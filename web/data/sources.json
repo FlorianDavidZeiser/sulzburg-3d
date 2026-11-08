@@ -541,7 +541,7 @@
       "url": "https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_ohne_liniennetz/bwgesamt.zip",
       "bytes": 48849522,
       "sha256": "f1a047dcf1f0f8d112d761685c01d403352b28e0e55aa78d8faa345a052e7785",
-      "heruntergeladen_am": "2026-11-08T21:01:38+00:00",
+      "heruntergeladen_am": "2026-11-08T22:04:56+00:00",
       "lizenz": "https://www.govdata.de/dl-de/by-2-0"
     },
     "ndom1_32_399_5298_2_bw.zip": {
@@ -927,7 +927,7 @@
       "gebietsmittel_erstellt": "Zeitreihen fuer Gebietsmittel fuer Bundeslaender und Kombinationen von Bundeslaender, erstellt am: 20261102"
     }
   },
-  "aktualisiert": "2026-11-08T21:53:09+00:00",
+  "aktualisiert": "2026-11-08T22:04:56+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,

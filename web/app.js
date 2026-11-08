@@ -7,6 +7,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { sunPosition, sunTimes, zonedToUtc, formatLocal, tzOffsetMs } from "./sun.js";
 import { setupPlaces } from "./places.js";
 import { setupScenario } from "./scenario.js";
+import { setupExtras } from "./extras.js";
 
 const TZ = "Europe/Berlin";
 const params = new URLSearchParams(location.search);
@@ -274,7 +275,7 @@ function initTimeControls() {
   $("date").addEventListener("input", update);
   $("time").addEventListener("input", () => { $("startHint").hidden = true; update(); });
   $("clouds").addEventListener("change", update);
-  document.querySelectorAll(".seasons button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".seasons button[data-d]").forEach((b) => b.addEventListener("click", () => {
     $("date").value = `${$("date").value.slice(0, 4)}-${b.dataset.d}`; update();
   }));
   update();
@@ -327,6 +328,30 @@ function showSources() {
 }
 
 // ---------- Klick-Info ----------
+// Gebäude-Info im rechten Feld (Klick, Adresssuche)
+function showBuilding(idx) {
+  const info = $("info");
+  const g = meta.buildings.gebaeude[idx];
+  if (!g) return;
+  const dgm = terrainHeightAt(g.e - meta.buildings.e0, -(g.n - meta.buildings.n0));
+  const fmt = (v, d = 1) => (v == null ? "–" : Number(v).toFixed(d).replace(".", ","));
+  info.hidden = false;
+  info.innerHTML = `<h2>${g.adresse || "Gebäude ohne Adresse"}</h2><dl>` +
+    `<dt>Gemeinde</dt><dd>${g.gemeinde || "–"}${g.in_gemeinde ? "" : " (Nachbargemeinde im Randbereich)"}</dd>` +
+    `<dt>Funktion</dt><dd>${g.funktion_name || "–"} <span style="color:var(--muted)">(${g.funktion || "–"})</span></dd>` +
+    `<dt>Dachform</dt><dd>${g.dachform_name || "–"} <span style="color:var(--muted)">(${g.dachform || "–"}${g.dachformen_teile ? ", Teile: " + g.dachformen_teile.join("/") : ""})</span></dd>` +
+    `<dt>Höhe</dt><dd>${fmt(g.hoehe_m)} m (LoD2 measuredHeight)</dd>` +
+    `<dt>First</dt><dd>${fmt(g.z_first)} m NHN</dd>` +
+    `<dt>Boden LoD2</dt><dd>${fmt(g.z_boden_min)}${g.z_boden_max !== g.z_boden_min ? " bis " + fmt(g.z_boden_max) : ""} m NHN</dd>` +
+    `<dt>Gelände hier</dt><dd>${dgm == null ? "–" : fmt(dgm) + " m NHN (DGM1, Darstellung)"}</dd>` +
+    `<dt>Grundriss</dt><dd>Stand ${g.grundriss_aktualitaet || "–"}, Modell ${g.erstellt || "–"}</dd>` +
+    `<dt>ID</dt><dd style="font-family:monospace;font-size:11px">${g.id}</dd></dl>` +
+    sunlightInfo(idx) +
+    infoHooks.map((h) => h(idx, g) || "").join("") +
+    externalLinks(g) +
+    `<div class="hint">LGL LoD2, dl-de/by-2-0. Bauteile: ${g.bauteile}. Klick ins Leere schließt.</div>`;
+}
+
 function setupPicking() {
   const ray = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
@@ -345,26 +370,7 @@ function setupPicking() {
     const hit = ray.intersectObjects(buildingMeshes, false)[0];
     if (!hit) { info.hidden = true; return; }
     const attr = hit.object.geometry.getAttribute("_building");
-    const idx = Math.round(attr.getX(hit.face.a));
-    const g = meta.buildings.gebaeude[idx];
-    if (!g) return;
-    const dgm = terrainHeightAt(g.e - meta.buildings.e0, -(g.n - meta.buildings.n0));
-    const fmt = (v, d = 1) => (v == null ? "–" : Number(v).toFixed(d).replace(".", ","));
-    info.hidden = false;
-    info.innerHTML = `<h2>${g.adresse || "Gebäude ohne Adresse"}</h2><dl>` +
-      `<dt>Gemeinde</dt><dd>${g.gemeinde || "–"}${g.in_gemeinde ? "" : " (Nachbargemeinde im Randbereich)"}</dd>` +
-      `<dt>Funktion</dt><dd>${g.funktion_name || "–"} <span style="color:var(--muted)">(${g.funktion || "–"})</span></dd>` +
-      `<dt>Dachform</dt><dd>${g.dachform_name || "–"} <span style="color:var(--muted)">(${g.dachform || "–"}${g.dachformen_teile ? ", Teile: " + g.dachformen_teile.join("/") : ""})</span></dd>` +
-      `<dt>Höhe</dt><dd>${fmt(g.hoehe_m)} m (LoD2 measuredHeight)</dd>` +
-      `<dt>First</dt><dd>${fmt(g.z_first)} m NHN</dd>` +
-      `<dt>Boden LoD2</dt><dd>${fmt(g.z_boden_min)}${g.z_boden_max !== g.z_boden_min ? " bis " + fmt(g.z_boden_max) : ""} m NHN</dd>` +
-      `<dt>Gelände hier</dt><dd>${dgm == null ? "–" : fmt(dgm) + " m NHN (DGM1, Darstellung)"}</dd>` +
-      `<dt>Grundriss</dt><dd>Stand ${g.grundriss_aktualitaet || "–"}, Modell ${g.erstellt || "–"}</dd>` +
-      `<dt>ID</dt><dd style="font-family:monospace;font-size:11px">${g.id}</dd></dl>` +
-      sunlightInfo(idx) +
-      infoHooks.map((h) => h(idx, g) || "").join("") +
-      externalLinks(g) +
-      `<div class="hint">LGL LoD2, dl-de/by-2-0. Bauteile: ${g.bauteile}. Klick ins Leere schließt.</div>`;
+    showBuilding(Math.round(attr.getX(hit.face.a)));
   });
 }
 
@@ -474,7 +480,7 @@ function setupSunlightLayer() {
   };
   $("sunlayer").addEventListener("change", apply);
   $("date").addEventListener("input", () => { if ($("sunlayer").checked) apply(); });
-  document.querySelectorAll(".seasons button").forEach((b) => b.addEventListener("click", () => { if ($("sunlayer").checked) setTimeout(apply, 0); }));
+  document.querySelectorAll(".seasons button[data-d]").forEach((b) => b.addEventListener("click", () => { if ($("sunlayer").checked) setTimeout(apply, 0); }));
 }
 
 // ---------- Bäume (nDOM1: Lage und Höhe echt, Form generisch) ----------
@@ -565,8 +571,8 @@ function showStop(st) {
   if (di < 0) {
     rows = `<div class="muted small">Für ${dayIso} liegen keine Fahrplandaten vor (Zeitraum ${tr.zeitraum.von} bis ${tr.zeitraum.bis}).</div>`;
   } else {
-    const deps = st.abfahrten.filter((a) => (a[3] >> di) & 1 && !a[4] && a[0] >= minutesNow * 60);
-    const all = st.abfahrten.filter((a) => (a[3] >> di) & 1 && !a[4]);
+    const deps = st.abfahrten.filter((a) => (a[3][Math.floor(di / 30)] >> (di % 30)) & 1 && !a[4] && a[0] >= minutesNow * 60);
+    const all = st.abfahrten.filter((a) => (a[3][Math.floor(di / 30)] >> (di % 30)) & 1 && !a[4]);
     rows = deps.length ? `<table class="deps">${deps.slice(0, 8).map((a) => `<tr><td>${fmt(a[0])}</td><td><b>${tr.linien[a[1]]?.name || "?"}</b></td><td>${a[2]}</td></tr>`).join("")}</table>` +
       `<div class="muted small">${all.length} Abfahrten an diesem Tag, ab ${$("timeLabel").textContent} Uhr gezeigt.</div>` :
       `<div class="muted small">Keine weiteren Abfahrten an diesem Tag ab ${$("timeLabel").textContent} Uhr (${all.length} insgesamt).</div>`;
@@ -676,10 +682,11 @@ async function main() {
   setupTransit();
   setupTrees();
   const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, infoHooks, buildingMeshes, roofMeshes, utmToLatLon, TZ, centerY,
-    setSun: () => setSun(currentDate()), localToday };
+    setSun: () => setSun(currentDate()), localToday, showBuilding, sunTimes, latLon };
   window.__ctx = ctx;
   await setupPlaces(ctx);
   await setupScenario(ctx);
+  await setupExtras(ctx);
   showSources();
   loadAlerts();
   updateProgress();

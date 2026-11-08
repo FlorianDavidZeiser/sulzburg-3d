@@ -31,6 +31,93 @@ import common  # noqa: E402
 ZIP = common.RAW / "bwgesamt.zip"
 URL = "https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_ohne_liniennetz/bwgesamt.zip"
 DATASET = "https://mobidata-bw.de/dataset/soll-fahrplandaten-baden-wurttemberg"
+SHAPES_ZIP = common.RAW / "gtfs_shapes" / "bwgesamt_mit_linienverlauf.zip"
+SHAPES_URL = "https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_mit_liniennetz/bwgesamt.zip"
+SHAPES_DATASET = "https://mobidata-bw.de/dataset/soll-fahrplandaten-baden-wurttemberg-mit-linienverlauf"
+
+
+def build_trips(zpath, trip_stops, trips, routes, out_stops, trip_masks, area, tr, box):
+    """Linienverläufe (shapes) aus dem Feed mit Linienverlauf den Fahrten des Feeds ohne Linienverlauf zuordnen.
+
+    Zuordnung über Linie und Folge der Haltestellen im Umgriff (gleiche stop_ids in beiden Feeds).
+    Der Verlauf wird auf den Abschnitt zwischen erstem und letztem Halt im Umgriff gekürzt und vereinfacht (1,5 m).
+    """
+    from shapely.geometry import LineString, Point as SPoint
+    from shapely.ops import substring
+
+    z = zipfile.ZipFile(zpath)
+    name_of = {rid: r["name"] for rid, r in routes.items()}
+    want_names = set(name_of.values())
+    stop_ids = {s["id"] for s in out_stops}
+    s_routes = {}
+    for row in read_csv(z, "routes.txt"):
+        if row.get("route_short_name") in want_names:
+            s_routes[row["route_id"]] = row["route_short_name"]
+    s_trips = {}
+    for row in read_csv(z, "trips.txt"):
+        if row["route_id"] in s_routes and row.get("shape_id"):
+            s_trips[row["trip_id"]] = (s_routes[row["route_id"]], row["shape_id"])
+    seqs = defaultdict(list)
+    for row in read_csv(z, "stop_times.txt"):
+        if row["trip_id"] in s_trips and row["stop_id"] in stop_ids:
+            seqs[row["trip_id"]].append((int(row["stop_sequence"]), row["stop_id"]))
+    key_to_shape = {}
+    for tid, lst in seqs.items():
+        name, shp = s_trips[tid]
+        key_to_shape.setdefault((name, tuple(s for _, s in sorted(lst))), shp)
+    need = set(key_to_shape.values())
+    pts = defaultdict(list)
+    for row in read_csv(z, "shapes.txt"):
+        if row["shape_id"] in need:
+            pts[row["shape_id"]].append((int(row["shape_pt_sequence"]), float(row["shape_pt_lon"]), float(row["shape_pt_lat"])))
+    feed = next(iter(read_csv(z, "feed_info.txt")), {}) if "feed_info.txt" in z.namelist() else {}
+
+    stop_idx = {s["id"]: i for i, s in enumerate(out_stops)}
+    lines = {}
+    for shp, lst in pts.items():
+        lst.sort()
+        xs, ys = tr.transform([p[1] for p in lst], [p[2] for p in lst])
+        lines[shp] = LineString([(x - box["e0"], -(y - box["n0"])) for x, y in zip(xs, ys)])
+
+    fahrten, verlaeufe = [], {}
+    for trip_id, halts in trip_stops.items():
+        t = trips.get(trip_id)
+        if not t or len(halts) < 2 or trip_id not in trip_masks:
+            continue
+        halts = sorted(halts, key=lambda h: h[2])
+        key = (name_of.get(t["route"]), tuple(h[0] for h in halts))
+        shp = key_to_shape.get(key)
+        if not shp or shp not in lines:
+            continue
+        line = lines[shp]
+        # Projektion der Halte auf den Verlauf, monoton steigend
+        proj, last = [], -1.0
+        for sid, dep, _ in halts:
+            st = out_stops[stop_idx[sid]]
+            d = line.project(SPoint(st["x"], st["zz"]))
+            if d < last:
+                d = last
+            proj.append(d); last = d
+        a, b = proj[0], proj[-1]
+        if b - a < 20:
+            continue
+        vkey = f"{shp}|{a:.0f}|{b:.0f}"
+        if vkey not in verlaeufe:
+            seg = substring(line, a, b).simplify(1.5)
+            verlaeufe[vkey] = [[round(x, 1), round(y, 1)] for x, y in seg.coords]
+        h_out = []
+        for (sid, dep, _), d in zip(halts, proj):
+            if not dep:
+                continue
+            hh, mm, ss = (int(x) for x in dep.split(":"))
+            h_out.append([stop_idx[sid], hh * 3600 + mm * 60 + ss, round(d - a, 1)])
+        if len(h_out) >= 2:
+            fahrten.append({"route": t["route"], "ziel": t["headsign"], "tage": trip_masks[trip_id], "verlauf": vkey, "halte": h_out})
+    info = {"titel": "Gebündelte Soll-Fahrplandaten Baden-Württemberg mit Linienverlauf (GTFS), NVBW über MobiData BW", "datensatz": SHAPES_DATASET, "download": SHAPES_URL,
+            "lizenz": {"name": "Open Data Commons Open Database License (ODbL)", "url": "https://opendatacommons.org/licenses/odbl/1-0/"},
+            "feed_info": {k: v for k, v in feed.items() if k in ("feed_version", "feed_start_date", "feed_end_date")},
+            "hinweis": "Nur die Linienverläufe stammen aus diesem Datensatz; Fahrzeiten aus dem Datensatz ohne Linienverlauf. Die Verläufe in transit.json stehen damit unter ODbL."}
+    return fahrten, verlaeufe, info
 
 
 def read_csv(z: zipfile.ZipFile, name: str):
@@ -129,6 +216,7 @@ def main() -> int:
     day_list = [(today + dt.timedelta(days=i)).isoformat() for i in range(args.tage + 1)]
     day_index = {d: i for i, d in enumerate(day_list)}
     departures = defaultdict(list)
+    trip_masks = {}
     for trip_id, halts in trip_stops.items():
         t = trips.get(trip_id)
         if not t:
@@ -136,10 +224,12 @@ def main() -> int:
         days = service_days.get(t["service"], set())
         if not days:
             continue
-        mask = 0
+        mask = [0] * ((len(day_list) + 29) // 30)   # Blöcke à 30 Tage, weil JavaScript-Bitoperationen 32 Bit haben
         for d in days:
-            mask |= 1 << day_index[d]
+            k = day_index[d]
+            mask[k // 30] |= 1 << (k % 30)
         last_seq = max(h[2] for h in halts)
+        trip_masks[trip_id] = mask
         for sid, dep, seq in halts:
             if not dep:
                 continue
@@ -179,6 +269,12 @@ def main() -> int:
         s["abfahrten"] = departures.get(sid, [])
         out_stops.append(s)
 
+    # 6. Fahrten mit Linienverlauf für die Bus-Animation (optional, Feed "mit Linienverlauf", ODbL)
+    fahrten, verlaeufe, shape_info = [], {}, None
+    if SHAPES_ZIP.exists():
+        fahrten, verlaeufe, shape_info = build_trips(SHAPES_ZIP, trip_stops, trips, routes, out_stops, trip_masks, area, tr, box)
+        print(f"Fahrten mit Verlauf: {len(fahrten)}, Verläufe: {len(verlaeufe)}")
+
     out = {
         "ebene": "Bus und Bahn (Soll-Fahrplan)",
         "hinweis": "Soll-Fahrplandaten, keine Echtzeit. Abfahrtszeiten in Sekunden ab Betriebstag-Mitternacht (Ortszeit), Tage als Bitmaske über den Zeitraum.",
@@ -186,6 +282,9 @@ def main() -> int:
         "koordinaten": "x/zz lokal wie buildings.json, z = Höhe aus dem dargestellten Gelände",
         "linien": routes,
         "haltestellen": out_stops,
+        "fahrten": fahrten,
+        "verlaeufe": verlaeufe,
+        "verlauf_quelle": shape_info,
         "quelle": {
             "titel": "Gebündelte Soll-Fahrplandaten Baden-Württemberg ohne Linienverlauf (GTFS), NVBW Nahverkehrsgesellschaft Baden-Württemberg mbH über MobiData BW",
             "datensatz": DATASET, "download": URL,

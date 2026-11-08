@@ -78,6 +78,7 @@ function block(rows) {
       ["Herkunft", `${esc(tr.quelle.titel)}. <a href="${tr.quelle.datensatz}" target="_blank" rel="noopener">Datensatz</a>, Lizenz <a href="${tr.quelle.lizenz.url}" target="_blank" rel="noopener">${esc(tr.quelle.lizenz.name)}</a>, Namensnennung „${esc(tr.quelle.lizenz.namensnennung)}“.`],
       ["Datenstand", `Fahrplanversion ${esc(tr.quelle.feed_info.feed_version)} (gültig ${de(String(tr.quelle.feed_info.feed_start_date).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3"))} bis ${de(String(tr.quelle.feed_info.feed_end_date).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3"))}); exportiert für ${tr.zeitraum.von} bis ${tr.zeitraum.bis}.`],
       ["Umfang", `${tr.haltestellen.length} Haltesteige im Umgriff, Linien ${esc(routes)}.`],
+      ["Busse auf der Karte", tr.verlauf_quelle ? `Fahrzeuge bewegen sich nach Soll-Fahrplan gleichmäßig zwischen den Halten entlang des Linienverlaufs. Linienverläufe aus: ${esc(tr.verlauf_quelle.titel)}, Lizenz <a href="${tr.verlauf_quelle.lizenz.url}" target="_blank" rel="noopener">${esc(tr.verlauf_quelle.lizenz.name)}</a>, Stand ${esc(tr.verlauf_quelle.feed_info.feed_version || "–")}. ${esc(tr.verlauf_quelle.hinweis)} Fahrzeugform ist Darstellung.` : "keine"],
       ["Bekannte Lücken", "Nur Soll-Fahrplan, keine Echtzeit, keine Ausfälle oder Verspätungen. Der Datensatz wird vom Land zweimal im Monat aktualisiert, die Kopie hier nur, wenn die Pipeline neu läuft. Bahnhalte außerhalb des Umgriffs (Heitersheim, Müllheim) sind nicht enthalten."],
     ]));
   } catch (e) { /* ohne transit.json keine Angabe */ }
