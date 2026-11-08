@@ -92,6 +92,29 @@ function block(rows) {
     ]));
   } catch (e) { /* ohne places.json keine Angabe */ }
 
+  try {
+    const cl = await j("data/climate.json");
+    out.push(`<h2>Klima und Fortschreibung 2040</h2>` + block([
+      ["Herkunft", `${esc(cl.quelle.titel)}. ${cl.quelle.urls.map((u) => `<a href="${u}" target="_blank" rel="noopener">${esc(u.replace("https://", ""))}</a>`).join(", ")}. ${esc(cl.quelle.nutzung)}.`],
+      ["Datenstand", `30-jährige Mittel 1961–1990 und 1991–2020 (1 km); Gebietsmittel Baden-Württemberg ${cl.bw_reihen.hot_days[0][0]} bis ${cl.bw_reihen.hot_days[cl.bw_reihen.hot_days.length - 1][0]}, ${esc(cl.quelle.gebietsmittel_erstellt)}.`],
+      ["Szenario", `<span class="ph">Szenario</span> ${esc(cl.fortschreibung)} Am Marktplatz ergibt das rund ${Math.round(cl.marktplatz.hot_days[2])} Heiße Tage im Jahr 2040, nach ${cl.marktplatz.hot_days[0]} (1961–1990) und ${cl.marktplatz.hot_days[1]} (1991–2020).`],
+      ["Projektionen", `${esc(cl.projektion_hinweis.text)} ${cl.projektion_hinweis.quellen.map((x) => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titel)}</a>`).join(" · ")}. Ortsgenaue Projektionsdaten für Sulzburg wurden nicht als offener Download gefunden.`],
+      ["Bekannte Lücken", "Das 1-km-Raster glättet das Tal: Ortskern und Hänge teilen sich Zellen. Frosttage zeigen im Raster am Marktplatz kaum Veränderung, im Landesmittel sinken sie. Die Fortschreibung unterstellt einen linearen Trend und ist keine Vorhersage."],
+    ]));
+  } catch (e) { /* ohne climate.json keine Angabe */ }
+
+  try {
+    const so = await j("data/solar.json");
+    const r = so.ergebnis_gemeinde, b = so.bestand;
+    out.push(`<h2>PV auf allen geeigneten Dächern (Szenario)</h2>` + block([
+      ["Ergebnis", `<span class="ph">Szenario</span> ${r.leistung_kwp.toLocaleString("de-DE")} kWp auf ${r.geeignete_dachflaeche_m2.toLocaleString("de-DE")} m² geeigneter Dachfläche, rund ${r.ertrag_mwh_jahr.toLocaleString("de-DE")} MWh pro Jahr; Geländehorizont kostet ${r.verlust_durch_gelaendehorizont_prozent} %.`],
+      ["Annahmen", `<ul>${Object.values(so.annahmen).map((a) => `<li>${esc(a.grund)}</li>`).join("")}</ul>`],
+      ["Rechenweg", `${esc(so.methode.wetter)}. ${esc(so.methode.modell)}. ${esc(so.methode.verschattung)} Kalibriert gegen den PVGIS-Rechner (Faktor ${so.methode.kalibrierfaktor}); Abweichung bei anderen Ausrichtungen ${so.methode.pruefung_gegen_pvgis.map((p) => `${p.neigung}°/${p.ausrichtung}°: ${p.abweichung_prozent > 0 ? "+" : ""}${p.abweichung_prozent} %`).join(", ")}. Quelle: ${esc(so.quelle.pvgis)}.`],
+      ["Bestand heute", b ? `${b.einheiten_in_betrieb} Photovoltaik-Einheiten in Betrieb mit ${b.bruttoleistung_kw.toLocaleString("de-DE")} kW Bruttoleistung. Quelle: ${esc(so.bestand_quelle.titel)}, abgerufen ${de(so.bestand_quelle.abgerufen_am)}, ${esc(so.bestand_quelle.lizenz ? so.bestand_quelle.lizenz.namensnennung : "Bundesnetzagentur")}. ${esc(so.bestand_quelle.hinweis)}` : "nicht abrufbar"],
+      ["Bekannte Lücken", "Keine Prüfung von Statik, Denkmalschutz, Dachzustand oder Netzanschluss. Nachbargebäude und Bäume verschatten im Modell nicht. Der Horizont gilt für den First, nicht für jede Dachfläche. Ost- und Westdächer liegen im Modell einige Prozent über PVGIS, das Ergebnis ist eher eine obere Grenze. Der Energieatlas BW wurde nicht verwendet."],
+    ]));
+  } catch (e) { /* ohne solar.json keine Angabe */ }
+
   out.push(`<h2>Wetterwarnungen</h2>` + block([
     ["Herkunft", "Amtliche Warnungen des Deutschen Wetterdienstes für die Warnzelle der Stadt Sulzburg, live über Bright Sky."],
     ["Darstellung", "Banner mit Überschrift, Stufe, Gültigkeit und aufklappbarer Beschreibung. Ohne Warnung bleibt das Feld unsichtbar."],
@@ -110,6 +133,12 @@ function block(rows) {
     <li>Keine personenbezogenen Daten: Adressen stammen aus dem offenen LoD2-Datensatz, Eigentümer oder Bewohner sind nicht enthalten.</li>
     <li>Kein offizielles Angebot der Stadt Sulzburg oder eines Unternehmens; kein Wappen, kein Logo.</li>
   </ul>`);
+  out.push(`<h2>Weitere Bausteine</h2>` + block([
+    ["Bäume", "Normalisiertes Oberflächenmodell nDOM1 des LGL (dl-de/by-2-0); Lage und Höhe echt, Form generisch."],
+    ["Dächer aus Luftbild", "DOP20 des LGL senkrecht auf die LoD2-Dachflächen projiziert; im Luftbild eingebrannte Schatten bleiben sichtbar."],
+    ["Adresssuche", "Durchsucht die Adressen im LoD2-Datensatz, keine externe Abfrage."],
+    ["Einstiegsfahrt", "Reine Kameraführung; bei der Systemeinstellung „Bewegung reduzieren“ entfällt sie."],
+  ]));
   out.push(`<p class="muted">Technik: three.js (MIT), statische Dateien ohne Server-Logik, keine Cookies, keine Zähler. Quellcode und Datenpipeline: <a href="https://github.com/FlorianDavidZeiser/sulzburg-3d" target="_blank" rel="noopener">github.com/FlorianDavidZeiser/sulzburg-3d</a>. Stand der Aufbereitung: ${de(idx.quelle.verarbeitet_am)}.</p>`);
   document.getElementById("content").innerHTML = out.join("\n");
 })().catch((e) => { document.getElementById("content").textContent = "Fehler beim Laden der Metadaten: " + e.message; });

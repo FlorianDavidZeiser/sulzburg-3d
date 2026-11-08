@@ -143,18 +143,26 @@ def check_addresses(sample: int) -> tuple[list[str], dict]:
     picks = rnd.sample(cands, min(sample, len(cands)))
     tr = Transformer.from_crs("EPSG:4326", f"EPSG:{common.EPSG}", always_xy=True)
     rows, dists, found = [], [], 0
+    cache_path = common.ROOT / "data" / "processed" / "nominatim_cache.json"
+    cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
     for g in picks:
         street = g["adresse"].split(",")[0]
-        q = urllib.parse.urlencode({"street": street, "city": "Sulzburg", "country": "Deutschland", "format": "json", "limit": 1, "addressdetails": 1})
-        req = urllib.request.Request("https://nominatim.openstreetmap.org/search?" + q, headers={"User-Agent": "sulzburg-3d validation (privates Projekt)"})
-        try:
-            with urllib.request.urlopen(req, timeout=30) as r:
-                res = json.loads(r.read().decode("utf-8"))
-        except Exception as exc:  # noqa: BLE001
-            rows.append(f"| {g['i']} | {street} | Fehler: {exc} | – | – |")
-            time.sleep(1.1)
-            continue
-        time.sleep(1.1)  # Nominatim-Nutzungsbedingungen: höchstens eine Anfrage pro Sekunde
+        if street in cache:
+            res = cache[street]
+        else:
+            res = None
+        if res is None:
+            q = urllib.parse.urlencode({"street": street, "city": "Sulzburg", "country": "Deutschland", "format": "json", "limit": 1, "addressdetails": 1})
+            req = urllib.request.Request("https://nominatim.openstreetmap.org/search?" + q, headers={"User-Agent": "sulzburg-3d validation (privates Projekt)"})
+            try:
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    res = json.loads(r.read().decode("utf-8"))
+                cache[street] = res
+            except Exception as exc:  # noqa: BLE001
+                rows.append(f"| {g['i']} | {street} | Fehler: {exc} | – | – |")
+                time.sleep(5)
+                continue
+            time.sleep(1.5)  # Nominatim-Nutzungsbedingungen: höchstens eine Anfrage pro Sekunde
         if not res:
             rows.append(f"| {g['i']} | {street} | kein Treffer | – | – |")
             continue
@@ -167,6 +175,8 @@ def check_addresses(sample: int) -> tuple[list[str], dict]:
         if ok:
             dists.append(d); found += 1
         rows.append(f"| {g['i']} | {street} | {typ}{' Nr. ' + hn if hn else ''} | {d:.0f} m | {'ja' if ok else 'nur Straße/Ort'} |")
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
     stats = {"stichprobe": len(picks), "osm_treffer_mit_hausnummer": found,
              "abstand_median_m": float(np.median(dists)) if dists else None, "abstand_max_m": float(max(dists)) if dists else None,
              "innerhalb_25_m": int(sum(1 for d in dists if d <= 25))}
@@ -214,18 +224,59 @@ def check_size() -> tuple[list[str], dict]:
     web = common.ROOT / "web"
     groups = {"Gelände (Höhen + Index)": [web / "data" / "terrain" / "heights.bin", web / "data" / "terrain" / "index.json"],
               "Luftbild (JPEG-Kacheln)": sorted((web / "data" / "terrain").glob("o_*.jpg")),
-              "Gebäude (GLB + JSON)": [web / "data" / "buildings.glb", web / "data" / "buildings.json"],
+              "Gebäude (GLB + JSON + Dachtextur)": [web / "data" / "buildings.glb", web / "data" / "buildings.json"] + sorted((web / "data").glob("roofs_*.jpg")),
+              "Bäume": [web / "data" / "trees.bin", web / "data" / "trees.json"],
+              "Sonne, Klima, PV, Orte, Fahrplan": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json")],
               "Sonstige Daten": [web / "data" / "gemeinde.geojson", web / "data" / "sources.json"],
               "three.js + Anwendung": [p for p in web.rglob("*.js")] + [web / "index.html", web / "style.css"]}
-    md = ["## 4. Ladevolumen", "", "| Bestandteil | Dateien | MB |", "|---|---|---|"]
-    total = 0
+    import gzip as _gz
+    md = ["## 4. Ladevolumen", "", "GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 für GLB, JSON und BIN). JPEG-Bilder sind bereits komprimiert.", "",
+          "| Bestandteil | Dateien | MB auf der Platte | MB übertragen (gzip) |", "|---|---|---|---|"]
+    total = total_gz = 0
     for k, files in groups.items():
         size = sum(f.stat().st_size for f in files if f.exists())
-        total += size
-        md.append(f"| {k} | {len(files)} | {size/1e6:.1f} |")
-    md += [f"| **Gesamt** | | **{total/1e6:.1f}** |", "",
-           f"Bei 20 Mbit/s entspricht das rund {total*8/20e6:.0f} s, bei 50 Mbit/s rund {total*8/50e6:.0f} s. Gelände und Gebäude kommen zuerst, Luftbildkacheln laden nach (Siedlung zuerst).", ""]
-    return md, {"gesamt_mb": total / 1e6}
+        gz = sum((f.stat().st_size if f.suffix == ".jpg" else len(_gz.compress(f.read_bytes(), 6))) for f in files if f.exists())
+        total += size; total_gz += gz
+        md.append(f"| {k} | {len(files)} | {size/1e6:.1f} | {gz/1e6:.1f} |")
+    md += [f"| **Gesamt** | | **{total/1e6:.1f}** | **{total_gz/1e6:.1f}** |", "",
+           f"Übertragen bei 20 Mbit/s rund {total_gz*8/20e6:.0f} s, bei 50 Mbit/s rund {total_gz*8/50e6:.0f} s. Gelände und Gebäude kommen zuerst, die Luftbildkacheln laden danach (Siedlung zuerst); bedienbar ist die Ansicht vorher.", ""]
+    return md, {"gesamt_mb": total / 1e6, "uebertragen_gzip_mb": total_gz / 1e6}
+
+
+def check_layers() -> tuple[list[str], dict]:
+    """Kennzahlen und Plausibilität der Ebenen aus Phase 2 und 3 (aus den aufbereiteten Dateien)."""
+    W = common.WEB_DATA
+    md = ["## 5. Ebenen aus Phase 2 und 3", ""]
+    st = {}
+    src = common.load_sources()
+    orte = src["ebenen"].get("orte", {})
+    if orte:
+        md += [f"**Orte mit Geschichte** ({orte['anzahl']} Orte, Quellen abgerufen {orte['abgerufen_am']}). Lage gegen LoD2:", ""] + [f"- {x}" for x in orte["pruefung"]] + [""]
+        st["orte"] = orte["anzahl"]
+    if (W / "solar.json").exists():
+        so = json.loads((W / "solar.json").read_text(encoding="utf-8"))
+        r = so["ergebnis_gemeinde"]
+        md += ["**PV-Szenario.** Modell gegen den PVGIS-Rechner (ohne Horizont, kWh je kWp und Jahr):", "",
+               "| Neigung | Ausrichtung | Modell | PVGIS | Abweichung |", "|---|---|---|---|---|"]
+        md += [f"| {p['neigung']}° | {p['ausrichtung']}° | {p['modell_kwh_kwp']} | {p['pvgis_kwh_kwp']} | {p['abweichung_prozent']:+.1f} % |" for p in so["methode"]["pruefung_gegen_pvgis"]]
+        b = so.get("bestand") or {}
+        md += ["", f"Ergebnis: {r['leistung_kwp']:,} kWp, {r['ertrag_mwh_jahr']:,} MWh pro Jahr, spezifischer Ertrag Median {r['spezifischer_ertrag_median_kwh_kwp']:.0f} kWh/kWp "
+               f"(5. bis 95. Perzentil {r['spezifischer_ertrag_p05_p95'][0]} bis {r['spezifischer_ertrag_p05_p95'][1]}). Bestand laut MaStR: {b.get('einheiten_in_betrieb')} Einheiten, {b.get('bruttoleistung_kw')} kW, "
+               f"das sind {b.get('bruttoleistung_kw', 0) / r['leistung_kwp'] * 100:.0f} % des Szenarios. Plausibilität: Ein spezifischer Ertrag um 1.000 kWh/kWp entspricht der PVGIS-Größenordnung für den Oberrhein.", ""]
+        st["pv"] = {"kwp": r["leistung_kwp"], "mwh": r["ertrag_mwh_jahr"], "max_abweichung_pvgis_prozent": max(abs(p["abweichung_prozent"]) for p in so["methode"]["pruefung_gegen_pvgis"])}
+    if (W / "climate.json").exists():
+        cl = json.loads((W / "climate.json").read_text(encoding="utf-8"))
+        m = cl["marktplatz"]["hot_days"]; bw = cl["bw_periodenmittel_heisse_tage"]
+        md += [f"**Klima.** {len(cl['zellen'])} 1-km-Zellen im Umgriff. Heiße Tage am Marktplatz {m[0]:.0f} (1961–1990), {m[1]:.0f} (1991–2020), Fortschreibung 2040 rund {m[2]:.0f}. "
+               f"Gegenprobe Landesmittel BW aus der Jahresreihe: {bw['1961-1990']} und {bw['1991-2020']}; Sulzburg liegt am Oberrhein erwartungsgemäß darüber.", ""]
+        st["klima"] = {"zellen": len(cl["zellen"]), "marktplatz_heisse_tage": m}
+    if (W / "transit.json").exists():
+        tr = json.loads((W / "transit.json").read_text(encoding="utf-8"))
+        n_trips = len(tr.get("fahrten") or [])
+        md += [f"**Busse.** {len(tr['haltestellen'])} Haltesteige, {n_trips} Fahrten mit Linienverlauf zugeordnet ({len(tr.get('verlaeufe') or {})} Verlaufsabschnitte). "
+               "Die Zuordnung prüft Linie und Folge der Haltestellen; eine Prüfung gegen die Fahrplanauskunft des Verbunds steht aus.", ""]
+        st["busse"] = {"fahrten": n_trips}
+    return md, st
 
 
 def main() -> int:
@@ -240,10 +291,11 @@ def main() -> int:
         a_md, a_stats = check_addresses(args.stichprobe)
     s_md, s_stats = check_sun()
     z_md, z_stats = check_size()
-    doc = ["# Validierung Phase 1 (automatisch erzeugt)", "", f"Erzeugt am {common.now_iso()} durch `scripts/05_validate.py`.", ""] + t_md + a_md + s_md + z_md
+    l_md, l_stats = check_layers()
+    doc = ["# Validierung (automatisch erzeugt)", "", f"Erzeugt am {common.now_iso()} durch `scripts/05_validate.py`.", ""] + t_md + a_md + s_md + z_md + l_md
     (common.ROOT / "docs" / "validierung.md").write_text("\n".join(doc), encoding="utf-8")
     src = common.load_sources()
-    src["validierung"] = {"gelaende_gebaeude": t_stats, "adressen_osm": a_stats, "sonnenstand": s_stats, "ladevolumen": z_stats, "datei": "docs/validierung.md"}
+    src["validierung"] = {"gelaende_gebaeude": t_stats, "adressen_osm": a_stats, "sonnenstand": s_stats, "ladevolumen": z_stats, "ebenen": l_stats, "datei": "docs/validierung.md"}
     common.save_sources(src)
     print(json.dumps(src["validierung"], indent=1, ensure_ascii=False))
     return 0

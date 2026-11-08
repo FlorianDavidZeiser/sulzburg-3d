@@ -927,7 +927,7 @@
       "gebietsmittel_erstellt": "Zeitreihen fuer Gebietsmittel fuer Bundeslaender und Kombinationen von Bundeslaender, erstellt am: 20261102"
     }
   },
-  "aktualisiert": "2026-11-08T22:04:56+00:00",
+  "aktualisiert": "2026-11-08T22:26:26+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
@@ -956,7 +956,27 @@
       "max_zeitdifferenz_min": 0.7787698
     },
     "ladevolumen": {
-      "gesamt_mb": 19.349009
+      "gesamt_mb": 24.674422,
+      "uebertragen_gzip_mb": 15.811607
+    },
+    "ebenen": {
+      "orte": 6,
+      "pv": {
+        "kwp": 17115,
+        "mwh": 17189,
+        "max_abweichung_pvgis_prozent": 6.3
+      },
+      "klima": {
+        "zellen": 42,
+        "marktplatz_heisse_tage": [
+          7.0,
+          14.0,
+          22.1
+        ]
+      },
+      "busse": {
+        "fahrten": 154
+      }
     },
     "datei": "docs/validierung.md"
   }

@@ -104,3 +104,4 @@ details.sec[open] > summary::before { content: "▾ "; }
 #scenario select { font-size: 12px; }
 #info .close { float: right; font: inherit; font-size: 18px; line-height: 1; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 0 0 4px 8px; }
 #info .close:hover { color: var(--fg); }
+.ph { background: rgba(242,181,68,0.9); color: #1a1408; font-weight: 700; font-size: 11px; padding: 0 5px; border-radius: 4px; margin-right: 4px; }

@@ -1,37 +1,45 @@
 # Sulzburg 3D
 
-Privater Prototyp: die Gemeinde Sulzburg (Landkreis Breisgau-Hochschwarzwald) als begehbares 3D-Modell im Browser, gebaut aus offenen Geodaten des Landes Baden-Württemberg und Wetterdaten des Deutschen Wetterdienstes. Kein Angebot der Stadt Sulzburg und keines Unternehmens. Kein Wappen, kein Logo.
+Privater Prototyp: die Gemeinde Sulzburg (Landkreis Breisgau-Hochschwarzwald) als begehbares 3D-Modell im Browser, gebaut aus offenen Daten des Landes Baden-Württemberg, des Deutschen Wetterdienstes, der Bundesnetzagentur und der EU-Kommission. Kein Angebot der Stadt Sulzburg und keines Unternehmens. Kein Wappen, kein Logo.
 
-![Übersicht Phase 1](docs/screenshot-phase1.jpg)
+Live: https://floriandavidzeiser.github.io/sulzburg-3d/
 
-## Stand: Phase 2 („Nützlich“), im Aufbau
+![Übersicht](docs/screenshot-phase3.jpg)
 
-Neu seit Phase 1:
+## Was das Modell zeigt
 
-- **Sonne auf dem Dach.** Für jedes Gebäude der Geländehorizont aus dem DGM1 und daraus für den 21. jedes Monats, wann die Sonne den First erreicht und verlässt. Klick-Info je Gebäude, Einfärbung aller Dächer für den gewählten Monat. Am 21. Dezember liegen die Werte zwischen rund 4 und 7,5 Stunden, zehn Gebäude bekommen keine direkte Sonne (`scripts/06_sunlight.py`).
-- **Bus und Bahn.** Elf Haltesteige der Linien 620, 640 und 641 (SBG) mit den nächsten Abfahrten laut Soll-Fahrplan für das gewählte Datum und die gewählte Uhrzeit. Quelle: Gebündelte Soll-Fahrplandaten Baden-Württemberg (GTFS) der NVBW über MobiData BW, dl-de/by-2-0, Fahrplanversion 07.11.2026 (`scripts/07_transit.py`).
-- **Wetterwarnungen.** Amtliche DWD-Warnungen für die Warnzelle Stadt Sulzburg als Banner, live über Bright Sky.
-- Verweise je Gebäude auf Google Street View und Mapillary (nur Links, keine übernommenen Bilder).
-- Navigation: Zoom zur Maus, Doppelklick setzt den Blickpunkt, Pfeiltasten und WASD, Sprungziele Marktplatz, Laufen, Überblick, Nachtansicht aufgehellt.
-
-Noch offen in Phase 2: Solarpotenzial je Dach (Energieatlas BW, Quelle und Nutzungsbedingungen nicht geklärt, Metadatenkatalog von hier nicht erreichbar), Luftqualität (Schnittstelle des Umweltbundesamts antwortete mit Serverfehler), Termine (bewusst zurückgestellt).
-
-## Phase 1 („Das Tal“)
-
-- Gelände der ganzen Gemeinde plus 250 m Rand aus dem amtlichen Höhenmodell DGM1, gekachelt (147 Kacheln à 500 m, 5 m Raster im Siedlungsbereich, 20 m sonst)
-- Luftbild DOP20 als Textur je Kachel (0,5 m im Ortskern, 1 m in Siedlungen, 2 m sonst)
+**Das Tal (Phase 1)**
+- Gelände der ganzen Gemeinde plus 250 m Rand aus dem Höhenmodell DGM1, 147 Kacheln, 5 m Raster im Siedlungsbereich, 20 m sonst
+- Luftbild DOP20 auf dem Gelände und auf den Dächern (Dachtextur je Gebäude aus dem Luftbild)
 - Alle 2.318 Gebäude der Gemeinde als LoD2-Modelle mit echten Dachformen, dazu 48 Gebäude von Nachbargemeinden im Randbereich
-- Amtliche Gemeindegrenze (ALKIS) als Linie
-- Sonnenstand für Datum und Uhrzeit mit Schattenwurf, Schnellwahl der Jahreszeiten
-- Wetter jetzt und heute von der nächsten DWD-Station, abgerufen über Bright Sky
-- Klick auf ein Gebäude: Adresse, Gemeinde, Gebäudefunktion, Dachform, Höhe, Boden- und Firsthöhe, Grundriss-Stand
-- Seite „Datenquellen und Grenzen“ (`web/quellen.html`), erzeugt aus den Metadaten der Pipeline
+- 66.580 Bäume aus dem Oberflächenmodell nDOM1: Lage und Höhe echt, Form generisch
+- Amtliche Gemeindegrenze, Sonnenstand mit Schatten, Tagesablauf zum Abspielen
+- Wetter jetzt und heute von der nächsten DWD-Station
+- Klick auf ein Gebäude: Adresse, Funktion, Dachform, Höhen, Sonne auf dem First, PV-Abschätzung, Links zu Street View und Mapillary
+- Adresssuche mit Kameraflug, Sprungziele, Einstiegsfahrt ins Tal
 
-Phase 0 (Spike mit 50 Gebäuden im Ortskern) ist in der Git-Historie erhalten; Screenshots davon liegen in `docs/screenshot.jpg` und `docs/screenshot-detail.jpg`.
+**Nützlich (Phase 2)**
+- Sonne auf dem Dach: Geländehorizont je Gebäude, erste und letzte Minute direkter Sonne am 21. jedes Monats, Einfärbung aller Dächer
+- Bus: elf Haltesteige der Linien 620, 640, 641 mit Abfahrten laut Soll-Fahrplan; Busse fahren nach Fahrplan entlang der Linienverläufe
+- Amtliche DWD-Warnungen für die Warnzelle Stadt Sulzburg
+
+**Zeitachse und Zukunft (Phase 3)**
+- Sechs Orte mit Geschichte (Stadtgeschichte, St. Cyriak, ehemalige Synagoge, ehemalige Stadtkirche, Burg, Laufen) mit Fakten und Quellen
+- Klima: Heiße Tage, Sommertage, Frosttage aus dem 1-km-Raster des DWD für 1961–1990 und 1991–2020, Jahresreihe Baden-Württemberg seit 1951, Fortschreibung 2040 ausdrücklich als Szenario
+- Szenario „PV auf allen geeigneten Dächern“: 17,1 MWp und rund 17,2 GWh pro Jahr, gegenüber 3,1 MW heute laut Marktstammdatenregister
+
+**Feinschliff (Phase 4)**
+- Seite „Datenquellen und Grenzen“ (`web/quellen.html`), erzeugt aus den Metadaten der Pipeline
+- Impressum und Datenschutz als Vorlage (`web/impressum.html`), **Platzhalter vor öffentlicher Verbreitung ausfüllen**
+- Handy-Ansicht mit einklappbarem Menü, Schließen-Knopf, kompakter Quellenzeile
+
+| Szenario PV | Klimaraster | Handy |
+|---|---|---|
+| ![PV](docs/screenshot-szenario-pv.jpg) | ![Klima](docs/screenshot-klima.jpg) | ![Handy](docs/screenshot-mobil.jpg) |
 
 ## Starten
 
-Statische Dateien, kein Build, kein Schlüssel. Ein lokaler Webserver ist nötig, weil der Browser Module und Binärdaten nicht aus dem Dateisystem lädt.
+Statische Dateien, kein Build, kein Schlüssel.
 
 ```bash
 cd web
@@ -39,104 +47,120 @@ python3 -m http.server 8123
 # http://localhost:8123/
 ```
 
-URL-Parameter für reproduzierbare Ansichten: `?t=2026-06-21T18:30` (lokale Zeit), `&cam=-60,70,140` (Kamera relativ zum Marktplatz: Ost, Höhe, Süd), `&target=0,0` (Blickpunkt), `&lod=2` (Gelände grob), `&shadow=4096` (Schattenkarte).
+URL-Parameter: `?t=2026-06-21T18:30` (lokale Zeit), `&cam=-60,70,140` (Kamera relativ zum Marktplatz: Ost, Höhe, Süd), `&target=0,0`, `&lod=2` (Gelände grob), `&shadow=4096`, `&intro=0` (ohne Einstiegsfahrt).
 
-Veröffentlichung: `.github/workflows/pages.yml` legt den Ordner `web/` auf GitHub Pages, sobald in den Repo-Einstellungen unter Pages die Quelle „GitHub Actions“ gewählt ist. Impressum und Datenschutz sind vor einer Veröffentlichung noch zu ergänzen (Phase 4).
+Bedienung: Ziehen dreht, rechte Maustaste oder zwei Finger verschieben, Rad zoomt zur Mausposition, Doppelklick setzt den Blickpunkt, Pfeiltasten oder W A S D fahren, Q und E senken und heben.
 
 ## Struktur
 
 ```
-scripts/   Datenpipeline (Python, reproduzierbar, läuft komplett in unter zwei Minuten plus Download)
-  common.py          Mittelpunkt, Pfade, Lizenz, Kachelliste
-  00_gemeinde.py     Gemeindegrenze aus den ALKIS-Verwaltungsgrenzen, Liste der 2-km-Kacheln
-  01_download.py     LGL-Kacheln laden, Prüfsummen und Server-Datum protokollieren
-  02_terrain.py      DGM1 (XYZ) -> web/data/terrain/heights.bin + index.json (gekachelt, zwei Auflösungen)
-  03_orthophoto.py   DOP20 (TIFF + TFW) -> web/data/terrain/o_*.jpg je Kachel
-  04_buildings.py    LoD2 (CityGML) -> web/data/buildings.glb + buildings.json (alle Gebäude, mit Sockel)
-  05_validate.py     Gebäude gegen Gelände, Adressen gegen OpenStreetMap, Sonnenstand, Ladevolumen -> docs/validierung.md
-  06_sunlight.py     Geländehorizont je Gebäude, Sonne am First je Monat -> web/data/sunlight.json
-  07_transit.py      Haltestellen und Soll-Abfahrten aus den GTFS-Daten BW -> web/data/transit.json
+scripts/   Datenpipeline (Python), Reihenfolge siehe unten
+  common.py          Mittelpunkt, Pfade, Lizenz, Kachelliste, Annahmen des PV-Szenarios
+  00_gemeinde.py     Gemeindegrenze und Gemarkungen (ALKIS), Liste der 2-km-Kacheln
+  01_download.py     LGL-Kacheln laden (DGM1, LoD2, DOP20, nDOM1), Prüfsummen, Server-Datum
+  02_terrain.py      Gelände gekachelt, zwei Auflösungen
+  03_orthophoto.py   Luftbild je Geländekachel
+  04_buildings.py    LoD2 -> GLB mit Dachtextur-Atlas, Dachflächen-Kennwerte, PV-Eignung je Fläche
+  05_validate.py     Gebäude gegen Gelände, Adressen gegen OSM, Sonne, Ladevolumen, Ebenen -> docs/validierung.md
+  06_sunlight.py     Geländehorizont je Gebäude, Sonne am First je Monat
+  07_transit.py      Haltestellen, Soll-Abfahrten, Fahrten mit Linienverlauf (GTFS)
+  08_trees.py        Bäume aus dem nDOM1
+  09_places.py       Orte mit Geschichte (data/orte.json) prüfen und aufbereiten
+  10_solar.py        PV-Szenario (PVGIS-Wetterjahr, Geländehorizont), Bestand aus dem MaStR
+  11_climate.py      DWD-Klimaraster, Gebietsmittel BW, Fortschreibung 2040
 data/
-  sources.json       Protokoll aller Downloads und Ebenen (URL, SHA-256, Server-Datum, Kennzahlen, Validierung)
-  gemeinde.geojson   amtliche Gemeindegrenze (EPSG:25832)
-  kacheln.json       benötigte LGL-Kacheln mit Flächenanteil
-  codelisten/        amtliche AdV-Codelisten (Dachform, Gebäudefunktion)
-  raw/               Rohdaten des LGL (nicht im Git, rund 4 GB, per 01_download.py neu ladbar)
+  sources.json       Protokoll aller Downloads und Ebenen (URL, SHA-256, Stand, Kennzahlen, Validierung)
+  orte.json          kuratierte Orte mit Fakten und Quellen (hier ergänzen oder kürzen)
+  gemeinde.geojson, kacheln.json, codelisten/
+  raw/, processed/   Rohdaten und Zwischenstände (nicht im Git, rund 5 GB, per Skript neu ladbar)
 web/
-  index.html, app.js, sun.js, style.css   Anwendung (three.js, ES-Module, kein Build)
-  quellen.html, quellen.js                Seite „Datenquellen und Grenzen“
-  data/              aufbereitete Daten (rund 17 MB)
-  vendor/three/      three.js 0.187.0 (MIT), lokal eingebunden
+  index.html, app.js, places.js, scenario.js, extras.js, sun.js, style.css
+  quellen.html, quellen.js, impressum.html
+  data/              aufbereitete Daten (22 MB, übertragen dank gzip rund 16 MB)
+  vendor/three/      three.js 0.187.0 (MIT)
 docs/                Screenshots, Validierungsbericht
+.github/workflows/   Veröffentlichung von web/ über GitHub Pages
 ```
 
 ## Datenquellen, Lizenzen, Datenstände
 
-Alle Geobasisdaten stammen vom Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL) über das [Open GeoData Portal](https://opengeodata.lgl-bw.de/). Lizenz: [Datenlizenz Deutschland – Namensnennung – Version 2.0](https://www.govdata.de/dl-de/by-2-0). Vorgeschriebene Namensnennung: **„Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0“**. Koordinaten ETRS89/UTM 32N (EPSG:25832), Höhen NHN (DHHN2016). Downloads am 08.11.2026, Prüfsummen und Server-Daten in `data/sources.json`.
-
-| Ebene | Produkt | Umfang | Datenstand (aus den Metadaten der Lieferung) |
+| Ebene | Quelle | Lizenz | Datenstand |
 |---|---|---|---|
-| Gelände | DGM1, 1 m Raster, Höhengenauigkeit ±0,15 m | 16 Kacheln à 2 km, 64 Teilkacheln | Laserscan 16.03.2019 bis 14.01.2020, je nach Teilkachel |
-| Luftbild | DOP20 RGB, TrueDOP, 20 cm, Kamera Leica DMC-4 | 16 Kacheln (3,7 GB Rohdaten) | Bildflug **25.08.2025** |
-| Gebäude | LoD2, CityGML 1.0 | 2.366 Gebäude im Umgriff | Auslesedatum 04. bis 06.02.2026, Aktualität ALKIS LoD2 01.04.2025, Grundrisse Stand 2025, Modelle erstellt November bis Dezember 2025 |
-| Gemeindegrenze | Verwaltungsgrenzen aus ALKIS, Ebene Gemeinde | Sulzburg, 22,73 km² | **Januar 2026** |
+| Gelände | LGL, DGM1 (1 m) | dl-de/by-2-0 | Laserscan 03/2019 bis 01/2020 |
+| Luftbild, Dachtexturen | LGL, DOP20 RGB (TrueDOP) | dl-de/by-2-0 | Bildflug 25.08.2025 |
+| Gebäude | LGL, LoD2 CityGML | dl-de/by-2-0 | Auslesedatum Februar 2026, Grundrisse 2025 |
+| Bäume | LGL, nDOM1 | dl-de/by-2-0 | Oberfläche 25.08.2025 |
+| Gemeindegrenze, Gemarkungen | LGL, Verwaltungsgrenzen ALKIS | dl-de/by-2-0 | Januar 2026 |
+| Code-Bezeichnungen | AdV-Codelisten Dachform und Gebäudefunktion | AdV | Stand der Dateien |
+| Wetter, Warnungen | Deutscher Wetterdienst über [Bright Sky](https://brightsky.dev) | DWD-Daten frei mit Quellenangabe | live |
+| Klima | DWD Climate Data Center: 1-km-Raster multi_annual, Gebietsmittel Bundesländer | DWD-Daten frei mit Quellenangabe | 1961–1990, 1991–2020; Reihe bis 2025 (erstellt 02.11.2026) |
+| Klimaprojektion (Text) | LUBW: Pressemitteilung 27.04.2021, Klimaatlas-Blog 23.01.2025 | Verweis | wie angegeben |
+| Fahrplan | NVBW über MobiData BW, Soll-Fahrplandaten BW ohne Linienverlauf (GTFS) | dl-de/by-2-0 | Version 07.11.2026 |
+| Linienverläufe | NVBW über MobiData BW, Soll-Fahrplandaten BW mit Linienverlauf | **ODbL** | Version 02.11.2026 |
+| PV-Wetterjahr, Prüfwerte | PVGIS 5.2, EU-Kommission (JRC) | frei mit Quellenangabe | SARAH2 2005–2020 |
+| PV-Bestand | Marktstammdatenregister, Bundesnetzagentur | dl-de/by-2-0 | abgerufen 08.11.2026, nur Summen |
+| Orte mit Geschichte | Wikipedia-Artikel (Sulzburg, St. Cyriak, Synagoge, Burg Sulzburg, Laufen), bpb, Gemeinderatsvorlage 2023 | CC BY-SA 4.0 bzw. Verweis | abgerufen 08.11.2026 |
+| Einwohnerzahl | Wikipedia (Infobox) | CC BY-SA 4.0 | 31.12.2025 |
+| Marktplatz-Koordinate, Adress-Stichprobe | OpenStreetMap über Nominatim | ODbL | 08.11.2026 |
+| 3D-Darstellung | three.js 0.187.0 | MIT | |
 
-Weitere Quellen:
+Namensnennung LGL: **„Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0“**. Namensnennung MaStR: „Marktstammdatenregister – © Bundesnetzagentur | dl-de/by-2-0“. Weil `web/data/transit.json` Linienverläufe aus einem ODbL-Datensatz enthält, steht diese Datei unter ODbL.
 
-| Zweck | Quelle | Lizenz / Hinweis |
-|---|---|---|
-| Wetter jetzt und heute, Warnungen | Deutscher Wetterdienst, Open Data, abgerufen über [Bright Sky](https://brightsky.dev) (api.brightsky.dev, frei, ohne Schlüssel) | DWD-Daten frei nutzbar mit Quellenangabe; nächste Station meist Müllheim, 6,4 km; Warnzelle Stadt Sulzburg |
-| Bus und Bahn | [Gebündelte Soll-Fahrplandaten Baden-Württemberg ohne Linienverlauf](https://mobidata-bw.de/dataset/soll-fahrplandaten-baden-wurttemberg) (GTFS), NVBW über MobiData BW, 49 MB, zweimal monatlich aktualisiert | dl-de/by-2-0, „Datenquelle: MobiData BW / NVBW“; Soll-Fahrplan, keine Echtzeit |
-| Bezeichnungen der Codes für Dachform und Gebäudefunktion | AdV-Codelisten `RoofTypeTypeAdV.xml`, `BuildingFunctionTypeAdV.xml` von repository.gdi-de.org | AdV, Kopie in `data/codelisten/` |
-| Mittelpunkt des Modells (Marktplatz) und Adress-Stichprobe der Validierung | OpenStreetMap über Nominatim | © OpenStreetMap-Mitwirkende, ODbL. Keine Datenebene in der Anwendung |
-| Sonnenstand | eigene Berechnung nach dem NOAA-Algorithmus (`web/sun.js`) | geprüft gegen die Python-Bibliothek astral |
-| 3D-Darstellung | [three.js](https://threejs.org/) 0.187.0 | MIT, `web/vendor/three/LICENSE` |
-
-## Pipeline nachvollziehen
+## Pipeline
 
 ```bash
 pip install numpy pyproj shapely pyshp lxml pillow tifffile mapbox_earcut astral
 curl -o data/raw/Verw-Grenzen_ALKIS.zip https://opengeodata.lgl-bw.de/data/vg/Verw-Grenzen_ALKIS.zip
-python3 -I scripts/00_gemeinde.py       # Grenze und Kachelliste
-python3 -I scripts/01_download.py       # 16 Kacheln DGM1, LoD2, DOP20 (rund 4 GB)
-python3 -I scripts/04_buildings.py      # Gebäude zuerst, das Gelände braucht die Siedlungsmaske
+python3 -I scripts/00_gemeinde.py
+python3 -I scripts/01_download.py                    # DGM1, LoD2, DOP20 (rund 4 GB)
+python3 -I scripts/01_download.py --products ndom1   # für die Bäume
+python3 -I scripts/04_buildings.py                   # Gebäude zuerst (Siedlungsmaske, Dachflächen)
 python3 -I scripts/02_terrain.py
 python3 -I scripts/03_orthophoto.py
-python3 -I scripts/05_validate.py
-python3 -I scripts/06_sunlight.py       # Sonne auf dem Dach
+python3 -I scripts/06_sunlight.py
 curl -o data/raw/bwgesamt.zip https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_ohne_liniennetz/bwgesamt.zip
-python3 -I scripts/07_transit.py        # Bus und Bahn
+mkdir -p data/raw/gtfs_shapes && curl -o data/raw/gtfs_shapes/bwgesamt_mit_linienverlauf.zip https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_mit_liniennetz/bwgesamt.zip
+python3 -I scripts/07_transit.py
+python3 -I scripts/08_trees.py
+python3 -I scripts/09_places.py
+python3 -I scripts/10_solar.py                       # ruft PVGIS und das MaStR ab
+# DWD-Dateien siehe Kopf von scripts/11_climate.py, Ablage in data/raw/dwd/
+python3 -I scripts/11_climate.py
+python3 -I scripts/05_validate.py
 ```
 
-## Validierung (Stand 08.11.2026, Details in `docs/validierung.md`)
+Der Fahrplan läuft im Modell nur bis zum Ende des exportierten Zeitraums (sechs Wochen ab Lauf von `07_transit.py`). Für einen dauerhaften Betrieb müsste dieser Schritt regelmäßig laufen, etwa per GitHub-Workflow.
 
-**Gebäude gegen Gelände.** 18.786 Eckpunkte der Bodenflächen aller 2.366 Gebäude. Gegen das DGM1: Median −0,39 m, 72 % innerhalb ±1 m. Gegen das dargestellte, gröbere Gelände: 73 % innerhalb ±1 m, 0,7 % der Punkte liegen höher als der 2-m-Sockel reicht. **Kein Gebäude schwebt komplett.** Acht Gebäude haben einzelne Ecken über dem Sockel: drei Kirch- und Museumstürme (Bauteile, die auf Dächern sitzen) und fünf Brücken, die das LGL bewusst nicht ans Gelände zieht. Negative Werte sind gewollt: Das LGL setzt die Bodenfläche am tiefsten Geländepunkt an, am Hang stecken die Wände im Boden.
+## Validierung (Details in `docs/validierung.md`)
 
-**Adressen gegen OpenStreetMap.** 20 zufällig gewählte Wohngebäude mit Hausnummer. 18 in OSM mit Hausnummer gefunden, Abstand zum LoD2-Grundrissmittel im Median 1,9 m, maximal 6,8 m. Zwei Hausnummern fehlen in OSM.
-
-**Sonnenstand.** Auf- und Untergang weichen höchstens 0,8 Minuten von astral ab. Einschränkung: gleicher Algorithmus, geprüft wird die Umsetzung.
-
-**Ladevolumen.** 19,3 MB insgesamt (Luftbild 9,0 MB, Gebäude 6,6 MB, Gelände 1,2 MB, three.js und Anwendung 1,4 MB). Bei 20 Mbit/s rund 8 Sekunden, bei 50 Mbit/s rund 3. Gelände und Gebäude kommen zuerst, Luftbildkacheln laden nach.
-
-**Sichtprüfung.** Marktplatz, Stadtkirche, Rathaus, Landesbergbaumuseum, Laufen und St. Ilgen liegen im Luftbild dort, wo die Modelle stehen. Die dünnen hohen Objekte am Hang sind drei Funkmasten aus den ATKIS-Bauwerken (31 bis 53 m), keine Fehler.
+- **Gebäude gegen Gelände.** 18.786 Bodenpunkte aller 2.366 Gebäude. Kein Gebäude schwebt. Acht haben einzelne Ecken über dem Sockel: drei Turm-Bauteile auf Dächern und fünf Brücken.
+- **Adressen gegen OpenStreetMap.** Stichprobe von 20 Wohngebäuden; die gefundenen Adressen liegen im Median rund 2 m vom LoD2-Grundriss entfernt, höchstens 7 m. Fehlende Treffer betreffen Hausnummern, die in OSM fehlen.
+- **Orte.** St. Cyriak liegt 13 m neben dem LoD2-Gebäude mit Funktion Kirche, die Synagoge 8 m neben Gustav-Weil-Straße 18 (Adresse laut bpb).
+- **Sonnenstand.** Auf- und Untergang weichen höchstens 0,8 Minuten von astral ab.
+- **PV-Modell.** Kalibriert auf PVGIS für 35° Süd; 15° Süd liegt 3,6 % darüber, Ost und West 5 bis 6 %. Das Szenario ist eher eine obere Grenze.
+- **Klima.** Heiße Tage am Marktplatz 7 → 14 (DWD-Raster), Landesmittel 4,7 → 10,5. Sulzburg liegt am Oberrhein erwartungsgemäß darüber.
+- **Busse.** Alle 154 Fahrten im Umgriff einem Linienverlauf zugeordnet. Ein Abgleich mit der Fahrplanauskunft des Verbunds steht aus.
+- **Ladevolumen.** Rund 25 MB auf der Platte, rund 16 MB übertragen (gzip). Bei 20 Mbit/s etwa 6 bis 7 Sekunden bis alles geladen ist, bedienbar früher.
 
 ## Ehrliche Einschätzung
 
-Was gut läuft:
-
-- Die amtlichen Daten passen ohne Korrektur zusammen: Gelände, Grenze, Gebäude und Adressen aus einer Quelle, eine Lizenz, 16 Kacheln per URL.
-- Alles läuft ohne Dienst, Schlüssel oder Build. Wetter ist der einzige Live-Abruf, und der Ausfall wird angezeigt statt überspielt.
-- Die Pipeline rechnet die ganze Gemeinde in unter zwei Minuten nach dem Download.
+Was gut läuft: Alle Ebenen stammen aus offenen Quellen mit Lizenz und Stand, Szenarien sind sichtbar gekennzeichnet, die Pipeline ist reproduzierbar, und die Anwendung braucht weder Server noch Schlüssel.
 
 Was hakt oder offen ist:
 
-- **Performance ist weiter nicht auf echter Hardware gemessen.** Hier gibt es nur Software-Rendering. Das feine Gelände hat 1,1 Mio. Dreiecke, die Gebäude 112.000. Auf kleinen Geräten startet die Anwendung automatisch grob (276.000 Dreiecke), der Schalter „Gelände“ wechselt jederzeit.
-- **Schatten nur im Umkreis von 700 m um den Blickpunkt.** Die Berge im Osten werfen im Modell keinen Schatten ins Tal, solange man nicht dorthin blickt. Kaskadierte Schattenkarten wären der nächste Schritt.
-- Höhenmodell 2019/2020 gegen Luftbild und Gebäude 2025: Neubaugebiete können sichtbar werden.
-- Die Luftbildkacheln haben an den Kanten der Auflösungsstufen sichtbare Sprünge (0,5 m neben 2 m).
-- Die Vorlage „Niedergörsdorf in 3D“ aus dem LinkedIn-Post ist weiterhin nicht gefunden.
-- Die Gebäudeliste (`buildings.json`, 1 MB) trägt mehr Felder als die Klick-Info braucht; Quantisierung des GLB könnte das Ladevolumen um ein Drittel senken.
+- **Performance auf echter Hardware** ist nur für „grob“ gemessen (60 Bilder/s auf Thomas' Laptop). „Fein“ und die neuen Ebenen (66.580 Bäume, Busse, Klimaraster) sind nur im Software-Rendering getestet.
+- **Schatten** nur im Umkreis von 700 m um den Blickpunkt; ferne Berge werfen keinen Schatten ins Tal.
+- **Klimaprojektion** für Sulzburg selbst ist nicht eingebunden. Ortsgenaue Projektionen (Klimaatlas BW, GERICS-Klimaausblick) waren nicht als offener Download zu finden; die Fortschreibung ist nur ein Trend.
+- **Energieatlas BW** (offizielles Solarpotenzial) ist nicht eingebunden; die eigene Rechnung ersetzt ihn, sollte aber an drei Dächern gegen den Energieatlas geprüft werden (Abnahmekriterium Phase 2).
+- **Luftqualität** (Umweltbundesamt): Schnittstelle antwortete mit Serverfehler. **Termine:** bewusst zurückgestellt.
+- **Historische Luftbilder** sind im offenen LGL-Portal nicht verfügbar; die Zeitachse „gestern“ besteht deshalb aus Orten mit Geschichte und Klimadaten.
+- **Impressum** enthält Platzhalter. Die Seite ist bereits öffentlich erreichbar.
+- Die Vorlage „Niedergörsdorf in 3D“ ist weiterhin nicht gefunden.
 
-## Nächste Schritte (Phase 2 laut Konzept)
+## Nächste Schritte
 
-Solarpotenzial je Dach (Energieatlas BW, Nutzungsbedingungen prüfen), „Wann kommt die Sonne auf mein Dach?“ aus Gelände und Sonnenstand, Haltestellen und Abfahrten (MobiData BW, GTFS), Termine, Warnungen des DWD, Luftqualität des Umweltbundesamts. Vorher die offene Entscheidung Variante A (privat) oder B (mit Kommunikation).
+1. Impressum ausfüllen, Variante A oder B entscheiden.
+2. Rundgang mit Ortskenntnis und Fehlerliste (Abnahme Phase 4).
+3. Energieatlas-Abgleich an drei Dächern, Abfahrten gegen die Fahrplanauskunft prüfen.
+4. Fahrplan automatisch aktualisieren (Workflow), Luftqualität erneut versuchen.
+5. Optional: Zensus-2022-Gitter (Baualter, Heizungsart), kaskadierte Schatten, Hochwassergefahrenkarten der LUBW.

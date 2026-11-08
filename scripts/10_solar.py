@@ -219,7 +219,9 @@ def main() -> int:
         bestand = mastr_bestand()
         bestand_quelle = {"titel": "Marktstammdatenregister der Bundesnetzagentur, öffentliche Einheitenübersicht (Stromerzeugung, Solare Strahlungsenergie, Gemeindeschlüssel 08315111)",
                           "url": "https://www.marktstammdatenregister.de/MaStR/Einheit/Einheiten/OeffentlicheEinheitenuebersicht", "abgerufen_am": common.now_iso(),
-                          "hinweis": "Nur Summen gespeichert, keine Namen oder Kennungen. Enthält auch Steckersolargeräte."}
+                          "hinweis": "Nur Summen gespeichert, keine Namen oder Kennungen. Enthält auch Steckersolargeräte.",
+                          "lizenz": {"name": "Datenlizenz Deutschland – Namensnennung – Version 2.0", "url": "https://www.govdata.de/dl-de/by-2-0",
+                                     "namensnennung": "Marktstammdatenregister – © Bundesnetzagentur | dl-de/by-2-0"}}
     except Exception as exc:  # noqa: BLE001
         bestand, bestand_quelle = None, {"fehler": str(exc)}
     print("Bestand:", None if not bestand else {k: bestand[k] for k in ("einheiten_in_betrieb", "bruttoleistung_kw", "gesamt_gemeldet")})

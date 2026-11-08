@@ -1,6 +1,6 @@
-# Validierung Phase 1 (automatisch erzeugt)
+# Validierung (automatisch erzeugt)
 
-Erzeugt am 2026-11-08T20:27:03+00:00 durch `scripts/05_validate.py`.
+Erzeugt am 2026-11-08T22:26:26+00:00 durch `scripts/05_validate.py`.
 
 ## 1. Gebäude gegen Gelände
 
@@ -71,13 +71,43 @@ Größte Abweichung: **0.8 min**.
 
 ## 4. Ladevolumen
 
-| Bestandteil | Dateien | MB |
-|---|---|---|
-| Gelände (Höhen + Index) | 2 | 1.2 |
-| Luftbild (JPEG-Kacheln) | 147 | 9.0 |
-| Gebäude (GLB + JSON) | 2 | 6.6 |
-| Sonstige Daten | 2 | 0.0 |
-| three.js + Anwendung | 11 | 2.4 |
-| **Gesamt** | | **19.3** |
+GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 für GLB, JSON und BIN). JPEG-Bilder sind bereits komprimiert.
 
-Bei 20 Mbit/s entspricht das rund 8 s, bei 50 Mbit/s rund 3 s. Gelände und Gebäude kommen zuerst, Luftbildkacheln laden nach (Siedlung zuerst).
+| Bestandteil | Dateien | MB auf der Platte | MB übertragen (gzip) |
+|---|---|---|---|
+| Gelände (Höhen + Index) | 2 | 1.2 | 0.7 |
+| Luftbild (JPEG-Kacheln) | 147 | 9.0 | 9.0 |
+| Gebäude (GLB + JSON + Dachtextur) | 3 | 10.6 | 5.0 |
+| Bäume | 2 | 0.8 | 0.5 |
+| Sonne, Klima, PV, Orte, Fahrplan | 5 | 0.5 | 0.1 |
+| Sonstige Daten | 2 | 0.1 | 0.0 |
+| three.js + Anwendung | 14 | 2.5 | 0.5 |
+| **Gesamt** | | **24.7** | **15.8** |
+
+Übertragen bei 20 Mbit/s rund 6 s, bei 50 Mbit/s rund 3 s. Gelände und Gebäude kommen zuerst, die Luftbildkacheln laden danach (Siedlung zuerst); bedienbar ist die Ansicht vorher.
+
+## 5. Ebenen aus Phase 2 und 3
+
+**Orte mit Geschichte** (6 Orte, Quellen abgerufen 2026-11-08). Lage gegen LoD2:
+
+- stadt: nächstes Gebäude 30 m: Museum, Hauptstraße 56, Sulzburg
+- cyriak: nächstes Gebäude 13 m: Kirche, Klosterplatz, Sulzburg -> verknüpft
+- synagoge: nächstes Gebäude 8 m: Wohnhaus, Gustav-Weil-Straße 18, Sulzburg -> verknüpft
+- stadtkirche: aus LoD2-Adresse Hauptstraße 56, Sulzburg (Museum)
+- burg: nächstes Gebäude 85 m: Wochenendhaus, Im Rammerspach, Sulzburg
+- laufen: nächstes Gebäude 13 m: Wohnhaus, Weinstraße 12, Sulzburg
+
+**PV-Szenario.** Modell gegen den PVGIS-Rechner (ohne Horizont, kWh je kWp und Jahr):
+
+| Neigung | Ausrichtung | Modell | PVGIS | Abweichung |
+|---|---|---|---|---|
+| 35° | 0° | 1088.1 | 1088.14 | +0.0 % |
+| 15° | 0° | 1060.7 | 1024.02 | +3.6 % |
+| 35° | -90° | 930.0 | 875.25 | +6.3 % |
+| 35° | 90° | 899.3 | 856.94 | +4.9 % |
+
+Ergebnis: 17,115 kWp, 17,189 MWh pro Jahr, spezifischer Ertrag Median 1033 kWh/kWp (5. bis 95. Perzentil 914 bis 1070). Bestand laut MaStR: 315 Einheiten, 3067.0 kW, das sind 18 % des Szenarios. Plausibilität: Ein spezifischer Ertrag um 1.000 kWh/kWp entspricht der PVGIS-Größenordnung für den Oberrhein.
+
+**Klima.** 42 1-km-Zellen im Umgriff. Heiße Tage am Marktplatz 7 (1961–1990), 14 (1991–2020), Fortschreibung 2040 rund 22. Gegenprobe Landesmittel BW aus der Jahresreihe: 4.7 und 10.5; Sulzburg liegt am Oberrhein erwartungsgemäß darüber.
+
+**Busse.** 11 Haltesteige, 154 Fahrten mit Linienverlauf zugeordnet (12 Verlaufsabschnitte). Die Zuordnung prüft Linie und Folge der Haltestellen; eine Prüfung gegen die Fahrplanauskunft des Verbunds steht aus.
