@@ -108,10 +108,8 @@ Was hakt oder offen ist:
 - Im Luftbild sind alle Dächer zu sehen, als 3D-Modell nur 50. Das wirkt im Spike bewusst unvollständig; `--all` liefert alle 661 Gebäude des Ausschnitts.
 - Gebäude haben keine Texturen und keine Fenster, nur Dachfarbe und Wandfarbe. Das ist Stilentscheidung, keine Datenlücke.
 - Die Vorlage „Niedergörsdorf in 3D“ aus dem LinkedIn-Post war per Websuche nicht auffindbar. Der Link aus den Kommentaren fehlt weiterhin.
-- Dieses Projekt liegt vorerst als Unterordner in einem fremden Repository. Das Konzept verlangt ein eigenes Repository; der Ordner ist dafür in sich geschlossen.
 
 ## Offene Entscheidungen für Phase 1
 
-1. Eigenes Repository anlegen und diesen Ordner dorthin verschieben.
-2. Ausdehnung auf die ganze Gemeinde: Gelände dann gekachelt oder in 2 bis 5 m, Luftbild in Kacheln (die Gemeinde umfasst grob 8 bis 10 LGL-Kacheln, rund 2 GB Rohdaten).
-3. Variante A (privat) oder B (mit Kommunikation), siehe Konzept.
+1. Ausdehnung auf die ganze Gemeinde: Gelände dann gekachelt oder in 2 bis 5 m, Luftbild in Kacheln (die Gemeinde umfasst grob 8 bis 10 LGL-Kacheln, rund 2 GB Rohdaten).
+2. Variante A (privat) oder B (mit Kommunikation), siehe Konzept.
