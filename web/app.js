@@ -470,8 +470,8 @@ function setupTrees() {
   const data = new Float32Array(buf);
   const n = data.length / 3;
   // Generische Baumform (Einheitshöhe 1): kurzer Stamm, runde Krone. Artunabhängig, bewusst schlicht (28 Dreiecke je Baum).
-  const trunk = new THREE.CylinderGeometry(0.035, 0.045, 0.45, 4, 1, true); trunk.translate(0, 0.22, 0);
-  const crown = new THREE.IcosahedronGeometry(0.33, 0); crown.scale(1, 1.15, 1); crown.translate(0, 0.66, 0);
+  const trunk = new THREE.CylinderGeometry(0.035, 0.045, 0.45, 4, 1, true).toNonIndexed(); trunk.translate(0, 0.22, 0);
+  const crown = new THREE.IcosahedronGeometry(0.33, 0).toNonIndexed(); crown.scale(1, 1.15, 1); crown.translate(0, 0.66, 0);
   const geo = mergeGeometries([trunk, crown]);
   const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
   const build = (step) => {
