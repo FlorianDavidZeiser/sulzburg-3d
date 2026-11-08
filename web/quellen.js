@@ -82,6 +82,15 @@ function block(rows) {
     ]));
   } catch (e) { /* ohne transit.json keine Angabe */ }
 
+  try {
+    const pl = await j("data/places.json");
+    out.push(`<h2>Orte mit Geschichte</h2>` + block([
+      ["Herkunft", `Kuratierte Auswahl von ${pl.orte.length} Orten. Fakten sinngemäß aus den verlinkten Quellen, abgerufen am ${de(pl.abgerufen_am)}; Wikipedia-Inhalte stehen unter CC BY-SA 4.0. Quellen je Ort in der Info-Karte.`],
+      ["Lage", "Koordinaten aus den Wikipedia-Artikeln, mit dem LoD2-Datensatz abgeglichen (<code>scripts/09_places.py</code>): St. Cyriak liegt 13 m neben dem LoD2-Gebäude mit Funktion Kirche, die Synagoge 8 m neben Gustav-Weil-Straße 18 (Adresse laut bpb)."],
+      ["Bekannte Lücken", "Die Auswahl ist ein Vorschlag und unvollständig. Der Stand des Landesbergbaumuseums nach 2023 ist nicht geprüft. Das LoD2 führt die ehemalige Synagoge als Wohnhaus. Für die Burg gibt es kein 3D-Modell, nur die Lage."],
+    ]));
+  } catch (e) { /* ohne places.json keine Angabe */ }
+
   out.push(`<h2>Wetterwarnungen</h2>` + block([
     ["Herkunft", "Amtliche Warnungen des Deutschen Wetterdienstes für die Warnzelle der Stadt Sulzburg, live über Bright Sky."],
     ["Darstellung", "Banner mit Überschrift, Stufe, Gültigkeit und aufklappbarer Beschreibung. Ohne Warnung bleibt das Feld unsichtbar."],

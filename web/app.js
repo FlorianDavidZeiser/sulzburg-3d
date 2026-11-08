@@ -5,6 +5,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { sunPosition, sunTimes, zonedToUtc, formatLocal, tzOffsetMs } from "./sun.js";
+import { setupPlaces } from "./places.js";
 
 const TZ = "Europe/Berlin";
 const params = new URLSearchParams(location.search);
@@ -40,6 +41,16 @@ window.addEventListener("keydown", (e) => { if (e.target.tagName !== "INPUT" && 
 window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 window.addEventListener("blur", () => keys.clear());
 let targetGoal = null; // Zielpunkt für sanftes Umsetzen des Blickpunkts (Doppelklick, Sprungknöpfe)
+let flight = null;     // laufender Kameraflug { p0, t0, p1, t1, start, dur }
+const frameHooks = []; // Funktionen (now, dt), die jedes Bild aufgerufen werden
+const pickHooks = [];  // Funktionen (raycaster) -> true, wenn der Klick behandelt wurde
+// Sanfter Kameraflug zu einem Blickpunkt: Abstand und Blickrichtung frei wählbar
+function flyTo(goal, dist = 450, dir = new THREE.Vector3(-0.45, 0.55, 0.7), dur = 1600) {
+  const d = dir.clone().normalize();
+  flight = { p0: camera.position.clone(), t0: controls.target.clone(), p1: goal.clone().addScaledVector(d, dist), t1: goal.clone(), start: performance.now(), dur };
+  targetGoal = null;
+  if (controls.autoRotate) { controls.autoRotate = false; $("autorotate").checked = false; }
+}
 
 const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x6b5a46, 1.0);
 scene.add(hemi);
@@ -324,6 +335,7 @@ function setupPicking() {
     mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(mouse, camera);
     const info = $("info");
+    for (const h of pickHooks) { if (h(ray)) return; }
     if (stopsGroup && stopsGroup.visible) {
       const sh = ray.intersectObjects(stopsGroup.children, false)[0];
       if (sh) { showStop(sh.object.userData.stop); return; }
@@ -364,7 +376,8 @@ function setupNavigation() {
     if (hit) targetGoal = hit.point.clone();
   });
   $("autorotate").addEventListener("change", (e) => { controls.autoRotate = e.target.checked; });
-  canvas.addEventListener("pointerdown", () => { if (controls.autoRotate) { controls.autoRotate = false; $("autorotate").checked = false; } });
+  canvas.addEventListener("pointerdown", () => { flight = null; if (controls.autoRotate) { controls.autoRotate = false; $("autorotate").checked = false; } });
+  canvas.addEventListener("wheel", () => { flight = null; }, { passive: true });
   // Sprungziele: Marktplatz, Gemarkungen (Schwerpunkt der Gebäude je Gemarkung), Überblick
   const { e0, n0 } = meta.index;
   const inRing = (x, y, ring) => { let inside = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -386,8 +399,7 @@ function setupNavigation() {
       const y = terrainHeightAt(jmp.x, jmp.z) ?? centerY;
       const goal = new THREE.Vector3(jmp.x, y, jmp.z);
       const dir = jmp.overview ? new THREE.Vector3(-0.75, 0.55, 0.6) : new THREE.Vector3(-0.45, 0.55, 0.7);
-      camera.position.copy(goal).addScaledVector(dir.normalize(), jmp.dist);
-      controls.target.copy(goal); targetGoal = null;
+      flyTo(goal, jmp.dist, dir);
     });
     box.appendChild(b);
   }
@@ -471,7 +483,7 @@ function setupTrees() {
   const n = data.length / 3;
   // Generische Baumform (Einheitshöhe 1): kurzer Stamm, runde Krone. Artunabhängig, bewusst schlicht (28 Dreiecke je Baum).
   const trunk = new THREE.CylinderGeometry(0.035, 0.045, 0.45, 4, 1, true).toNonIndexed(); trunk.translate(0, 0.22, 0);
-  const crown = new THREE.IcosahedronGeometry(0.33, 0).toNonIndexed(); crown.scale(1, 1.15, 1); crown.translate(0, 0.66, 0);
+  const crown = new THREE.IcosahedronGeometry(0.33, 0); crown.scale(1, 1.15, 1); crown.translate(0, 0.66, 0);
   const geo = mergeGeometries([trunk, crown]);
   const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
   const build = (step) => {
@@ -660,14 +672,28 @@ async function main() {
   setupSunlightLayer();
   setupTransit();
   setupTrees();
+  const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, buildingMeshes, utmToLatLon, TZ, centerY };
+  window.__ctx = ctx;
+  await setupPlaces(ctx);
   showSources();
   loadAlerts();
   updateProgress();
   window.__loadMs = Math.round(performance.now() - t0);
 
-  let frames = 0, last = performance.now();
+  let frames = 0, last = performance.now(), prev = performance.now();
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), delta = new THREE.Vector3();
   renderer.setAnimationLoop((now) => {
+    const dt = Math.min(0.1, (now - prev) / 1000); prev = now;
+    for (const h of frameHooks) h(now, dt);
+    if (flight) {
+      const f = Math.min(1, (now - flight.start) / flight.dur);
+      const k = f < 0.5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2; // ease in-out
+      // Bogen: in der Mitte des Flugs etwas höher, damit die Kamera nicht durch Hänge fliegt
+      const lift = Math.sin(Math.PI * f) * Math.min(400, flight.p0.distanceTo(flight.p1) * 0.25);
+      camera.position.lerpVectors(flight.p0, flight.p1, k).y += lift;
+      controls.target.lerpVectors(flight.t0, flight.t1, k);
+      if (f >= 1) flight = null;
+    }
     // WASD / QE: über das Gelände fahren, Geschwindigkeit abhängig vom Abstand zum Blickpunkt
     if (keys.size) {
       const dist = camera.position.distanceTo(controls.target);
@@ -691,7 +717,7 @@ async function main() {
     controls.update();
     // Blickpunkt auf dem Boden halten, Kamera nicht unter das Gelände lassen
     const th = terrainHeightAt(controls.target.x, controls.target.z);
-    if (th != null && !targetGoal) { const dy = th - controls.target.y; if (Math.abs(dy) > 0.05) { controls.target.y += dy; camera.position.y += dy; } }
+    if (th != null && !targetGoal && !flight) { const dy = th - controls.target.y; if (Math.abs(dy) > 0.05) { controls.target.y += dy; camera.position.y += dy; } }
     const ch = terrainHeightAt(camera.position.x, camera.position.z);
     if (ch != null && camera.position.y < ch + 4) camera.position.y = ch + 4;
     updateSunPosition();

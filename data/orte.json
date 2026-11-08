@@ -1,0 +1,110 @@
+{
+  "hinweis": "Kuratierte Orte mit Geschichte. Jede Aussage stammt aus der genannten Quelle (sinngemäß, nicht wörtlich). Koordinaten aus der jeweiligen Quelle, abgeglichen mit LoD2 durch scripts/09_places.py. Auswahl ist ein Vorschlag (Konzept, offene Frage 5) und kann hier erweitert oder gekürzt werden.",
+  "abgerufen_am": "2026-11-08",
+  "orte": [
+    {
+      "id": "stadt",
+      "name": "Stadtgeschichte",
+      "kurz": "847 erstmals erwähnt, Bergbaustadt",
+      "lat": 47.8405182, "lon": 7.70817,
+      "koordinatenquelle": "Marktplatz laut OpenStreetMap (Nominatim), © OpenStreetMap-Mitwirkende, ODbL",
+      "fakten": [
+        "847 erstmals im Lorscher Codex erwähnt, als „Sulzibergeheim“, im Zusammenhang mit einer Schenkung an das Kloster Lorsch.",
+        "1008 Marktrecht durch König Heinrich II.; von 1008 bis 1523 unterhielt das Kloster St. Blasien hier ein Frauenkloster.",
+        "Um 1280 werden erstmals Bürger („cives de Sulzberch“) erwähnt, das Stadtrecht dürfte aus dieser Zeit stammen.",
+        "Der Silberbergbau blühte seit dem Mittelalter, kam im Dreißigjährigen Krieg zum Erliegen und wurde 1832 eingestellt. Die Stadtsiegel zeigten ab 1283 Bergmann und Engel.",
+        "Am 1. Januar 1974 wurden Laufen und St. Ilgen eingemeindet."
+      ],
+      "quellen": [
+        {"titel": "Wikipedia: Sulzburg", "url": "https://de.wikipedia.org/wiki/Sulzburg", "lizenz": "CC BY-SA 4.0"}
+      ]
+    },
+    {
+      "id": "cyriak",
+      "name": "St. Cyriak",
+      "kurz": "frühromanische Kirche, geweiht 993",
+      "lat": 47.8413333, "lon": 7.7103889,
+      "koordinatenquelle": "Wikipedia-Artikel St. Cyriak (Sulzburg): 47° 50′ 28,8″ N, 7° 42′ 37,4″ O",
+      "lod2_funktion_erwartet": "Kirche",
+      "fakten": [
+        "Graf Birchtilo ließ die Kirche um 990 errichten, geweiht wurde sie 993. Eine Urkunde Ottos III. vom 22. Juni 993 stattete sie mit Königsgut aus.",
+        "Ursprünglich eine dreischiffige Pfeilerbasilika mit Apsiden an beiden Enden im ottonischen Stil; Birchtilo wurde in der Westapsis bestattet.",
+        "Von 1008 bis zur Reformation Kirche eines Benediktinerinnenklosters; die Krypta entstand um 1008 bis 1010.",
+        "Der Westturm von 1103 gilt als ältester erhaltener Kirchturm Südwestdeutschlands.",
+        "1742 zur barocken Saalkirche umgebaut, 1961 bis 2009 restauriert, heute evangelische Pfarrkirche."
+      ],
+      "quellen": [
+        {"titel": "Wikipedia: St. Cyriak (Sulzburg)", "url": "https://de.wikipedia.org/wiki/St._Cyriak_(Sulzburg)", "lizenz": "CC BY-SA 4.0"}
+      ]
+    },
+    {
+      "id": "synagoge",
+      "name": "Ehemalige Synagoge",
+      "kurz": "1821/22, heute Gedenkstätte",
+      "lat": 47.8413889, "lon": 7.70841667,
+      "koordinatenquelle": "Wikipedia-Artikel Synagoge (Sulzburg): 47° 50′ 29″ N, 7° 42′ 30,3″ O; Adresse Gustav-Weil-Straße 18 laut Bundeszentrale für politische Bildung",
+      "adresse_erwartet": "Gustav-Weil-Straße 18",
+      "fakten": [
+        "Um 1500 erhielten die ersten Juden kaiserliche Schutzbriefe und damit das Recht, sich in Sulzburg niederzulassen. 1864 lebten hier 416 Juden, über 32 Prozent der Bevölkerung.",
+        "Die Synagoge wurde 1821/22 nach Plänen von Johann Ludwig Weinbrenner errichtet.",
+        "Beim Novemberpogrom 1938 wurde sie stark verwüstet; angezündet wurde sie nicht, weil die Nachbarhäuser zu nah standen.",
+        "1939 erwarb die politische Gemeinde das Gebäude, 1954 wurde es an einen Privatmann verkauft und gewerblich genutzt.",
+        "Nach Restaurierung 1984 als „Haus der Begegnung“ eröffnet, heute Gedenkstätte mit Veranstaltungen und Ausstellungen."
+      ],
+      "quellen": [
+        {"titel": "Wikipedia: Synagoge (Sulzburg)", "url": "https://de.wikipedia.org/wiki/Synagoge_(Sulzburg)", "lizenz": "CC BY-SA 4.0"},
+        {"titel": "Wikipedia: Sulzburg, Abschnitt Jüdische Besiedelung", "url": "https://de.wikipedia.org/wiki/Sulzburg", "lizenz": "CC BY-SA 4.0"},
+        {"titel": "bpb: Gedenkstätte Ehemalige Synagoge Sulzburg", "url": "https://www.bpb.de/themen/holocaust/erinnerungsorte/503157/gedenkstaette-ehemalige-synagoge-sulzburg/", "lizenz": "Verweis, kein übernommener Text"}
+      ]
+    },
+    {
+      "id": "stadtkirche",
+      "name": "Ehemalige Stadtkirche",
+      "kurz": "1982 bis 2023 Landesbergbaumuseum",
+      "lat": null, "lon": null,
+      "koordinatenquelle": "Lage aus dem LoD2-Gebäude Hauptstraße 56 (Funktion Museum)",
+      "adresse_erwartet": "Hauptstraße 56",
+      "fakten": [
+        "Ehemalige evangelische Stadtkirche am Marktplatz, erbaut nach Plänen von Heinrich Hübsch (Wikipedia nennt 1835 und 1836).",
+        "1982 wurde hier das Landesbergbaumuseum Baden-Württemberg eröffnet; laut Wikipedia befand es sich bis 2023 in diesem Gebäude.",
+        "Eine Gemeinderatsvorlage von 2023 beschreibt den geplanten Umzug der Ausstellung in den Rathauskeller, mit Eingang weiterhin in der ehemaligen Kirche. Wie weit das umgesetzt ist, ist hier nicht geprüft."
+      ],
+      "quellen": [
+        {"titel": "Wikipedia: Sulzburg", "url": "https://de.wikipedia.org/wiki/Sulzburg", "lizenz": "CC BY-SA 4.0"},
+        {"titel": "Stadt Sulzburg: Beratungsvorlage Gemeinderat 2023, TOP III 2", "url": "https://Sulzburg.de/fileadmin/Dateien/Website/Dateien/Gemeinderatssitzungen/2023/GR-2023-03/Beratungsvorlage_zu_TOP_III-2.pdf", "lizenz": "Verweis, kein übernommener Text"}
+      ]
+    },
+    {
+      "id": "burg",
+      "name": "Burg Sulzburg",
+      "kurz": "Ruine über dem Ort, 12. Jh.",
+      "lat": 47.8433056, "lon": 7.7095,
+      "koordinatenquelle": "Wikipedia-Artikel Burg Sulzburg (Breisgau): 47° 50′ 35,9″ N, 7° 42′ 34,2″ O",
+      "fakten": [
+        "Spornburg auf dem rund 380 Meter hohen Schlössleberg über der Stadt.",
+        "Vermutlich in der zweiten Hälfte des 12. Jahrhunderts von den Herren von Üsenberg errichtet, um den Silberbergbau im Tal zu schützen und zu überwachen.",
+        "Zuletzt 1439 urkundlich erwähnt; über ihr Ende ist nichts bekannt.",
+        "Erhalten sind Mauerreste und Gräben, darunter ein rund 7 Meter langes und 4 Meter hohes Mauerstück an der Ostecke."
+      ],
+      "quellen": [
+        {"titel": "Wikipedia: Burg Sulzburg (Breisgau)", "url": "https://de.wikipedia.org/wiki/Burg_Sulzburg_(Breisgau)", "lizenz": "CC BY-SA 4.0"}
+      ]
+    },
+    {
+      "id": "laufen",
+      "name": "Laufen",
+      "kurz": "Weinort, 820 erstmals erwähnt",
+      "lat": 47.8430556, "lon": 7.6830556,
+      "koordinatenquelle": "Wikipedia-Artikel Laufen (Sulzburg): 47° 50′ 35″ N, 7° 40′ 59″ O",
+      "fakten": [
+        "Erste urkundliche Erwähnung 820 in einer Urkunde des Klosters St. Gallen als „Laufin“.",
+        "Bekannt für Qualitätswein und für die Irisszucht, die Helene von Stein-Zeppelin begründete.",
+        "Der historische Ortskern steht seit 2009 als Gesamtanlage unter Schutz. Die evangelische Kirche wurde 1852 bis 1856 nach Plänen von Heinrich Hübsch gebaut.",
+        "Seit 1. Januar 1974 Ortsteil von Sulzburg, Ende 2025 rund 800 Einwohner."
+      ],
+      "quellen": [
+        {"titel": "Wikipedia: Laufen (Sulzburg)", "url": "https://de.wikipedia.org/wiki/Laufen_(Sulzburg)", "lizenz": "CC BY-SA 4.0"}
+      ]
+    }
+  ]
+}

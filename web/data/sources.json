@@ -871,9 +871,22 @@
         "2025-08-25"
       ],
       "block_m": 8
+    },
+    "orte": {
+      "ebene": "Orte mit Geschichte",
+      "anzahl": 6,
+      "pruefung": [
+        "stadt: nächstes Gebäude 30 m: Museum, Hauptstraße 56, Sulzburg",
+        "cyriak: nächstes Gebäude 13 m: Kirche, Klosterplatz, Sulzburg -> verknüpft",
+        "synagoge: nächstes Gebäude 8 m: Wohnhaus, Gustav-Weil-Straße 18, Sulzburg -> verknüpft",
+        "stadtkirche: aus LoD2-Adresse Hauptstraße 56, Sulzburg (Museum)",
+        "burg: nächstes Gebäude 85 m: Wochenendhaus, Im Rammerspach, Sulzburg",
+        "laufen: nächstes Gebäude 13 m: Wohnhaus, Weinstraße 12, Sulzburg"
+      ],
+      "abgerufen_am": "2026-11-08"
     }
   },
-  "aktualisiert": "2026-11-08T21:18:52+00:00",
+  "aktualisiert": "2026-11-08T21:31:00+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
