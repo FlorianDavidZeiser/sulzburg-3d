@@ -62,6 +62,16 @@ function block(rows) {
   } catch (e) { /* ohne sunlight.json keine Angabe */ }
 
   try {
+    const tb = await j("data/trees.json");
+    out.push(`<h2>Bäume</h2>` + block([
+      ["Herkunft", `${esc(tb.quelle.titel)}, Oberfläche vom Bildflug ${tb.quelle.oberflaeche_aktualitaet.map(de).join(", ")}, Geländebezug DGM ${tb.quelle.dgm_aktualitaet.map(de).join(", ")}.`],
+      ["Methode", `Je Block von ${tb.methode.block_m} m die höchste Zelle außerhalb der Gebäude (Puffer ${tb.methode.gebaeudepuffer_m} m) mit ${tb.methode.min_hoehe_m} bis ${tb.methode.max_hoehe_m} m Höhe über Grund, nur im Umkreis von ${tb.methode.umkreis_um_gebaeude_m} m um Gebäude. ${tb.anzahl.toLocaleString("de-DE")} Bäume, Höhe im Median ${tb.hoehe_median_m.toFixed(1)} m.`],
+      ["Darstellung", esc(tb.methode.hinweis)],
+      ["Bekannte Lücken", "Hecken und Sträucher ab 3 m erscheinen als kleine Bäume. Im geschlossenen Wald steht je Block nur ein Baum, die Dichte ist dort untertrieben. Außerhalb des Umkreises um Gebäude gibt es keine Bäume, dort zeigt nur das Luftbild den Wald. Baumarten sind nicht bekannt."],
+    ]));
+  } catch (e) { /* ohne trees.json keine Angabe */ }
+
+  try {
     const tr = await j("data/transit.json");
     const routes = Object.values(tr.linien).map((r) => r.name).sort().join(", ");
     out.push(`<h2>Bus und Bahn</h2>` + block([

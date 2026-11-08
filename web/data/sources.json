@@ -861,9 +861,19 @@
       ],
       "feed_version": "20261107",
       "abfahrten_gesamt": 526
+    },
+    "baeume": {
+      "ebene": "Bäume",
+      "anzahl": 66580,
+      "hoehe_median_m": 22.019332885742188,
+      "hoehe_max_m": 44.999359130859375,
+      "oberflaeche_aktualitaet": [
+        "2025-08-25"
+      ],
+      "block_m": 8
     }
   },
-  "aktualisiert": "2026-11-08T21:14:56+00:00",
+  "aktualisiert": "2026-11-08T21:18:52+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,

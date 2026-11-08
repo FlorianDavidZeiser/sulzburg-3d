@@ -1,0 +1,40 @@
+{
+ "ebene": "Bäume",
+ "datei": "trees.bin",
+ "format": "Float32 LE je Baum: x, z (lokal wie buildings.json), Höhe über Grund in m",
+ "anzahl": 66580,
+ "hoehe_min_m": 3.000335693359375,
+ "hoehe_max_m": 44.999359130859375,
+ "hoehe_median_m": 22.019332885742188,
+ "methode": {
+  "block_m": 8,
+  "min_hoehe_m": 3.0,
+  "max_hoehe_m": 45.0,
+  "umkreis_um_gebaeude_m": 250.0,
+  "gebaeudepuffer_m": 1.5,
+  "vegetationszellen_1m": 3356411,
+  "hinweis": "Lage und Höhe aus dem nDOM1 (höchste Zelle je Block). Baumform, Kronenbreite und Farbe sind generische Darstellung, keine Daten. Außerhalb des Umkreises um Gebäude werden keine Bäume gesetzt."
+ },
+ "quelle": {
+  "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1, Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+  "portal": "https://opengeodata.lgl-bw.de/",
+  "oberflaeche_aktualitaet": [
+   "2025-08-25"
+  ],
+  "dgm_aktualitaet": [
+   "2019-03-16",
+   "2019-03-29",
+   "2019-04-18",
+   "2019-12-06",
+   "2020-01-14"
+  ],
+  "lizenz": {
+   "name": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
+   "url": "https://www.govdata.de/dl-de/by-2-0",
+   "namensnennung": "Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0",
+   "herausgeber": "Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+   "portal": "https://opengeodata.lgl-bw.de/"
+  },
+  "verarbeitet_am": "2026-11-08T21:18:52+00:00"
+ }
+}

@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { sunPosition, sunTimes, zonedToUtc, formatLocal, tzOffsetMs } from "./sun.js";
 
 const TZ = "Europe/Berlin";
@@ -461,6 +462,55 @@ function setupSunlightLayer() {
   document.querySelectorAll(".seasons button").forEach((b) => b.addEventListener("click", () => { if ($("sunlayer").checked) setTimeout(apply, 0); }));
 }
 
+// ---------- Bäume (nDOM1: Lage und Höhe echt, Form generisch) ----------
+let treeMesh = null;
+function setupTrees() {
+  const info = meta.trees, buf = meta.treesBuf;
+  if (!info || !buf) { $("treesWrap").hidden = true; return; }
+  const data = new Float32Array(buf);
+  const n = data.length / 3;
+  // Generische Baumform (Einheitshöhe 1): kurzer Stamm, runde Krone. Artunabhängig, bewusst schlicht (28 Dreiecke je Baum).
+  const trunk = new THREE.CylinderGeometry(0.035, 0.045, 0.45, 4, 1, true); trunk.translate(0, 0.22, 0);
+  const crown = new THREE.IcosahedronGeometry(0.33, 0); crown.scale(1, 1.15, 1); crown.translate(0, 0.66, 0);
+  const geo = mergeGeometries([trunk, crown]);
+  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const build = (step) => {
+    const count = Math.ceil(n / step);
+    const mesh = new THREE.InstancedMesh(geo, mat, count);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), scl = new THREE.Vector3(), col = new THREE.Color();
+    let k = 0;
+    for (let i = 0; i < n; i += step) {
+      const x = data[i * 3], z = data[i * 3 + 1], h = data[i * 3 + 2];
+      const y = terrainHeightAt(x, z);
+      if (y == null) continue;
+      const w = h * 0.45; // Kronenbreite: Darstellung, kein Datum
+      pos.set(x, y, z); scl.set(w, h, w);
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), ((i * 7919) % 360) * Math.PI / 180);
+      mesh.setMatrixAt(k, m4.compose(pos, q, scl));
+      // Farbe nach Höhe: niedrig hellgrün (Gärten, Hecken), hoch dunkelgrün (Wald)
+      col.setHSL(0.27 + ((i * 31) % 7) * 0.004, 0.45, THREE.MathUtils.lerp(0.42, 0.22, Math.min(1, h / 30)));
+      mesh.setColorAt(k, col);
+      k++;
+    }
+    mesh.count = k;
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.instanceColor.needsUpdate = true;
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    return mesh;
+  };
+  const rebuild = () => {
+    if (treeMesh) { scene.remove(treeMesh); treeMesh.dispose(); }
+    treeMesh = build(LOD > 1 ? 3 : 1);
+    treeMesh.visible = $("trees").checked;
+    scene.add(treeMesh);
+    $("treesInfo").textContent = `${treeMesh.count.toLocaleString("de-DE")} von ${n.toLocaleString("de-DE")} Bäumen (nDOM1, Stand ${(info.quelle.oberflaeche_aktualitaet || []).join(", ")}), Höhe echt, Form generisch`;
+  };
+  rebuild();
+  $("trees").addEventListener("change", (e) => { if (treeMesh) treeMesh.visible = e.target.checked; });
+  $("lod").addEventListener("change", rebuild);
+}
+
 // ---------- Bus und Bahn (Soll-Fahrplan, MobiData BW / NVBW) ----------
 let stopsGroup = null;
 function setupTransit() {
@@ -560,13 +610,15 @@ function resize() {
 
 async function main() {
   const t0 = performance.now();
-  const [index, buildings, gemeinde, heightsBuf, sunlight, transit] = await Promise.all([
+  const [index, buildings, gemeinde, heightsBuf, sunlight, transit, trees, treesBuf] = await Promise.all([
     loadJson("data/terrain/index.json"), loadJson("data/buildings.json"), loadJson("data/gemeinde.geojson"),
     fetch("data/terrain/heights.bin").then((r) => r.arrayBuffer()),
     loadJson("data/sunlight.json").catch(() => null),
     loadJson("data/transit.json").catch(() => null),
+    loadJson("data/trees.json").catch(() => null),
+    fetch("data/trees.bin").then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
   ]);
-  Object.assign(meta, { index, buildings, gemeinde, sunlight, transit });
+  Object.assign(meta, { index, buildings, gemeinde, sunlight, transit, trees, treesBuf });
   latLon = utmToLatLon(index.e0, index.n0);
   buildTerrain(heightsBuf);
   centerY = terrainHeightAt(0, 0) ?? 340;
@@ -607,6 +659,7 @@ async function main() {
   setupNavigation();
   setupSunlightLayer();
   setupTransit();
+  setupTrees();
   showSources();
   loadAlerts();
   updateProgress();
