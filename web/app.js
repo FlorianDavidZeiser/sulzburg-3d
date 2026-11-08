@@ -321,8 +321,12 @@ function setupPicking() {
     if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4 || !buildingsMesh) return;
     mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(mouse, camera);
-    const hit = ray.intersectObject(buildingsMesh, false)[0];
     const info = $("info");
+    if (stopsGroup && stopsGroup.visible) {
+      const sh = ray.intersectObjects(stopsGroup.children, false)[0];
+      if (sh) { showStop(sh.object.userData.stop); return; }
+    }
+    const hit = ray.intersectObject(buildingsMesh, false)[0];
     if (!hit) { info.hidden = true; return; }
     const attr = buildingsMesh.geometry.getAttribute("_building");
     const idx = Math.round(attr.getX(hit.face.a));
@@ -342,6 +346,7 @@ function setupPicking() {
       `<dt>Grundriss</dt><dd>Stand ${g.grundriss_aktualitaet || "–"}, Modell ${g.erstellt || "–"}</dd>` +
       `<dt>ID</dt><dd style="font-family:monospace;font-size:11px">${g.id}</dd></dl>` +
       sunlightInfo(idx) +
+      externalLinks(g) +
       `<div class="hint">LGL LoD2, dl-de/by-2-0. Bauteile: ${g.bauteile}. Klick ins Leere schließt.</div>`;
   });
 }
@@ -410,6 +415,14 @@ function sunlightInfo(idx) {
   return `<h3>Sonne auf dem First</h3><dl>${months.map(row).join("")}</dl>` +
     `<div class="hint">Geländehorizont aus dem DGM1, ohne Nachbargebäude und Bäume. Referenztag ist der 21. des Monats.</div>`;
 }
+// Verweise auf Straßenansichten Dritter (nur Links, es werden keine Bilder übernommen)
+function externalLinks(g) {
+  const [lat, lon] = utmToLatLon(g.e, g.n);
+  const sv = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat.toFixed(6)},${lon.toFixed(6)}`;
+  const mp = `https://www.mapillary.com/app/?lat=${lat.toFixed(6)}&lng=${lon.toFixed(6)}&z=18`;
+  return `<div class="links small"><a href="${sv}" target="_blank" rel="noopener">In Google Street View ansehen</a> · <a href="${mp}" target="_blank" rel="noopener">Mapillary</a> <span class="muted">(externe Dienste, Verfügbarkeit vor Ort nicht garantiert)</span></div>`;
+}
+
 function setupSunlightLayer() {
   const sl = meta.sunlight;
   if (!sl) { $("sunlayerWrap").hidden = true; return; }
@@ -452,6 +465,57 @@ function setupSunlightLayer() {
   $("sunlayer").addEventListener("change", apply);
   $("date").addEventListener("input", () => { if ($("sunlayer").checked) apply(); });
   document.querySelectorAll(".seasons button").forEach((b) => b.addEventListener("click", () => { if ($("sunlayer").checked) setTimeout(apply, 0); }));
+}
+
+// ---------- Bus und Bahn (Soll-Fahrplan, MobiData BW / NVBW) ----------
+let stopsGroup = null;
+function setupTransit() {
+  const tr = meta.transit;
+  if (!tr) { $("transitWrap").hidden = true; return; }
+  stopsGroup = new THREE.Group();
+  const geo = new THREE.CylinderGeometry(1.6, 1.6, 0.6, 16);
+  const pole = new THREE.CylinderGeometry(0.15, 0.15, 4, 6);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x2f7fd6, roughness: 0.6 });
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0xe8e6e1 });
+  for (const st of tr.haltestellen) {
+    if (!st.abfahrten.length) continue;
+    const y = terrainHeightAt(st.x, st.zz) ?? st.z ?? centerY;
+    const disc = new THREE.Mesh(geo, mat);
+    disc.position.set(st.x, y + 4, st.zz);
+    disc.userData.stop = st;
+    disc.castShadow = true;
+    const p = new THREE.Mesh(pole, poleMat);
+    p.position.set(st.x, y + 2, st.zz);
+    p.userData.stop = st;
+    stopsGroup.add(disc, p);
+  }
+  scene.add(stopsGroup);
+  $("transit").addEventListener("change", (e) => { stopsGroup.visible = e.target.checked; });
+  const routes = Object.values(tr.linien).map((r) => r.name).sort();
+  $("transitInfo").textContent = `${tr.haltestellen.length} Haltesteige, Linien ${routes.join(", ")} (${[...new Set(Object.values(tr.linien).map((r) => r.agency))].join(", ")}), Soll-Fahrplan Stand ${tr.quelle.feed_info.feed_version || "–"}`;
+}
+function showStop(st) {
+  const tr = meta.transit;
+  const info = $("info");
+  // Betriebstag und Uhrzeit aus den Reglern (Datum/Zeit der Anwendung), Abfahrten ab dieser Zeit
+  const dayIso = $("date").value;
+  const minutesNow = parseInt($("time").value, 10);
+  const di = tr.zeitraum.tage.indexOf(dayIso);
+  const fmt = (sec) => `${String(Math.floor(sec / 3600) % 24).padStart(2, "0")}:${String(Math.floor(sec / 60) % 60).padStart(2, "0")}`;
+  let rows = "";
+  if (di < 0) {
+    rows = `<div class="muted small">Für ${dayIso} liegen keine Fahrplandaten vor (Zeitraum ${tr.zeitraum.von} bis ${tr.zeitraum.bis}).</div>`;
+  } else {
+    const deps = st.abfahrten.filter((a) => (a[3] >> di) & 1 && !a[4] && a[0] >= minutesNow * 60);
+    const all = st.abfahrten.filter((a) => (a[3] >> di) & 1 && !a[4]);
+    rows = deps.length ? `<table class="deps">${deps.slice(0, 8).map((a) => `<tr><td>${fmt(a[0])}</td><td><b>${tr.linien[a[1]]?.name || "?"}</b></td><td>${a[2]}</td></tr>`).join("")}</table>` +
+      `<div class="muted small">${all.length} Abfahrten an diesem Tag, ab ${$("timeLabel").textContent} Uhr gezeigt.</div>` :
+      `<div class="muted small">Keine weiteren Abfahrten an diesem Tag ab ${$("timeLabel").textContent} Uhr (${all.length} insgesamt).</div>`;
+  }
+  info.hidden = false;
+  info.innerHTML = `<h2>${st.name}</h2><div class="muted small">Haltestelle${st.platform ? ", Steig " + st.platform : ""} · ${st.lat.toFixed(5)}° N, ${st.lon.toFixed(5)}° O</div>` +
+    `<h3>Nächste Abfahrten laut Soll-Fahrplan</h3>${rows}` +
+    `<div class="hint">Soll-Fahrplandaten (GTFS) der NVBW über MobiData BW, dl-de/by-2-0, Stand ${tr.quelle.feed_info.feed_version || "–"}. Keine Echtzeit, keine Verspätungen. Richtung = Fahrtziel.</div>`;
 }
 
 // ---------- DWD-Warnungen (über Bright Sky) ----------
@@ -502,12 +566,13 @@ function resize() {
 
 async function main() {
   const t0 = performance.now();
-  const [index, buildings, gemeinde, heightsBuf, sunlight] = await Promise.all([
+  const [index, buildings, gemeinde, heightsBuf, sunlight, transit] = await Promise.all([
     loadJson("data/terrain/index.json"), loadJson("data/buildings.json"), loadJson("data/gemeinde.geojson"),
     fetch("data/terrain/heights.bin").then((r) => r.arrayBuffer()),
     loadJson("data/sunlight.json").catch(() => null),
+    loadJson("data/transit.json").catch(() => null),
   ]);
-  Object.assign(meta, { index, buildings, gemeinde, sunlight });
+  Object.assign(meta, { index, buildings, gemeinde, sunlight, transit });
   latLon = utmToLatLon(index.e0, index.n0);
   buildTerrain(heightsBuf);
   centerY = terrainHeightAt(0, 0) ?? 340;
@@ -539,6 +604,7 @@ async function main() {
   }
   setupNavigation();
   setupSunlightLayer();
+  setupTransit();
   showSources();
   loadAlerts();
   updateProgress();

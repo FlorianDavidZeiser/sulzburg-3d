@@ -61,6 +61,17 @@ function block(rows) {
     ]));
   } catch (e) { /* ohne sunlight.json keine Angabe */ }
 
+  try {
+    const tr = await j("data/transit.json");
+    const routes = Object.values(tr.linien).map((r) => r.name).sort().join(", ");
+    out.push(`<h2>Bus und Bahn</h2>` + block([
+      ["Herkunft", `${esc(tr.quelle.titel)}. <a href="${tr.quelle.datensatz}" target="_blank" rel="noopener">Datensatz</a>, Lizenz <a href="${tr.quelle.lizenz.url}" target="_blank" rel="noopener">${esc(tr.quelle.lizenz.name)}</a>, Namensnennung „${esc(tr.quelle.lizenz.namensnennung)}“.`],
+      ["Datenstand", `Fahrplanversion ${esc(tr.quelle.feed_info.feed_version)} (gültig ${de(String(tr.quelle.feed_info.feed_start_date).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3"))} bis ${de(String(tr.quelle.feed_info.feed_end_date).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3"))}); exportiert für ${tr.zeitraum.von} bis ${tr.zeitraum.bis}.`],
+      ["Umfang", `${tr.haltestellen.length} Haltesteige im Umgriff, Linien ${esc(routes)}.`],
+      ["Bekannte Lücken", "Nur Soll-Fahrplan, keine Echtzeit, keine Ausfälle oder Verspätungen. Der Datensatz wird vom Land zweimal im Monat aktualisiert, die Kopie hier nur, wenn die Pipeline neu läuft. Bahnhalte außerhalb des Umgriffs (Heitersheim, Müllheim) sind nicht enthalten."],
+    ]));
+  } catch (e) { /* ohne transit.json keine Angabe */ }
+
   out.push(`<h2>Wetterwarnungen</h2>` + block([
     ["Herkunft", "Amtliche Warnungen des Deutschen Wetterdienstes für die Warnzelle der Stadt Sulzburg, live über Bright Sky."],
     ["Darstellung", "Banner mit Überschrift, Stufe, Gültigkeit und aufklappbarer Beschreibung. Ohne Warnung bleibt das Feld unsichtbar."],

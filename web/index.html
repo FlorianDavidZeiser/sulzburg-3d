@@ -14,7 +14,7 @@
 <canvas id="c"></canvas>
 <div id="hud">
   <section class="panel" id="sunpanel">
-    <h1>Sulzburg 3D <span>Phase 1 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
+    <h1>Sulzburg 3D <span>Phase 2 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
     <label for="date">Datum <span class="seasons"><button data-d="03-20">Frühling</button><button data-d="06-21">Sommer</button><button data-d="09-22">Herbst</button><button data-d="12-21">Winter</button></span></label>
     <input type="date" id="date">
     <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b> <span class="seasons"><button id="now">Jetzt</button></span></label>
@@ -30,6 +30,8 @@
     </div>
     <div id="sunlayerWrap"><label class="inline"><input type="checkbox" id="sunlayer"> Sonne auf den Dächern einfärben</label>
       <div id="sunlegend" class="small muted" hidden></div></div>
+    <div id="transitWrap"><label class="inline"><input type="checkbox" id="transit" checked> Haltestellen (Klick: Abfahrten)</label>
+      <div id="transitInfo" class="small muted"></div></div>
     <div class="jumps" id="jumps"><span>Springe zu:</span></div>
     <details class="help"><summary>Bedienung</summary>
       Ziehen dreht, rechte Maustaste oder zwei Finger verschieben, Rad zoomt zur Mausposition.

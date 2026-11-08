@@ -4,7 +4,19 @@ Privater Prototyp: die Gemeinde Sulzburg (Landkreis Breisgau-Hochschwarzwald) al
 
 ![Übersicht Phase 1](docs/screenshot-phase1.jpg)
 
-## Stand: Phase 1 („Das Tal“)
+## Stand: Phase 2 („Nützlich“), im Aufbau
+
+Neu seit Phase 1:
+
+- **Sonne auf dem Dach.** Für jedes Gebäude der Geländehorizont aus dem DGM1 und daraus für den 21. jedes Monats, wann die Sonne den First erreicht und verlässt. Klick-Info je Gebäude, Einfärbung aller Dächer für den gewählten Monat. Am 21. Dezember liegen die Werte zwischen rund 4 und 7,5 Stunden, zehn Gebäude bekommen keine direkte Sonne (`scripts/06_sunlight.py`).
+- **Bus und Bahn.** Elf Haltesteige der Linien 620, 640 und 641 (SBG) mit den nächsten Abfahrten laut Soll-Fahrplan für das gewählte Datum und die gewählte Uhrzeit. Quelle: Gebündelte Soll-Fahrplandaten Baden-Württemberg (GTFS) der NVBW über MobiData BW, dl-de/by-2-0, Fahrplanversion 07.11.2026 (`scripts/07_transit.py`).
+- **Wetterwarnungen.** Amtliche DWD-Warnungen für die Warnzelle Stadt Sulzburg als Banner, live über Bright Sky.
+- Verweise je Gebäude auf Google Street View und Mapillary (nur Links, keine übernommenen Bilder).
+- Navigation: Zoom zur Maus, Doppelklick setzt den Blickpunkt, Pfeiltasten und WASD, Sprungziele Marktplatz, Laufen, Überblick, Nachtansicht aufgehellt.
+
+Noch offen in Phase 2: Solarpotenzial je Dach (Energieatlas BW, Quelle und Nutzungsbedingungen nicht geklärt, Metadatenkatalog von hier nicht erreichbar), Luftqualität (Schnittstelle des Umweltbundesamts antwortete mit Serverfehler), Termine (bewusst zurückgestellt).
+
+## Phase 1 („Das Tal“)
 
 - Gelände der ganzen Gemeinde plus 250 m Rand aus dem amtlichen Höhenmodell DGM1, gekachelt (147 Kacheln à 500 m, 5 m Raster im Siedlungsbereich, 20 m sonst)
 - Luftbild DOP20 als Textur je Kachel (0,5 m im Ortskern, 1 m in Siedlungen, 2 m sonst)
@@ -42,6 +54,8 @@ scripts/   Datenpipeline (Python, reproduzierbar, läuft komplett in unter zwei 
   03_orthophoto.py   DOP20 (TIFF + TFW) -> web/data/terrain/o_*.jpg je Kachel
   04_buildings.py    LoD2 (CityGML) -> web/data/buildings.glb + buildings.json (alle Gebäude, mit Sockel)
   05_validate.py     Gebäude gegen Gelände, Adressen gegen OpenStreetMap, Sonnenstand, Ladevolumen -> docs/validierung.md
+  06_sunlight.py     Geländehorizont je Gebäude, Sonne am First je Monat -> web/data/sunlight.json
+  07_transit.py      Haltestellen und Soll-Abfahrten aus den GTFS-Daten BW -> web/data/transit.json
 data/
   sources.json       Protokoll aller Downloads und Ebenen (URL, SHA-256, Server-Datum, Kennzahlen, Validierung)
   gemeinde.geojson   amtliche Gemeindegrenze (EPSG:25832)
@@ -71,7 +85,8 @@ Weitere Quellen:
 
 | Zweck | Quelle | Lizenz / Hinweis |
 |---|---|---|
-| Wetter jetzt und heute | Deutscher Wetterdienst, Open Data, abgerufen über [Bright Sky](https://brightsky.dev) (api.brightsky.dev, frei, ohne Schlüssel) | DWD-Daten frei nutzbar mit Quellenangabe; nächste Station meist Müllheim, 6,4 km |
+| Wetter jetzt und heute, Warnungen | Deutscher Wetterdienst, Open Data, abgerufen über [Bright Sky](https://brightsky.dev) (api.brightsky.dev, frei, ohne Schlüssel) | DWD-Daten frei nutzbar mit Quellenangabe; nächste Station meist Müllheim, 6,4 km; Warnzelle Stadt Sulzburg |
+| Bus und Bahn | [Gebündelte Soll-Fahrplandaten Baden-Württemberg ohne Linienverlauf](https://mobidata-bw.de/dataset/soll-fahrplandaten-baden-wurttemberg) (GTFS), NVBW über MobiData BW, 49 MB, zweimal monatlich aktualisiert | dl-de/by-2-0, „Datenquelle: MobiData BW / NVBW“; Soll-Fahrplan, keine Echtzeit |
 | Bezeichnungen der Codes für Dachform und Gebäudefunktion | AdV-Codelisten `RoofTypeTypeAdV.xml`, `BuildingFunctionTypeAdV.xml` von repository.gdi-de.org | AdV, Kopie in `data/codelisten/` |
 | Mittelpunkt des Modells (Marktplatz) und Adress-Stichprobe der Validierung | OpenStreetMap über Nominatim | © OpenStreetMap-Mitwirkende, ODbL. Keine Datenebene in der Anwendung |
 | Sonnenstand | eigene Berechnung nach dem NOAA-Algorithmus (`web/sun.js`) | geprüft gegen die Python-Bibliothek astral |
@@ -88,6 +103,9 @@ python3 -I scripts/04_buildings.py      # Gebäude zuerst, das Gelände braucht 
 python3 -I scripts/02_terrain.py
 python3 -I scripts/03_orthophoto.py
 python3 -I scripts/05_validate.py
+python3 -I scripts/06_sunlight.py       # Sonne auf dem Dach
+curl -o data/raw/bwgesamt.zip https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_ohne_liniennetz/bwgesamt.zip
+python3 -I scripts/07_transit.py        # Bus und Bahn
 ```
 
 ## Validierung (Stand 08.11.2026, Details in `docs/validierung.md`)

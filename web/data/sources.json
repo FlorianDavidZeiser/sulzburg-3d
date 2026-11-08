@@ -534,6 +534,15 @@
       "server_last_modified": "Thu, 26 Mar 2026 13:05:15 GMT",
       "heruntergeladen_am": "2026-11-08T20:23:20+00:00",
       "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "bwgesamt.zip": {
+      "produkt": "gtfs",
+      "titel": "Gebündelte Soll-Fahrplandaten Baden-Württemberg ohne Linienverlauf (GTFS), NVBW Nahverkehrsgesellschaft Baden-Württemberg mbH über MobiData BW",
+      "url": "https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_ohne_liniennetz/bwgesamt.zip",
+      "bytes": 48849522,
+      "sha256": "f1a047dcf1f0f8d112d761685c01d403352b28e0e55aa78d8faa345a052e7785",
+      "heruntergeladen_am": "2026-11-08T21:01:38+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
     }
   },
   "ebenen": {
@@ -665,9 +674,20 @@
       "juni_minuten_median": 876,
       "moegliche_minuten_dez": 500,
       "moegliche_minuten_jun": 957
+    },
+    "bus_bahn": {
+      "ebene": "Bus und Bahn (Soll-Fahrplan)",
+      "haltestellen": 11,
+      "linien": 3,
+      "zeitraum": [
+        "2026-11-08",
+        "2026-12-20"
+      ],
+      "feed_version": "20261107",
+      "abfahrten_gesamt": 526
     }
   },
-  "aktualisiert": "2026-11-08T20:52:30+00:00",
+  "aktualisiert": "2026-11-08T21:01:38+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
