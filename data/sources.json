@@ -543,6 +543,182 @@
       "sha256": "f1a047dcf1f0f8d112d761685c01d403352b28e0e55aa78d8faa345a052e7785",
       "heruntergeladen_am": "2026-11-08T21:01:38+00:00",
       "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_399_5298_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "399_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_399_5298_2_bw.zip",
+      "bytes": 9186653,
+      "sha256": "2de72182073773677cd0de84a7bf15e9e96e8aaf073960ab15e6173f6b4f9e05",
+      "server_last_modified": "Mon, 19 Oct 2026 11:32:32 GMT",
+      "heruntergeladen_am": "2026-11-08T21:12:00+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_399_5300_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "399_5300",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_399_5300_2_bw.zip",
+      "bytes": 9084095,
+      "sha256": "3466e5e02ca2f0fdbb829e75004c7a84f63067b4015300bbf8c56e65354f6e6c",
+      "server_last_modified": "Mon, 19 Oct 2026 11:32:34 GMT",
+      "heruntergeladen_am": "2026-11-08T21:12:09+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_401_5296_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "401_5296",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_401_5296_2_bw.zip",
+      "bytes": 11397544,
+      "sha256": "5dd777eb0d5ad2942653d4c14842f8cebc47062c5b613fc7b19d03ab0559c766",
+      "server_last_modified": "Mon, 19 Oct 2026 11:33:46 GMT",
+      "heruntergeladen_am": "2026-11-08T21:12:20+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_401_5298_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "401_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_401_5298_2_bw.zip",
+      "bytes": 10193965,
+      "sha256": "562014a5e44bdee1d0f50d7a2a6431ed14b9ddceb8b12a67e9f5eca649771982",
+      "server_last_modified": "Mon, 19 Oct 2026 11:33:48 GMT",
+      "heruntergeladen_am": "2026-11-08T21:12:33+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_401_5300_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "401_5300",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_401_5300_2_bw.zip",
+      "bytes": 9444915,
+      "sha256": "27306e1b70d8c43a9ddb883c0bd8c64b25a0d2adf04247ed2f8d6cc9a2a22dc6",
+      "server_last_modified": "Mon, 19 Oct 2026 11:33:50 GMT",
+      "heruntergeladen_am": "2026-11-08T21:12:44+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_403_5294_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "403_5294",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_403_5294_2_bw.zip",
+      "bytes": 11375127,
+      "sha256": "073152436101bd586cc02e8e1d3ebeddb84a1ca9f55895260c8fcb693eb51e1a",
+      "server_last_modified": "Mon, 19 Oct 2026 11:35:04 GMT",
+      "heruntergeladen_am": "2026-11-08T21:12:54+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_403_5296_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "403_5296",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_403_5296_2_bw.zip",
+      "bytes": 11706554,
+      "sha256": "388ca6703f1d7a93e14ec4630d6dc09359fa317d9327b33c3343b86c2dfbc46f",
+      "server_last_modified": "Mon, 19 Oct 2026 11:35:06 GMT",
+      "heruntergeladen_am": "2026-11-08T21:13:09+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_403_5298_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "403_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_403_5298_2_bw.zip",
+      "bytes": 11585257,
+      "sha256": "b6ec5acfff30294575366ebc8f723be1cd2b03c12dccc25d74690efb6b5b44c4",
+      "server_last_modified": "Mon, 19 Oct 2026 11:35:08 GMT",
+      "heruntergeladen_am": "2026-11-08T21:13:21+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_403_5300_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "403_5300",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_403_5300_2_bw.zip",
+      "bytes": 11054625,
+      "sha256": "902afffd22a3251f232ea4addb50c1f8a1e37912089771492d1ca5b064e3f7c2",
+      "server_last_modified": "Mon, 19 Oct 2026 11:35:10 GMT",
+      "heruntergeladen_am": "2026-11-08T21:13:38+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_405_5294_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "405_5294",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_405_5294_2_bw.zip",
+      "bytes": 11291250,
+      "sha256": "70fd8a38b0f0278dc03a44594894985fbd0af1971402799166a7dce449668389",
+      "server_last_modified": "Mon, 19 Oct 2026 11:36:28 GMT",
+      "heruntergeladen_am": "2026-11-08T21:13:49+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_405_5296_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "405_5296",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_405_5296_2_bw.zip",
+      "bytes": 11794604,
+      "sha256": "0fd6b4e94a5648518c665512c51b612b3996215e32b27363507909e2cb690884",
+      "server_last_modified": "Mon, 19 Oct 2026 11:36:29 GMT",
+      "heruntergeladen_am": "2026-11-08T21:14:00+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_405_5298_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "405_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_405_5298_2_bw.zip",
+      "bytes": 11634636,
+      "sha256": "5a5ae64aed1c7ba822dcb550e64c675f33f071b841cb10d6af4fc65626cec719",
+      "server_last_modified": "Mon, 19 Oct 2026 11:36:32 GMT",
+      "heruntergeladen_am": "2026-11-08T21:14:11+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_405_5300_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "405_5300",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_405_5300_2_bw.zip",
+      "bytes": 11437164,
+      "sha256": "d3a7e158844a185090a95128f0bcf48173f26ed3e1f4fedf8e244e3b8fc276ae",
+      "server_last_modified": "Mon, 19 Oct 2026 11:36:34 GMT",
+      "heruntergeladen_am": "2026-11-08T21:14:23+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_407_5294_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "407_5294",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_407_5294_2_bw.zip",
+      "bytes": 10898136,
+      "sha256": "bd706150a49a520b47f78dc5fcd793e75b130cfed3aa71a18f57677c6245a409",
+      "server_last_modified": "Mon, 19 Oct 2026 11:38:00 GMT",
+      "heruntergeladen_am": "2026-11-08T21:14:34+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_407_5296_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "407_5296",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_407_5296_2_bw.zip",
+      "bytes": 11290795,
+      "sha256": "3886788861eba3bef1cb27c2850199fae3dbf361552a16e589b958d389c44585",
+      "server_last_modified": "Mon, 19 Oct 2026 11:38:02 GMT",
+      "heruntergeladen_am": "2026-11-08T21:14:45+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "ndom1_32_407_5298_2_bw.zip": {
+      "produkt": "ndom1",
+      "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+      "kachel": "407_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/ndom1/ndom1_32_407_5298_2_bw.zip",
+      "bytes": 11463838,
+      "sha256": "07907b75d84bdd2b980e2d65766e24ca9f5e49f6d1acf9483f9a3f8163d16563",
+      "server_last_modified": "Mon, 19 Oct 2026 11:38:04 GMT",
+      "heruntergeladen_am": "2026-11-08T21:14:56+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
     }
   },
   "ebenen": {
@@ -687,7 +863,7 @@
       "abfahrten_gesamt": 526
     }
   },
-  "aktualisiert": "2026-11-08T21:01:38+00:00",
+  "aktualisiert": "2026-11-08T21:14:56+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,

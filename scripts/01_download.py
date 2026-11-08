@@ -37,6 +37,11 @@ PRODUCTS = {
         "datei": "dop20rgb_32_{tile}_2_bw.zip",
         "titel": "Digitales Orthophoto DOP20 RGB (Bodenauflösung 20 cm, TIFF + TFW)",
     },
+    "ndom1": {
+        "pfad": "ndom1",
+        "datei": "ndom1_32_{tile}_2_bw.zip",
+        "titel": "Normalisiertes Digitales Oberflächenmodell nDOM1 (Höhe über Grund, Rasterweite 1 m)",
+    },
 }
 
 
@@ -79,7 +84,7 @@ def download(url: str, target: Path, headers_file: Path) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tiles", nargs="+", default=common.TILES)
-    ap.add_argument("--products", nargs="+", default=list(PRODUCTS), choices=list(PRODUCTS))
+    ap.add_argument("--products", nargs="+", default=["dgm1", "lod2", "dop20rgb"], choices=list(PRODUCTS))
     args = ap.parse_args()
 
     common.RAW.mkdir(parents=True, exist_ok=True)

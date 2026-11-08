@@ -72,12 +72,13 @@ class Dop:
             self.cache.popitem(last=False)
         return img
 
-    def region(self, e_min: int, n_min: int, e_max: int, n_max: int) -> tuple[np.ndarray, int]:
+    def region(self, e_min: float, n_min: float, e_max: float, n_max: float) -> tuple[np.ndarray, int]:
+        """Ausschnitt in Metern (Vielfache von 0,2 m) -> Bild (Zeile 0 = Nordrand), Anzahl fehlender Pixel."""
         w, h = int(round((e_max - e_min) / PIXEL)), int(round((n_max - n_min) / PIXEL))
         out = np.full((h, w, 3), 128, dtype=np.uint8)
         covered = np.zeros((h, w), dtype=bool)
-        for e_km in range((e_min // 1000) * 1000, e_max, 1000):
-            for n_km in range((n_min // 1000) * 1000, n_max, 1000):
+        for e_km in range(int(e_min // 1000) * 1000, int(np.ceil(e_max)), 1000):
+            for n_km in range(int(n_min // 1000) * 1000, int(np.ceil(n_max)), 1000):
                 sub = self.subtile(e_km, n_km)
                 if sub is None:
                     continue

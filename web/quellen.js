@@ -33,7 +33,7 @@ function block(rows) {
     ["Datenstand", `Auslesedatum ${esc(li["Auslesedatum"])}; Aktualität ${esc(li["Aktualität"])}; Grundrisse Stand ${b.grundriss_aktualitaet_von_bis ? b.grundriss_aktualitaet_von_bis.map(de).join(" bis ") : "–"}; Modelle erstellt ${b.erstellt_von_bis ? b.erstellt_von_bis.map(de).join(" bis ") : "–"}`],
     ["Umfang", `${b.anzahl} Gebäude, davon ${b.anzahl_in_gemeinde} in der Gemeinde Sulzburg, Rest im Randbereich von Nachbargemeinden`],
     ["Attribute", `Adresse, Gebäudefunktion und Dachform aus dem LoD2-Datensatz; Bezeichnungen aus den amtlichen AdV-Codelisten (${esc(b.quelle.codelisten.dachform.split(" (")[0])}, ${esc(b.quelle.codelisten.gebaeudefunktion.split(" (")[0])})`],
-    ["Darstellung", `Standardisierte Dachformen (LoD2), keine Fenster, keine Texturen. Unter jeder Bodenfläche ein Sockel von ${b.sockel_m} m als Darstellungshilfe, damit am Hang kein Spalt zum gröberen Gelände entsteht. ${esc(b.sockel_hinweis)}`],
+    ["Darstellung", `Standardisierte Dachformen (LoD2), keine Fenster. ${b.dachtextur && b.dachtextur.aktiv ? esc(b.dachtextur.hinweis) + ` Textur-Atlas mit ${b.dachtextur.aufloesung_m} m Bodenauflösung für ${b.dachtextur.gebaeude_mit_textur} Gebäude.` : "Dächer einfarbig."} Unter jeder Bodenfläche ein Sockel von ${b.sockel_m} m als Darstellungshilfe, damit am Hang kein Spalt zum gröberen Gelände entsteht. ${esc(b.sockel_hinweis)}`],
     ["Bekannte Lücken", "LoD2 enthält keine Gebäudenutzung jenseits der ALKIS-Funktion, keine Baujahre, keine Eigentümer. Dachaufbauten, Gauben und Anbauten unter der Erfassungsgrenze fehlen. Gebäude mit Höhe unter 1 m wurden laut LGL mit einem noch nicht aktualisierten DGM modelliert."],
   ]));
 

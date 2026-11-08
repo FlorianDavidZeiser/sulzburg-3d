@@ -26,14 +26,25 @@ import sys
 import zipfile
 from pathlib import Path
 
+import importlib.util
+
 import mapbox_earcut
 import numpy as np
 from lxml import etree
+from PIL import Image
 from shapely.geometry import Point, shape
 from shapely.prepared import prep
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+
+_spec = importlib.util.spec_from_file_location("ortho03", Path(__file__).resolve().parent / "03_orthophoto.py")
+ortho03 = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ortho03)
+
+ATLAS_PX = 4096      # Kantenlänge eines Dachtextur-Atlas in Pixeln
+ATLAS_RES = 0.2      # Bodenauflösung des Luftbilds in Metern
+ATLAS_PAD = 2        # Rand in Pixeln je Gebäude
 
 NS = {
     "bldg": "http://www.opengis.net/citygml/building/1.0",
@@ -215,19 +226,23 @@ def parse_building(b) -> dict:
 
 
 class MeshBuilder:
-    def __init__(self, box: dict):
+    def __init__(self, box: dict, with_uv: bool = False):
         self.box = box
+        self.with_uv = with_uv
         self.pos: list[np.ndarray] = []
         self.col: list[np.ndarray] = []
         self.bid: list[np.ndarray] = []
+        self.uv: list[np.ndarray] = []
         self.idx: list[np.ndarray] = []
         self.count = 0
 
-    def add(self, pts3: np.ndarray, tri: np.ndarray, color: np.ndarray, building: int) -> None:
+    def add(self, pts3: np.ndarray, tri: np.ndarray, color: np.ndarray, building: int, uv: np.ndarray | None = None) -> None:
         local = np.column_stack([pts3[:, 0] - self.box["e0"], pts3[:, 2], -(pts3[:, 1] - self.box["n0"])]).astype(np.float32)
         self.pos.append(local)
         self.col.append(np.tile(color, (len(local), 1)))
         self.bid.append(np.full(len(local), building, dtype=np.float32))
+        if self.with_uv:
+            self.uv.append(uv.astype(np.float32) if uv is not None else np.zeros((len(local), 2), dtype=np.float32))
         self.idx.append((tri + self.count).astype(np.uint32).ravel())
         self.count += len(local)
 
@@ -254,33 +269,62 @@ class MeshBuilder:
         return quads
 
     def arrays(self):
-        return np.vstack(self.pos), np.vstack(self.col), np.concatenate(self.bid), np.concatenate(self.idx)
+        uv = np.vstack(self.uv) if self.with_uv and self.uv else None
+        return np.vstack(self.pos), np.vstack(self.col), np.concatenate(self.bid), np.concatenate(self.idx), uv
+
+    @property
+    def empty(self) -> bool:
+        return self.count == 0
 
 
-def write_glb(path: Path, positions: np.ndarray, colors: np.ndarray, ids: np.ndarray, indices: np.ndarray) -> None:
+def write_glb(path: Path, primitives: list[dict], images: list[str]) -> None:
+    """primitives: [{name, positions, colors, ids, indices, uv (optional), texture (Index in images oder None)}]."""
     def pad(b: bytes, n: int = 4, fill: bytes = b"\x00") -> bytes:
         return b + fill * ((n - len(b) % n) % n)
 
-    blobs = [positions.astype("<f4").tobytes(), colors.astype(np.uint8).tobytes(), ids.astype("<f4").tobytes(), indices.astype("<u4").tobytes()]
-    views, accessors, offset = [], [], 0
-    specs = [
-        {"componentType": 5126, "type": "VEC3", "count": len(positions), "min": positions.min(axis=0).tolist(), "max": positions.max(axis=0).tolist()},
-        {"componentType": 5121, "type": "VEC4", "count": len(colors), "normalized": True},
-        {"componentType": 5126, "type": "SCALAR", "count": len(ids)},
-        {"componentType": 5125, "type": "SCALAR", "count": len(indices)},
-    ]
-    for i, (blob, spec) in enumerate(zip(blobs, specs)):
-        views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(blob), "target": 34963 if i == 3 else 34962})
-        accessors.append({"bufferView": i} | spec)
+    blobs, views, accessors, prims, materials = [], [], [], [], []
+    offset = 0
+
+    def add_accessor(arr: np.ndarray, dtype: str, comp: int, typ: str, target: int, normalized=False, minmax=False) -> int:
+        nonlocal offset
+        blob = arr.astype(dtype).tobytes()
+        views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(blob), "target": target})
+        acc = {"bufferView": len(views) - 1, "componentType": comp, "type": typ, "count": len(arr)}
+        if normalized:
+            acc["normalized"] = True
+        if minmax:
+            acc["min"] = arr.min(axis=0).tolist(); acc["max"] = arr.max(axis=0).tolist()
+        accessors.append(acc)
+        blobs.append(blob)
         offset += len(pad(blob))
+        return len(accessors) - 1
+
+    for pr in primitives:
+        attrs = {
+            "POSITION": add_accessor(pr["positions"], "<f4", 5126, "VEC3", 34962, minmax=True),
+            "COLOR_0": add_accessor(pr["colors"], np.uint8, 5121, "VEC4", 34962, normalized=True),
+            "_BUILDING": add_accessor(pr["ids"], "<f4", 5126, "SCALAR", 34962),
+        }
+        if pr.get("uv") is not None:
+            attrs["TEXCOORD_0"] = add_accessor(pr["uv"], "<f4", 5126, "VEC2", 34962)
+        idx_acc = add_accessor(pr["indices"], "<u4", 5125, "SCALAR", 34963)
+        mat = {"name": pr["name"], "doubleSided": False, "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.9}}
+        if pr.get("texture") is not None:
+            mat["pbrMetallicRoughness"]["baseColorTexture"] = {"index": pr["texture"]}
+        materials.append(mat)
+        prims.append({"attributes": attrs, "indices": idx_acc, "material": len(materials) - 1, "mode": 4, "extras": {"name": pr["name"]}})
     bin_chunk = b"".join(pad(b) for b in blobs)
     gltf = {
         "asset": {"version": "2.0", "generator": "sulzburg-3d scripts/04_buildings.py", "copyright": common.LICENSE["namensnennung"]},
         "scene": 0, "scenes": [{"nodes": [0]}], "nodes": [{"mesh": 0, "name": "LoD2 Gebaeude"}],
-        "meshes": [{"name": "buildings", "primitives": [{"attributes": {"POSITION": 0, "COLOR_0": 1, "_BUILDING": 2}, "indices": 3, "material": 0, "mode": 4}]}],
-        "materials": [{"name": "lod2", "doubleSided": False, "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.9}}],
+        "meshes": [{"name": "buildings", "primitives": prims}],
+        "materials": materials,
         "buffers": [{"byteLength": len(bin_chunk)}], "bufferViews": views, "accessors": accessors,
     }
+    if images:
+        gltf["images"] = [{"uri": name} for name in images]
+        gltf["samplers"] = [{"magFilter": 9729, "minFilter": 9987, "wrapS": 33071, "wrapT": 33071}]
+        gltf["textures"] = [{"source": i, "sampler": 0} for i in range(len(images))]
     json_chunk = pad(json.dumps(gltf, separators=(",", ":")).encode("utf-8"), 4, b" ")
     total = 12 + 8 + len(json_chunk) + 8 + len(bin_chunk)
     with path.open("wb") as fh:
@@ -293,6 +337,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--count", type=int, default=0, help="nur die N dem Marktplatz nächsten Gebäude (0 = alle im Umgriff)")
     ap.add_argument("--sockel", type=float, default=2.0, help="Sockeltiefe unter der Bodenfläche in Metern (0 = kein Sockel)")
+    ap.add_argument("--ohne-dachtextur", action="store_true", help="Dächer einfarbig statt mit Luftbild")
+    ap.add_argument("--quality", type=int, default=85, help="JPEG-Qualität der Dachtextur-Atlanten")
     args = ap.parse_args()
 
     box = common.aoi()
@@ -347,7 +393,52 @@ def main() -> int:
     if args.count:
         buildings = buildings[: args.count]
 
-    mb = MeshBuilder(box)
+    # --- Dachtextur-Atlas: je Gebäude der Luftbildausschnitt über dem Dach (Regalpackung) ---
+    use_tex = not args.ohne_dachtextur
+    dop = None
+    placements: dict[int, tuple[int, int, int, float, float]] = {}  # i -> (atlas, px_x, px_y, e_min, n_max)
+    atlases: list[np.ndarray] = []
+    if use_tex:
+        dop_zips = [common.RAW / n for n, d in doc["downloads"].items() if d["produkt"] == "dop20rgb"]
+        if not dop_zips:
+            print("WARNUNG: kein DOP20 protokolliert, Dächer bleiben einfarbig", file=sys.stderr)
+            use_tex = False
+        else:
+            dop = ortho03.Dop(dop_zips, cache_size=12)
+            rects = []
+            for i, rec in enumerate(buildings):
+                roof = [p for typ, rings in rec["_surfaces"] if typ == "RoofSurface" for p in rings[0]]
+                if not roof:
+                    continue
+                r = np.array(roof)
+                e0, e1 = float(np.floor(r[:, 0].min() / ATLAS_RES) * ATLAS_RES), float(np.ceil(r[:, 0].max() / ATLAS_RES) * ATLAS_RES)
+                n0, n1 = float(np.floor(r[:, 1].min() / ATLAS_RES) * ATLAS_RES), float(np.ceil(r[:, 1].max() / ATLAS_RES) * ATLAS_RES)
+                w = int(round((e1 - e0) / ATLAS_RES)) + 2 * ATLAS_PAD; h = int(round((n1 - n0) / ATLAS_RES)) + 2 * ATLAS_PAD
+                if w > ATLAS_PX or h > ATLAS_PX:
+                    continue
+                rects.append((h, w, i, e0 - ATLAS_PAD * ATLAS_RES, n1 + ATLAS_PAD * ATLAS_RES))
+            rects.sort(key=lambda r: (-r[0], -r[1]))
+            # Regalpackung
+            a, x, y, shelf_h = 0, 0, 0, 0
+            atlases.append(np.zeros((ATLAS_PX, ATLAS_PX, 3), dtype=np.uint8))
+            for h, w, i, e_min_i, n_max_i in rects:
+                if x + w > ATLAS_PX:
+                    x = 0; y += shelf_h; shelf_h = 0
+                if y + h > ATLAS_PX:
+                    atlases.append(np.zeros((ATLAS_PX, ATLAS_PX, 3), dtype=np.uint8)); a += 1; x = y = shelf_h = 0
+                placements[i] = (a, x, y, e_min_i, n_max_i)
+                x += w; shelf_h = max(shelf_h, h)
+            # Luftbild in der Reihenfolge der Lage lesen, damit der Teilkachel-Cache greift
+            for i in sorted(placements, key=lambda i: (buildings[i]["e"] // 1000, buildings[i]["n"] // 1000, buildings[i]["e"])):
+                a, px, py, e_min_i, n_max_i = placements[i]
+                h, w = next((hh, ww) for hh, ww, ii, *_ in rects if ii == i)
+                region, _ = dop.region(e_min_i, n_max_i - h * ATLAS_RES, e_min_i + w * ATLAS_RES, n_max_i)
+                atlases[a][py:py + region.shape[0], px:px + region.shape[1]] = region[:h, :w]
+            print(f"Dachtexturen: {len(placements)} Gebäude in {len(atlases)} Atlas-Bild(ern) à {ATLAS_PX} px, Luftbild {ATLAS_RES} m")
+
+    walls = MeshBuilder(box)
+    roofs = [MeshBuilder(box, with_uv=True) for _ in atlases]
+    roofs_plain = MeshBuilder(box)
     n_poly = n_skipped = n_sockel = 0
     for i, rec in enumerate(buildings):
         for typ, rings in rec["_surfaces"]:
@@ -357,15 +448,42 @@ def main() -> int:
                 n_skipped += 1
                 continue
             pts3, tri = res
-            mb.add(pts3, tri, COLORS_U8.get(typ, COLORS_U8["WallSurface"]), i)
+            if typ == "RoofSurface" and i in placements:
+                a, px, py, e_min_i, n_max_i = placements[i]
+                uv = np.column_stack([(px + (pts3[:, 0] - e_min_i) / ATLAS_RES) / ATLAS_PX, (py + (n_max_i - pts3[:, 1]) / ATLAS_RES) / ATLAS_PX])
+                roofs[a].add(pts3, tri, np.array([255, 255, 255, 255], dtype=np.uint8), i, uv)
+            elif typ == "RoofSurface":
+                roofs_plain.add(pts3, tri, COLORS_U8["RoofSurface"], i)
+            else:
+                walls.add(pts3, tri, COLORS_U8.get(typ, COLORS_U8["WallSurface"]), i)
         if args.sockel > 0:
             for ring in rec["_ground_rings"]:
-                n_sockel += mb.add_socket(ring, args.sockel, i)
-    positions, colors, bid, indices = mb.arrays()
+                n_sockel += walls.add_socket(ring, args.sockel, i)
 
     common.WEB_DATA.mkdir(parents=True, exist_ok=True)
+    for old in common.WEB_DATA.glob("roofs_*.jpg"):
+        old.unlink()
+    images = []
+    for a, img in enumerate(atlases):
+        name = f"roofs_{a}.jpg"
+        Image.fromarray(img, "RGB").save(common.WEB_DATA / name, "JPEG", quality=args.quality, optimize=True)
+        images.append(name)
+    primitives = []
+    wp, wc, wb, wi, _ = walls.arrays()
+    primitives.append({"name": "walls", "positions": wp, "colors": wc, "ids": wb, "indices": wi})
+    for a, rb in enumerate(roofs):
+        if rb.empty:
+            continue
+        rp, rc, rbid, ri, ruv = rb.arrays()
+        primitives.append({"name": f"roofs_{a}", "positions": rp, "colors": rc, "ids": rbid, "indices": ri, "uv": ruv, "texture": a})
+    if not roofs_plain.empty:
+        pp, pc, pb, pi, _ = roofs_plain.arrays()
+        primitives.append({"name": "roofs_plain", "positions": pp, "colors": pc, "ids": pb, "indices": pi})
     glb = common.WEB_DATA / "buildings.glb"
-    write_glb(glb, positions, colors, bid, indices)
+    write_glb(glb, primitives, images)
+    n_tri = sum(len(p["indices"]) // 3 for p in primitives)
+    n_vert = sum(len(p["positions"]) for p in primitives)
+    indices = np.zeros(n_tri * 3); positions = np.zeros((n_vert, 3))  # nur für die Kennzahlen unten
 
     out_list, ground_out = [], []
     for i, rec in enumerate(buildings):
@@ -398,6 +516,8 @@ def main() -> int:
         "anzahl": len(buildings), "anzahl_in_gemeinde": n_in, "anzahl_im_umgriff": n_area,
         "auswahl": (f"die {len(buildings)} dem Marktplatz nächsten Gebäude" if args.count else
                     f"alle {len(buildings)} Gebäude innerhalb der Gemeindegrenze plus {kacheln['rand_m']:.0f} m Rand, davon {n_in} in der Gemeinde Sulzburg"),
+        "dachtextur": {"aktiv": use_tex, "atlanten": images, "aufloesung_m": ATLAS_RES, "gebaeude_mit_textur": len(placements),
+                       "hinweis": "Luftbild (DOP20) senkrecht auf die LoD2-Dachflächen projiziert. Zeigt echte Dachfarben, Gauben, Solaranlagen und die im Luftbild eingebrannten Schatten des Bildflugs. Fassaden bleiben einfarbig."},
         "sockel_m": args.sockel,
         "sockel_hinweis": "Darstellungshilfe: senkrechte Flächen unter der LoD2-Bodenfläche, damit am Hang kein Spalt zum gröber aufgelösten Gelände entsteht. Kein Datum des LGL.",
         "polygone": n_poly, "polygone_uebersprungen": n_skipped, "sockel_flaechen": n_sockel,
@@ -425,8 +545,9 @@ def main() -> int:
     doc["ebenen"]["gebaeude"]["dateien"] = used_files
     doc["ebenen"]["gebaeude"]["lieferinformation"] = info_lines
     common.save_sources(doc)
+    tex_bytes = sum((common.WEB_DATA / n).stat().st_size for n in images)
     print(f"Gebäude: {len(buildings)} ({n_in} in Sulzburg), {n_poly} Polygone ({n_skipped} übersprungen), {n_sockel} Sockelflächen, "
-          f"{len(indices)//3} Dreiecke, {len(positions)} Vertices, GLB {glb.stat().st_size:,} B, JSON {(common.WEB_DATA / 'buildings.json').stat().st_size:,} B")
+          f"{len(indices)//3} Dreiecke, {len(positions)} Vertices, GLB {glb.stat().st_size:,} B, Dachtexturen {tex_bytes:,} B, JSON {(common.WEB_DATA / 'buildings.json').stat().st_size:,} B")
     return 0
 
 

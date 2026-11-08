@@ -57,6 +57,7 @@ const tiles = new Map();     // id -> { t, heights, mesh }
 const terrainGroup = new THREE.Group();
 scene.add(terrainGroup);
 let buildingsMesh, boundaryLine, latLon, centerY = 0, sunDir = new THREE.Vector3(0, 1, 0), cloudCover = null;
+let buildingMeshes = [], roofMeshes = [];
 
 async function loadJson(url) {
   const r = await fetch(url);
@@ -326,9 +327,9 @@ function setupPicking() {
       const sh = ray.intersectObjects(stopsGroup.children, false)[0];
       if (sh) { showStop(sh.object.userData.stop); return; }
     }
-    const hit = ray.intersectObject(buildingsMesh, false)[0];
+    const hit = ray.intersectObjects(buildingMeshes, false)[0];
     if (!hit) { info.hidden = true; return; }
-    const attr = buildingsMesh.geometry.getAttribute("_building");
+    const attr = hit.object.geometry.getAttribute("_building");
     const idx = Math.round(attr.getX(hit.face.a));
     const g = meta.buildings.gebaeude[idx];
     if (!g) return;
@@ -357,7 +358,7 @@ function setupNavigation() {
   canvas.addEventListener("dblclick", (e) => {
     mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(mouse, camera);
-    const objs = [...terrainGroup.children]; if (buildingsMesh) objs.push(buildingsMesh);
+    const objs = [...terrainGroup.children, ...buildingMeshes];
     const hit = ray.intersectObjects(objs, false)[0];
     if (hit) targetGoal = hit.point.clone();
   });
@@ -425,38 +426,31 @@ function externalLinks(g) {
 
 function setupSunlightLayer() {
   const sl = meta.sunlight;
-  if (!sl) { $("sunlayerWrap").hidden = true; return; }
-  const attr = buildingsMesh.geometry.getAttribute("color");
-  const bid = buildingsMesh.geometry.getAttribute("_building");
-  const orig = meta.originalColors;
-  // Dachflächen erkennen: Originalfarbe der Dächer (linear, aus scripts/04_buildings.py)
-  const roofRef = [0.71, 0.36, 0.28].map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-  const isRoof = new Uint8Array(attr.count);
-  for (let i = 0; i < attr.count; i++) {
-    const o = i * 3;
-    if (Math.abs(orig[o] - roofRef[0]) < 0.03 && Math.abs(orig[o + 1] - roofRef[1]) < 0.03 && Math.abs(orig[o + 2] - roofRef[2]) < 0.03) isRoof[i] = 1;
-  }
+  if (!sl || !roofMeshes.length) { $("sunlayerWrap").hidden = true; return; }
   // Farbskala mit klaren Stufen (angelehnt an Viridis): wenig Sonne violett, viel Sonne gelb
   const stops = [0x440154, 0x3b528b, 0x21918c, 0x5ec962, 0xfde725].map((c) => new THREE.Color(c));
   const tmp = new THREE.Color();
   const ramp = (f) => { const x = Math.min(0.9999, Math.max(0, f)) * (stops.length - 1); const i = Math.floor(x); return tmp.copy(stops[i]).lerp(stops[i + 1], x - i); };
-  // Spannweite je Monat über alle Gebäude, damit Unterschiede sichtbar werden (Legende nennt die Grenzen)
+  // Spannweite je Monat (5. bis 95. Perzentil), damit Unterschiede sichtbar werden
   const range = sl.tage.map((_, m) => { const xs = sl.werte.map((v) => v[m * 3 + 2]).sort((a, b) => a - b); return [xs[Math.floor(xs.length * 0.05)], xs[Math.floor(xs.length * 0.95)]]; });
   const apply = () => {
     const on = $("sunlayer").checked;
     const m = monthIndex();
     const possible = sl.moegliche_minuten[m];
     const [lo, hi] = range[m];
-    for (let i = 0; i < attr.count; i++) {
-      const o = i * 3;
-      if (!on || !isRoof[i]) { attr.setXYZ(i, orig[o], orig[o + 1], orig[o + 2]); continue; }
-      const b = Math.round(bid.getX(i));
-      const minutes = sl.werte[b][m * 3 + 2];
-      const f = hi > lo ? Math.min(1, Math.max(0, (minutes - lo) / (hi - lo))) : 1;
-      ramp(f).convertSRGBToLinear();
-      attr.setXYZ(i, tmp.r, tmp.g, tmp.b);
+    for (const mesh of roofMeshes) {
+      const attr = mesh.geometry.getAttribute("color"), bid = mesh.geometry.getAttribute("_building"), orig = mesh.userData.originalColors;
+      for (let i = 0; i < attr.count; i++) {
+        if (!on) { attr.setXYZ(i, orig[i * 3], orig[i * 3 + 1], orig[i * 3 + 2]); continue; }
+        const minutes = sl.werte[Math.round(bid.getX(i))][m * 3 + 2];
+        const f = hi > lo ? Math.min(1, Math.max(0, (minutes - lo) / (hi - lo))) : 1;
+        ramp(f).convertSRGBToLinear();
+        attr.setXYZ(i, tmp.r, tmp.g, tmp.b);
+      }
+      attr.needsUpdate = true;
+      mesh.material.map = on || !$("rooftex").checked ? null : mesh.userData.roofMap;
+      mesh.material.needsUpdate = true;
     }
-    attr.needsUpdate = true;
     const label = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" }).format(new Date(sl.tage[m] + "T12:00:00Z"));
     $("sunlegend").hidden = !on;
     const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => `<span class="swatch" style="background:#${ramp(f).getHexString()}"></span>`).join("");
@@ -591,17 +585,25 @@ async function main() {
   loadWeather();
 
   const gltf = await new GLTFLoader().loadAsync("data/buildings.glb");
-  buildingsMesh = gltf.scene.getObjectByProperty("type", "Mesh");
-  buildingsMesh.material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9, metalness: 0 });
-  buildingsMesh.castShadow = true;
-  buildingsMesh.receiveShadow = true;
-  scene.add(buildingsMesh);
-  { // Originalfarben als normalisierte Werte sichern (COLOR_0 liegt als normalisiertes Uint8 vor)
-    const ca = buildingsMesh.geometry.getAttribute("color");
+  gltf.scene.traverse((o) => {
+    if (!o.isMesh) return;
+    const name = o.userData?.name || o.material?.name || "";
+    const map = o.material.map || null;
+    if (map) { map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = renderer.capabilities.getMaxAnisotropy(); }
+    o.material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9, metalness: 0, map });
+    o.userData.roofMap = map;
+    o.castShadow = true; o.receiveShadow = true;
+    buildingMeshes.push(o);
+    if (name.startsWith("roofs")) roofMeshes.push(o);
+    // Originalfarben als normalisierte Werte sichern (COLOR_0 liegt als normalisiertes Uint8 vor)
+    const ca = o.geometry.getAttribute("color");
     const orig = new Float32Array(ca.count * 3);
     for (let i = 0; i < ca.count; i++) { orig[i * 3] = ca.getX(i); orig[i * 3 + 1] = ca.getY(i); orig[i * 3 + 2] = ca.getZ(i); }
-    meta.originalColors = orig;
-  }
+    o.userData.originalColors = orig;
+  });
+  buildingsMesh = buildingMeshes[0];
+  scene.add(gltf.scene);
+  $("rooftex").addEventListener("change", (e) => { for (const r of roofMeshes) { r.material.map = e.target.checked && !$("sunlayer").checked ? r.userData.roofMap : null; r.material.needsUpdate = true; } });
   setupNavigation();
   setupSunlightLayer();
   setupTransit();
