@@ -1,0 +1,160 @@
+{
+ "gemeinde": "Sulzburg",
+ "gemeindeschluessel": "08315111",
+ "rand_m": 250.0,
+ "bbox": [
+  399663,
+  5295096,
+  407729,
+  5300811
+ ],
+ "bbox_mit_rand": [
+  399413,
+  5294846,
+  407979,
+  5301061
+ ],
+ "flaeche_km2": 22.73,
+ "gemeinden_im_umgriff": {
+  "08336107": "Kleines Wiesental",
+  "08315008": "Ballrechten-Dottingen",
+  "08315022": "Buggingen",
+  "08315007": "Badenweiler",
+  "08315111": "Sulzburg",
+  "08315074": "Müllheim im Markgräflerland",
+  "08336104": "Malsburg-Marzell",
+  "08315108": "Staufen im Breisgau",
+  "08315050": "Heitersheim",
+  "08315130": "Münstertal/Schwarzwald"
+ },
+ "kacheln": [
+  {
+   "kachel": "399_5298",
+   "e_min": 399000,
+   "n_min": 5298000,
+   "e_max": 401000,
+   "n_max": 5300000,
+   "anteil_gemeinde": 0.197
+  },
+  {
+   "kachel": "399_5300",
+   "e_min": 399000,
+   "n_min": 5300000,
+   "e_max": 401000,
+   "n_max": 5302000,
+   "anteil_gemeinde": 0.154
+  },
+  {
+   "kachel": "401_5296",
+   "e_min": 401000,
+   "n_min": 5296000,
+   "e_max": 403000,
+   "n_max": 5298000,
+   "anteil_gemeinde": 0.064
+  },
+  {
+   "kachel": "401_5298",
+   "e_min": 401000,
+   "n_min": 5298000,
+   "e_max": 403000,
+   "n_max": 5300000,
+   "anteil_gemeinde": 0.715
+  },
+  {
+   "kachel": "401_5300",
+   "e_min": 401000,
+   "n_min": 5300000,
+   "e_max": 403000,
+   "n_max": 5302000,
+   "anteil_gemeinde": 0.198
+  },
+  {
+   "kachel": "403_5294",
+   "e_min": 403000,
+   "n_min": 5294000,
+   "e_max": 405000,
+   "n_max": 5296000,
+   "anteil_gemeinde": 0.029
+  },
+  {
+   "kachel": "403_5296",
+   "e_min": 403000,
+   "n_min": 5296000,
+   "e_max": 405000,
+   "n_max": 5298000,
+   "anteil_gemeinde": 0.858
+  },
+  {
+   "kachel": "403_5298",
+   "e_min": 403000,
+   "n_min": 5298000,
+   "e_max": 405000,
+   "n_max": 5300000,
+   "anteil_gemeinde": 0.999
+  },
+  {
+   "kachel": "403_5300",
+   "e_min": 403000,
+   "n_min": 5300000,
+   "e_max": 405000,
+   "n_max": 5302000,
+   "anteil_gemeinde": 0.146
+  },
+  {
+   "kachel": "405_5294",
+   "e_min": 405000,
+   "n_min": 5294000,
+   "e_max": 407000,
+   "n_max": 5296000,
+   "anteil_gemeinde": 0.303
+  },
+  {
+   "kachel": "405_5296",
+   "e_min": 405000,
+   "n_min": 5296000,
+   "e_max": 407000,
+   "n_max": 5298000,
+   "anteil_gemeinde": 1.0
+  },
+  {
+   "kachel": "405_5298",
+   "e_min": 405000,
+   "n_min": 5298000,
+   "e_max": 407000,
+   "n_max": 5300000,
+   "anteil_gemeinde": 0.601
+  },
+  {
+   "kachel": "405_5300",
+   "e_min": 405000,
+   "n_min": 5300000,
+   "e_max": 407000,
+   "n_max": 5302000,
+   "anteil_gemeinde": 0.0
+  },
+  {
+   "kachel": "407_5294",
+   "e_min": 407000,
+   "n_min": 5294000,
+   "e_max": 409000,
+   "n_max": 5296000,
+   "anteil_gemeinde": 0.105
+  },
+  {
+   "kachel": "407_5296",
+   "e_min": 407000,
+   "n_min": 5296000,
+   "e_max": 409000,
+   "n_max": 5298000,
+   "anteil_gemeinde": 0.297
+  },
+  {
+   "kachel": "407_5298",
+   "e_min": 407000,
+   "n_min": 5298000,
+   "e_max": 409000,
+   "n_max": 5300000,
+   "anteil_gemeinde": 0.014
+  }
+ ]
+}

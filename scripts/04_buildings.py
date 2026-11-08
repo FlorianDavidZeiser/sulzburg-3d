@@ -1,13 +1,20 @@
-"""Schritt 4: LoD2-Gebäude (CityGML des LGL) für den Ausschnitt in glTF (GLB) umwandeln.
+"""Schritt 4: LoD2-Gebäude (CityGML des LGL) in glTF (GLB) umwandeln.
 
-Eingabe:  data/raw/LoD2_32_<tile>_2_bw.zip (CityGML 1.0, 1-km-Teilkacheln)
+Phase 1: alle Gebäude im Umgriff der Gemeinde (amtliche Grenze plus Rand aus data/kacheln.json).
+Eingabe:  data/raw/LoD2_32_<tile>_2_bw.zip (CityGML 1.0, 1-km-Teilkacheln), data/gemeinde.geojson,
           data/codelisten/*.xml (amtliche AdV-Codelisten für Dachform und Gebäudefunktion)
-Ausgabe:  web/data/buildings.glb  (ein Mesh, flache Normalen, Vertexfarben, Attribut _BUILDING = Index)
-          web/data/buildings.json (Attribute je Gebäude, Auswahl, Quelle, Datenstand)
+Ausgabe:  web/data/buildings.glb   indiziertes Mesh, Vertexfarben (COLOR_0), Attribut _BUILDING = Index,
+                                    keine Normalen (Flat Shading im Browser)
+          web/data/buildings.json  Attribute je Gebäude, Quelle, Datenstand
+          data/processed/bodenpunkte.json  Eckpunkte der Bodenflächen (nur für die Validierung)
+
+Darstellungshilfe: Unter jede Bodenfläche wird ein Sockel von --sockel Metern gezogen (Standard 2 m),
+damit am Hang zwischen gröber aufgelöstem Gelände und Gebäude kein Spalt entsteht. Der Sockel ist
+kein Datum des LGL und wird in buildings.json als solcher ausgewiesen.
 
 Koordinaten im GLB: lokal zum Ausschnittsmittelpunkt, x nach Osten, y = Höhe NHN, z nach Süden.
 
-Aufruf:  python3 -I scripts/04_buildings.py [--count 50 | --all]
+Aufruf:  python3 -I scripts/04_buildings.py [--count 50] [--sockel 2.0]
 """
 from __future__ import annotations
 
@@ -22,6 +29,8 @@ from pathlib import Path
 import mapbox_earcut
 import numpy as np
 from lxml import etree
+from shapely.geometry import Point, shape
+from shapely.prepared import prep
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
@@ -42,11 +51,15 @@ COLORS = {
     "ClosureSurface": (0.85, 0.83, 0.80),
     "OuterCeilingSurface": (0.80, 0.78, 0.75),
     "OuterFloorSurface": (0.70, 0.68, 0.65),
+    "Sockel": (0.78, 0.76, 0.72),
 }
 
 
 def srgb_to_linear(c: float) -> float:
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+COLORS_U8 = {k: np.array([round(srgb_to_linear(c) * 255) for c in v] + [255], dtype=np.uint8) for k, v in COLORS.items()}
 
 
 def load_codelist(path: Path) -> dict[str, str]:
@@ -76,8 +89,7 @@ def ring_points(ring) -> list[tuple[float, float, float]]:
             pts.append((v[0], v[1], v[2]))
     if len(pts) > 1 and pts[0] == pts[-1]:
         pts = pts[:-1]
-    # doppelte Folgepunkte entfernen
-    clean = []
+    clean: list[tuple[float, float, float]] = []
     for p in pts:
         if not clean or clean[-1] != p:
             clean.append(p)
@@ -97,14 +109,13 @@ def newell_normal(pts) -> np.ndarray:
 
 
 def triangulate(rings: list[list[tuple[float, float, float]]]) -> tuple[np.ndarray, np.ndarray] | None:
-    """Polygon (Außenring + Löcher, 3D, planar) -> (Dreieckspunkte Nx3, Normale)."""
+    """Planares Polygon (Außenring + Löcher) -> (Punkte Nx3, Dreiecksindizes Mx3 mit Umlauf gegen die Außennormale)."""
     outer = rings[0]
     if len(outer) < 3:
         return None
     normal = newell_normal(outer)
     if not np.any(normal):
         return None
-    # Basis in der Polygonebene
     helper = np.array([1.0, 0, 0]) if abs(normal[0]) < 0.9 else np.array([0, 1.0, 0])
     u = np.cross(normal, helper); u /= np.linalg.norm(u)
     v = np.cross(normal, u)
@@ -114,12 +125,11 @@ def triangulate(rings: list[list[tuple[float, float, float]]]) -> tuple[np.ndarr
     idx = mapbox_earcut.triangulate_float64(pts2, ends)
     if len(idx) == 0:
         return None
-    tri = pts3[idx].reshape(-1, 3, 3)
-    # Umlaufsinn an die Außennormale angleichen (glTF: gegen den Uhrzeigersinn = Vorderseite)
-    cross = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
-    flip = (cross @ normal) < 0
+    tri = np.asarray(idx, dtype=np.int64).reshape(-1, 3)
+    a, b, c = pts3[tri[:, 0]], pts3[tri[:, 1]], pts3[tri[:, 2]]
+    flip = (np.cross(b - a, c - a) @ normal) < 0
     tri[flip] = tri[flip][:, [0, 2, 1]]
-    return tri.reshape(-1, 3), normal
+    return pts3, tri
 
 
 def text(el, path: str):
@@ -151,8 +161,8 @@ def address(el):
 
 def parse_building(b) -> dict:
     """Ein bldg:Building inkl. BuildingParts -> Attribute und Flächen (Typ, Ringe)."""
-    surfaces = []  # (typ, [ring, ring...])
-    ground_pts = []
+    surfaces = []
+    ground_rings = []
     all_pts = []
     containers = [b] + b.findall(".//bldg:BuildingPart", NS)
     for c in containers:
@@ -160,11 +170,10 @@ def parse_building(b) -> dict:
             for surf in bby:
                 typ = etree.QName(surf).localname
                 for poly in surf.iterfind(".//gml:Polygon", NS):
-                    rings = []
                     ext = poly.find("gml:exterior/gml:LinearRing", NS)
                     if ext is None:
                         continue
-                    rings.append(ring_points(ext))
+                    rings = [ring_points(ext)]
                     for inner in poly.iterfind("gml:interior/gml:LinearRing", NS):
                         r = ring_points(inner)
                         if len(r) >= 3:
@@ -174,13 +183,15 @@ def parse_building(b) -> dict:
                     surfaces.append((typ, rings))
                     all_pts.extend(rings[0])
                     if typ == "GroundSurface":
-                        ground_pts.extend(rings[0])
+                        ground_rings.append(rings[0])
     if not all_pts:
         return {}
     arr = np.array(all_pts)
+    ground_pts = [p for r in ground_rings for p in r]
     g = np.array(ground_pts) if ground_pts else arr
     heights = [float(h.text) for h in b.iterfind(".//bldg:measuredHeight", NS) if h.text]
     roof_types = [r.text for r in b.iterfind(".//bldg:roofType", NS) if r.text]
+    mh = text(b, "bldg:measuredHeight")
     return {
         "id": b.get("{http://www.opengis.net/gml}id"),
         "alkis_id": text(b, "core:externalReference/core:externalObject/core:name"),
@@ -188,11 +199,9 @@ def parse_building(b) -> dict:
         "funktion": text(b, "bldg:function"),
         "dachform": text(b, "bldg:roofType") or (roof_types[0] if roof_types else None),
         "dachformen_teile": sorted(set(roof_types)) if len(set(roof_types)) > 1 else None,
-        "hoehe_m": float(text(b, "bldg:measuredHeight")) if text(b, "bldg:measuredHeight") else (max(heights) if heights else None),
+        "hoehe_m": float(mh) if mh else (max(heights) if heights else None),
         "erstellt": text(b, "core:creationDate"),
         "grundriss_aktualitaet": gen_attr(b, "Grundrissaktualitaet"),
-        "datenquelle_bodenhoehe": gen_attr(b, "DatenquelleBodenhoehe"),
-        "datenquelle_dachhoehe": gen_attr(b, "DatenquelleDachhoehe"),
         "adresse": address(b),
         "bauteile": len(containers) - 1,
         "e": float(g[:, 0].mean()),
@@ -201,42 +210,76 @@ def parse_building(b) -> dict:
         "z_boden_max": float(g[:, 2].max()),
         "z_first": float(arr[:, 2].max()),
         "_surfaces": surfaces,
-        "_ground": [tuple(map(float, p)) for p in ground_pts],
+        "_ground_rings": ground_rings,
     }
 
 
-def write_glb(path: Path, positions: np.ndarray, normals: np.ndarray, colors: np.ndarray, ids: np.ndarray) -> None:
+class MeshBuilder:
+    def __init__(self, box: dict):
+        self.box = box
+        self.pos: list[np.ndarray] = []
+        self.col: list[np.ndarray] = []
+        self.bid: list[np.ndarray] = []
+        self.idx: list[np.ndarray] = []
+        self.count = 0
+
+    def add(self, pts3: np.ndarray, tri: np.ndarray, color: np.ndarray, building: int) -> None:
+        local = np.column_stack([pts3[:, 0] - self.box["e0"], pts3[:, 2], -(pts3[:, 1] - self.box["n0"])]).astype(np.float32)
+        self.pos.append(local)
+        self.col.append(np.tile(color, (len(local), 1)))
+        self.bid.append(np.full(len(local), building, dtype=np.float32))
+        self.idx.append((tri + self.count).astype(np.uint32).ravel())
+        self.count += len(local)
+
+    def add_socket(self, ring: list[tuple[float, float, float]], depth: float, building: int) -> int:
+        """Senkrechte Flächen von der Bodenkante um `depth` nach unten (Darstellungshilfe)."""
+        if len(ring) < 3 or depth <= 0:
+            return 0
+        r = np.array(ring, dtype=np.float64)
+        centroid = r[:, :2].mean(axis=0)
+        n = len(r)
+        quads = 0
+        for i in range(n):
+            p0, p1 = r[i], r[(i + 1) % n]
+            q0, q1 = p0.copy(), p1.copy()
+            q0[2] -= depth; q1[2] -= depth
+            pts = np.array([p0, p1, q1, q0])
+            tri = np.array([[0, 1, 2], [0, 2, 3]])
+            normal = np.cross(pts[1] - pts[0], pts[3] - pts[0])
+            mid = (p0[:2] + p1[:2]) / 2
+            if np.dot(normal[:2], mid - centroid) < 0:
+                tri = tri[:, [0, 2, 1]]
+            self.add(pts, tri, COLORS_U8["Sockel"], building)
+            quads += 1
+        return quads
+
+    def arrays(self):
+        return np.vstack(self.pos), np.vstack(self.col), np.concatenate(self.bid), np.concatenate(self.idx)
+
+
+def write_glb(path: Path, positions: np.ndarray, colors: np.ndarray, ids: np.ndarray, indices: np.ndarray) -> None:
     def pad(b: bytes, n: int = 4, fill: bytes = b"\x00") -> bytes:
         return b + fill * ((n - len(b) % n) % n)
 
-    blobs = [positions.astype("<f4").tobytes(), normals.astype("<f4").tobytes(),
-             colors.astype("<f4").tobytes(), ids.astype("<f4").tobytes()]
+    blobs = [positions.astype("<f4").tobytes(), colors.astype(np.uint8).tobytes(), ids.astype("<f4").tobytes(), indices.astype("<u4").tobytes()]
     views, accessors, offset = [], [], 0
-    count = len(positions)
-    specs = [("VEC3", True), ("VEC3", False), ("VEC3", False), ("SCALAR", False)]
-    for blob, (typ, with_minmax) in zip(blobs, specs):
-        views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(blob), "target": 34962})
-        acc = {"bufferView": len(views) - 1, "componentType": 5126, "count": count, "type": typ}
-        if with_minmax:
-            acc["min"] = [float(v) for v in positions.min(axis=0)]
-            acc["max"] = [float(v) for v in positions.max(axis=0)]
-        accessors.append(acc)
+    specs = [
+        {"componentType": 5126, "type": "VEC3", "count": len(positions), "min": positions.min(axis=0).tolist(), "max": positions.max(axis=0).tolist()},
+        {"componentType": 5121, "type": "VEC4", "count": len(colors), "normalized": True},
+        {"componentType": 5126, "type": "SCALAR", "count": len(ids)},
+        {"componentType": 5125, "type": "SCALAR", "count": len(indices)},
+    ]
+    for i, (blob, spec) in enumerate(zip(blobs, specs)):
+        views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(blob), "target": 34963 if i == 3 else 34962})
+        accessors.append({"bufferView": i} | spec)
         offset += len(pad(blob))
     bin_chunk = b"".join(pad(b) for b in blobs)
     gltf = {
-        "asset": {"version": "2.0", "generator": "sulzburg-3d scripts/04_buildings.py",
-                  "copyright": common.LICENSE["namensnennung"]},
-        "scene": 0,
-        "scenes": [{"nodes": [0]}],
-        "nodes": [{"mesh": 0, "name": "LoD2 Gebaeude"}],
-        "meshes": [{"name": "buildings", "primitives": [{
-            "attributes": {"POSITION": 0, "NORMAL": 1, "COLOR_0": 2, "_BUILDING": 3},
-            "material": 0, "mode": 4}]}],
-        "materials": [{"name": "lod2", "doubleSided": False,
-                       "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.9}}],
-        "buffers": [{"byteLength": len(bin_chunk)}],
-        "bufferViews": views,
-        "accessors": accessors,
+        "asset": {"version": "2.0", "generator": "sulzburg-3d scripts/04_buildings.py", "copyright": common.LICENSE["namensnennung"]},
+        "scene": 0, "scenes": [{"nodes": [0]}], "nodes": [{"mesh": 0, "name": "LoD2 Gebaeude"}],
+        "meshes": [{"name": "buildings", "primitives": [{"attributes": {"POSITION": 0, "COLOR_0": 1, "_BUILDING": 2}, "indices": 3, "material": 0, "mode": 4}]}],
+        "materials": [{"name": "lod2", "doubleSided": False, "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.9}}],
+        "buffers": [{"byteLength": len(bin_chunk)}], "bufferViews": views, "accessors": accessors,
     }
     json_chunk = pad(json.dumps(gltf, separators=(",", ":")).encode("utf-8"), 4, b" ")
     total = 12 + 8 + len(json_chunk) + 8 + len(bin_chunk)
@@ -248,13 +291,22 @@ def write_glb(path: Path, positions: np.ndarray, normals: np.ndarray, colors: np
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--count", type=int, default=common.BUILDING_COUNT, help="Anzahl der dem Mittelpunkt nächsten Gebäude")
-    ap.add_argument("--all", action="store_true", help="alle Gebäude im Ausschnitt")
+    ap.add_argument("--count", type=int, default=0, help="nur die N dem Marktplatz nächsten Gebäude (0 = alle im Umgriff)")
+    ap.add_argument("--sockel", type=float, default=2.0, help="Sockeltiefe unter der Bodenfläche in Metern (0 = kein Sockel)")
     args = ap.parse_args()
 
     box = common.aoi()
     roof_names = load_codelist(common.ROOT / "data" / "codelisten" / "RoofTypeTypeAdV.xml")
     func_names = load_codelist(common.ROOT / "data" / "codelisten" / "BuildingFunctionTypeAdV.xml")
+
+    gemeinde = json.loads((common.ROOT / "data" / "gemeinde.geojson").read_text(encoding="utf-8"))
+    kacheln = json.loads((common.ROOT / "data" / "kacheln.json").read_text(encoding="utf-8"))
+    gemeinde_geom = shape(gemeinde["features"][0]["geometry"])
+    area = gemeinde_geom.buffer(kacheln["rand_m"])
+    area_prep = prep(area)
+    gemeinde_prep = prep(gemeinde_geom)
+    bounds = area.bounds
+    gemeinde_namen = kacheln.get("gemeinden_im_umgriff", {})
 
     doc = common.load_sources()
     zips = [common.RAW / name for name, d in doc["downloads"].items() if d["produkt"] == "lod2"]
@@ -262,11 +314,10 @@ def main() -> int:
         sys.exit("Kein LoD2-Download protokolliert. Erst scripts/01_download.py ausführen.")
 
     buildings, used_files, info_text = [], [], None
-    gemeinden = set()
-    for zpath in zips:
+    for zpath in sorted(zips):
         with zipfile.ZipFile(zpath) as z:
             for name in z.namelist():
-                if name.lower().endswith("info_opendata_lod2_2026.txt") or ("INFO_OpenData" in name):
+                if "INFO_OpenData" in name and info_text is None:
                     info_text = z.read(name).decode("cp1252", "replace")
                 if not name.lower().endswith(".gml"):
                     continue
@@ -275,72 +326,60 @@ def main() -> int:
                 if env is not None:
                     lo = [float(v) for v in env.find("gml:lowerCorner", NS).text.split()]
                     hi = [float(v) for v in env.find("gml:upperCorner", NS).text.split()]
-                    if hi[0] <= box["e_min"] or lo[0] >= box["e_max"] or hi[1] <= box["n_min"] or lo[1] >= box["n_max"]:
+                    if hi[0] <= bounds[0] or lo[0] >= bounds[2] or hi[1] <= bounds[1] or lo[1] >= bounds[3]:
                         continue
-                print(f"lese {name}")
                 used_files.append(name)
                 for b in root.iterfind(".//core:cityObjectMember/bldg:Building", NS):
                     rec = parse_building(b)
                     if not rec:
                         continue
-                    if rec["gemeindeschluessel"]:
-                        gemeinden.add(rec["gemeindeschluessel"])
-                    if box["e_min"] <= rec["e"] <= box["e_max"] and box["n_min"] <= rec["n"] <= box["n_max"]:
-                        rec["abstand_m"] = math.hypot(rec["e"] - box["e0"], rec["n"] - box["n0"])
-                        buildings.append(rec)
+                    p = Point(rec["e"], rec["n"])
+                    if not area_prep.contains(p):
+                        continue
+                    rec["in_gemeinde"] = bool(gemeinde_prep.contains(p))
+                    rec["gemeinde"] = gemeinde_namen.get(rec["gemeindeschluessel"] or "", None)
+                    rec["abstand_m"] = math.hypot(rec["e"] - box["e0"], rec["n"] - box["n0"])
+                    buildings.append(rec)
+                print(f"gelesen {name}: {len(buildings)} Gebäude bisher")
 
-    n_in_aoi = len(buildings)
+    n_area = len(buildings)
     buildings.sort(key=lambda r: r["abstand_m"])
-    if not args.all:
+    if args.count:
         buildings = buildings[: args.count]
-    radius = max(r["abstand_m"] for r in buildings) if buildings else 0
 
-    pos, nrm, col, ids = [], [], [], []
-    n_poly, n_skipped = 0, 0
+    mb = MeshBuilder(box)
+    n_poly = n_skipped = n_sockel = 0
     for i, rec in enumerate(buildings):
         for typ, rings in rec["_surfaces"]:
-            res = triangulate(rings)
             n_poly += 1
+            res = triangulate(rings)
             if res is None:
                 n_skipped += 1
                 continue
-            tri, normal = res
-            local = np.column_stack([tri[:, 0] - box["e0"], tri[:, 2], -(tri[:, 1] - box["n0"])])
-            # Normale ins lokale System (x=E, y=Z, z=-N)
-            ln = np.array([normal[0], normal[2], -normal[1]])
-            c = np.array([srgb_to_linear(v) for v in COLORS.get(typ, COLORS["WallSurface"])])
-            pos.append(local)
-            nrm.append(np.tile(ln, (len(local), 1)))
-            col.append(np.tile(c, (len(local), 1)))
-            ids.append(np.full(len(local), i, dtype=np.float32))
-    positions = np.vstack(pos); normals = np.vstack(nrm); colors = np.vstack(col); bid = np.concatenate(ids)
+            pts3, tri = res
+            mb.add(pts3, tri, COLORS_U8.get(typ, COLORS_U8["WallSurface"]), i)
+        if args.sockel > 0:
+            for ring in rec["_ground_rings"]:
+                n_sockel += mb.add_socket(ring, args.sockel, i)
+    positions, colors, bid, indices = mb.arrays()
 
     common.WEB_DATA.mkdir(parents=True, exist_ok=True)
     glb = common.WEB_DATA / "buildings.glb"
-    write_glb(glb, positions, normals, colors, bid)
+    write_glb(glb, positions, colors, bid, indices)
 
-    out_list = []
+    out_list, ground_out = [], []
     for i, rec in enumerate(buildings):
         out_list.append({
-            "i": i,
-            "id": rec["id"],
-            "alkis_id": rec["alkis_id"],
-            "adresse": rec["adresse"],
-            "funktion": rec["funktion"],
-            "funktion_name": func_names.get(rec["funktion"] or "", None),
-            "dachform": rec["dachform"],
-            "dachform_name": roof_names.get(rec["dachform"] or "", None),
-            "dachformen_teile": rec["dachformen_teile"],
-            "hoehe_m": rec["hoehe_m"],
-            "bauteile": rec["bauteile"],
-            "erstellt": rec["erstellt"],
-            "grundriss_aktualitaet": rec["grundriss_aktualitaet"],
+            "i": i, "id": rec["id"], "alkis_id": rec["alkis_id"], "adresse": rec["adresse"],
+            "gemeinde": rec["gemeinde"], "in_gemeinde": rec["in_gemeinde"],
+            "funktion": rec["funktion"], "funktion_name": func_names.get(rec["funktion"] or "", None),
+            "dachform": rec["dachform"], "dachform_name": roof_names.get(rec["dachform"] or "", None),
+            "dachformen_teile": rec["dachformen_teile"], "hoehe_m": rec["hoehe_m"], "bauteile": rec["bauteile"],
+            "erstellt": rec["erstellt"], "grundriss_aktualitaet": rec["grundriss_aktualitaet"],
             "e": round(rec["e"], 2), "n": round(rec["n"], 2),
-            "z_boden_min": round(rec["z_boden_min"], 2), "z_boden_max": round(rec["z_boden_max"], 2),
-            "z_first": round(rec["z_first"], 2),
-            "abstand_m": round(rec["abstand_m"], 1),
-            "bodenpunkte": [[round(p[0], 2), round(p[1], 2), round(p[2], 2)] for p in rec["_ground"]],
+            "z_boden_min": round(rec["z_boden_min"], 2), "z_boden_max": round(rec["z_boden_max"], 2), "z_first": round(rec["z_first"], 2),
         })
+        ground_out.append({"i": i, "punkte": [[round(p[0], 2), round(p[1], 2), round(p[2], 2)] for r in rec["_ground_rings"] for p in r]})
 
     info_lines = {}
     if info_text:
@@ -350,40 +389,44 @@ def main() -> int:
                 k, v = line.split(":", 1)
                 info_lines[k.strip()] = v.strip()
 
+    n_in = sum(1 for r in buildings if r["in_gemeinde"])
+    erstellt = sorted({r["erstellt"] for r in buildings if r["erstellt"]})
+    grundriss = sorted({r["grundriss_aktualitaet"] for r in buildings if r["grundriss_aktualitaet"]})
     buildings_json = {
-        "ebene": "Gebäude (LoD2)",
-        "datei": "buildings.glb",
-        "koordinaten": "lokal: x = E - e0, y = Höhe NHN, z = -(N - n0)",
-        "e0": box["e0"], "n0": box["n0"], "epsg": box["epsg"],
-        "anzahl": len(buildings),
-        "anzahl_im_ausschnitt": n_in_aoi,
-        "auswahl": ("alle Gebäude im Ausschnitt" if args.all else
-                    f"die {len(buildings)} dem Marktplatz nächsten Gebäude (Radius {radius:.0f} m) von {n_in_aoi} im Ausschnitt"),
-        "polygone": n_poly, "polygone_uebersprungen": n_skipped, "dreiecke": len(positions) // 3,
-        "gemeindeschluessel": sorted(gemeinden),
+        "ebene": "Gebäude (LoD2)", "datei": "buildings.glb",
+        "koordinaten": "lokal: x = E - e0, y = Höhe NHN, z = -(N - n0)", "e0": box["e0"], "n0": box["n0"], "epsg": box["epsg"],
+        "anzahl": len(buildings), "anzahl_in_gemeinde": n_in, "anzahl_im_umgriff": n_area,
+        "auswahl": (f"die {len(buildings)} dem Marktplatz nächsten Gebäude" if args.count else
+                    f"alle {len(buildings)} Gebäude innerhalb der Gemeindegrenze plus {kacheln['rand_m']:.0f} m Rand, davon {n_in} in der Gemeinde Sulzburg"),
+        "sockel_m": args.sockel,
+        "sockel_hinweis": "Darstellungshilfe: senkrechte Flächen unter der LoD2-Bodenfläche, damit am Hang kein Spalt zum gröber aufgelösten Gelände entsteht. Kein Datum des LGL.",
+        "polygone": n_poly, "polygone_uebersprungen": n_skipped, "sockel_flaechen": n_sockel,
+        "dreiecke": len(indices) // 3, "vertices": len(positions),
+        "erstellt_von_bis": [erstellt[0], erstellt[-1]] if erstellt else None,
+        "grundriss_aktualitaet_von_bis": [grundriss[0], grundriss[-1]] if grundriss else None,
         "quelle": {
             "titel": "3D-Gebäudemodell LoD2 (CityGML), Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
-            "portal": common.LICENSE["portal"],
-            "dateien": used_files,
-            "lieferinformation": info_lines,
+            "portal": common.LICENSE["portal"], "dateien": used_files, "lieferinformation": info_lines,
             "codelisten": {
                 "dachform": "AdV RoofTypeTypeAdV.xml (repository.gdi-de.org/schemas/adv/citygml/Codelisten/)",
                 "gebaeudefunktion": "AdV BuildingFunctionTypeAdV.xml (repository.gdi-de.org/schemas/adv/citygml/Codelisten/)",
             },
-            "lizenz": common.LICENSE,
-            "verarbeitet_am": common.now_iso(),
+            "gemeindegrenze": gemeinde["quelle"]["titel"] + f", Stand {gemeinde['quelle']['aktualitaet']}",
+            "lizenz": common.LICENSE, "verarbeitet_am": common.now_iso(),
         },
         "gebaeude": out_list,
     }
-    (common.WEB_DATA / "buildings.json").write_text(json.dumps(buildings_json, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    (common.WEB_DATA / "buildings.json").write_text(json.dumps(buildings_json, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+    proc = common.ROOT / "data" / "processed"
+    proc.mkdir(parents=True, exist_ok=True)
+    (proc / "bodenpunkte.json").write_text(json.dumps(ground_out, separators=(",", ":")), encoding="utf-8")
 
-    doc["ebenen"]["gebaeude"] = {k: buildings_json[k] for k in ("ebene", "anzahl", "anzahl_im_ausschnitt", "auswahl", "dreiecke", "polygone_uebersprungen")}
+    doc["ebenen"]["gebaeude"] = {k: buildings_json[k] for k in ("ebene", "anzahl", "anzahl_in_gemeinde", "anzahl_im_umgriff", "auswahl", "sockel_m", "dreiecke", "polygone_uebersprungen", "erstellt_von_bis", "grundriss_aktualitaet_von_bis")}
     doc["ebenen"]["gebaeude"]["dateien"] = used_files
     doc["ebenen"]["gebaeude"]["lieferinformation"] = info_lines
     common.save_sources(doc)
-    print(f"Gebäude: {len(buildings)} von {n_in_aoi} im Ausschnitt, Radius {radius:.0f} m, "
-          f"{n_poly} Polygone ({n_skipped} übersprungen), {len(positions)//3} Dreiecke, GLB {glb.stat().st_size:,} B")
-    print("Lieferinformation:", info_lines)
+    print(f"Gebäude: {len(buildings)} ({n_in} in Sulzburg), {n_poly} Polygone ({n_skipped} übersprungen), {n_sockel} Sockelflächen, "
+          f"{len(indices)//3} Dreiecke, {len(positions)} Vertices, GLB {glb.stat().st_size:,} B, JSON {(common.WEB_DATA / 'buildings.json').stat().st_size:,} B")
     return 0
 
 

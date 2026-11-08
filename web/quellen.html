@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sulzburg 3D · Datenquellen und Grenzen</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  html, body { overflow: auto; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+  main h1 { font-size: 22px; margin: 0 0 4px; }
+  main h2 { font-size: 16px; margin: 28px 0 8px; color: var(--accent); }
+  main p, main li { font-size: 14px; color: var(--fg); }
+  main .muted { color: var(--muted); }
+  dl.src { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; font-size: 13px; background: var(--panel); padding: 12px 14px; border-radius: 10px; }
+  dl.src dt { color: var(--muted); } dl.src dd { margin: 0; }
+  code { font-size: 12px; background: #1b2028; padding: 1px 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="index.html">← zurück zur Karte</a></p>
+  <h1>Datenquellen und Grenzen</h1>
+  <p class="muted">Sulzburg 3D ist ein privates Projekt aus offenen Daten. Es ist kein Angebot der Stadt Sulzburg, keines Amtes und keines Unternehmens. Nichts auf dieser Seite ersetzt amtliche Auskünfte, Katasterunterlagen oder Fachplanungen.</p>
+  <div id="content">lädt …</div>
+</main>
+<script type="module" src="quellen.js"></script>
+</body>
+</html>

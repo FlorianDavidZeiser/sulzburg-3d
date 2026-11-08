@@ -1,0 +1,67 @@
+// Seite "Datenquellen und Grenzen": liest die Metadaten der aufbereiteten Ebenen und ergänzt sie um bekannte Lücken.
+async function j(url) { const r = await fetch(url); if (!r.ok) throw new Error(url); return r.json(); }
+const esc = (s) => String(s ?? "–").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const de = (iso) => (iso && /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(8, 10) + "." + iso.slice(5, 7) + "." + iso.slice(0, 4) : esc(iso));
+function block(rows) {
+  return `<dl class="src">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`;
+}
+(async () => {
+  const [idx, b, g] = await Promise.all([j("data/terrain/index.json"), j("data/buildings.json"), j("data/gemeinde.geojson")]);
+  const liz = idx.quelle.lizenz;
+  const lb = idx.luftbild;
+  const out = [];
+  out.push(`<h2>Lizenz der Geobasisdaten</h2><p>Alle Geobasisdaten stammen vom Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL) über das <a href="${liz.portal}" target="_blank" rel="noopener">Open GeoData Portal</a>. Lizenz: <a href="${liz.url}" target="_blank" rel="noopener">${esc(liz.name)}</a>. Namensnennung: <b>${esc(liz.namensnennung)}</b>. Koordinaten ETRS89/UTM 32N, Höhen NHN (DHHN2016).</p>`);
+
+  out.push(`<h2>Gelände</h2>` + block([
+    ["Herkunft", esc(idx.quelle.titel)],
+    ["Datenstand", `Laserscan-Befliegung ${idx.quelle.aktualitaet_laserscan.map(de).join(", ")} (je nach Teilkachel)`],
+    ["Genauigkeit", `Höhe ±${idx.quelle.hoehengenauigkeit_m.join("/")} m laut LGL, Original 1 m Raster`],
+    ["Darstellung", `${idx.anzahl_kacheln} Kacheln à ${idx.kachel_m} m, ${idx.res_siedlung_m} m Raster im Siedlungsbereich (${idx.anzahl_siedlung} Kacheln), ${idx.res_sonst_m} m sonst, Höhen als Mittel der 1-m-Zellen`],
+    ["Bekannte Lücken", "Das Höhenmodell ist bis zu sechs Jahre älter als Gebäude und Luftbild. Neubaugebiete, Baugruben und Aufschüttungen nach 2019/2020 fehlen. Zwischen Kacheln unterschiedlicher Auflösung verdecken Schürzen die Übergänge."],
+  ]));
+
+  out.push(`<h2>Luftbild</h2>` + (lb ? block([
+    ["Herkunft", esc(lb.quelle.titel)],
+    ["Datenstand", `Bildflug ${lb.quelle.bildflugdatum.map(de).join(", ")}, Kamera ${esc(lb.quelle.kamera.join(", "))}`],
+    ["Auflösung", `Original 20 cm, hier ${lb.aufloesungen_m.join(" / ")} m je nach Kachel, JPEG-komprimiert (${(lb.jpeg_bytes / 1e6).toFixed(1)} MB gesamt)`],
+    ["Bekannte Lücken", "Das Luftbild zeigt den Zustand eines Sommertags 2025 mit Belaubung. Dächer im Luftbild und LoD2-Dächer stammen aus unterschiedlichen Verfahren und können leicht versetzt wirken. Schatten im Luftbild sind eingebrannt und ändern sich nicht mit der Uhrzeit."],
+  ]) : "<p class='muted'>noch nicht aufbereitet</p>"));
+
+  const li = b.quelle.lieferinformation || {};
+  out.push(`<h2>Gebäude</h2>` + block([
+    ["Herkunft", esc(b.quelle.titel)],
+    ["Datenstand", `Auslesedatum ${esc(li["Auslesedatum"])}; Aktualität ${esc(li["Aktualität"])}; Grundrisse Stand ${b.grundriss_aktualitaet_von_bis ? b.grundriss_aktualitaet_von_bis.map(de).join(" bis ") : "–"}; Modelle erstellt ${b.erstellt_von_bis ? b.erstellt_von_bis.map(de).join(" bis ") : "–"}`],
+    ["Umfang", `${b.anzahl} Gebäude, davon ${b.anzahl_in_gemeinde} in der Gemeinde Sulzburg, Rest im Randbereich von Nachbargemeinden`],
+    ["Attribute", `Adresse, Gebäudefunktion und Dachform aus dem LoD2-Datensatz; Bezeichnungen aus den amtlichen AdV-Codelisten (${esc(b.quelle.codelisten.dachform.split(" (")[0])}, ${esc(b.quelle.codelisten.gebaeudefunktion.split(" (")[0])})`],
+    ["Darstellung", `Standardisierte Dachformen (LoD2), keine Fenster, keine Texturen. Unter jeder Bodenfläche ein Sockel von ${b.sockel_m} m als Darstellungshilfe, damit am Hang kein Spalt zum gröberen Gelände entsteht. ${esc(b.sockel_hinweis)}`],
+    ["Bekannte Lücken", "LoD2 enthält keine Gebäudenutzung jenseits der ALKIS-Funktion, keine Baujahre, keine Eigentümer. Dachaufbauten, Gauben und Anbauten unter der Erfassungsgrenze fehlen. Gebäude mit Höhe unter 1 m wurden laut LGL mit einem noch nicht aktualisierten DGM modelliert."],
+  ]));
+
+  const gq = g.quelle;
+  out.push(`<h2>Gemeindegrenze</h2>` + block([
+    ["Herkunft", esc(gq.titel)],
+    ["Datenstand", esc(gq.aktualitaet)],
+    ["Darstellung", `Gelbe Linie, 2,5 m über dem Gelände. Fläche ${g.features[0].properties.flaeche_km2} km². Das Modell zeigt die Gemeinde plus einen Rand von rund 250 m; außerhalb endet das Gelände.`],
+  ]));
+
+  out.push(`<h2>Wetter</h2>` + block([
+    ["Herkunft", `Deutscher Wetterdienst (DWD), Open Data. Abruf im Browser über die freie Schnittstelle <a href="https://brightsky.dev" target="_blank" rel="noopener">Bright Sky</a>.`],
+    ["Datenstand", "Live beim Laden der Seite; Stationsname, Entfernung und Zeitstempel stehen im Wetterfeld."],
+    ["Bekannte Lücken", "Es gibt keine DWD-Station in Sulzburg. Angezeigt wird die nächstgelegene Station (meist Müllheim, rund 6 km westlich, 275 m Höhe). Im Tal und am Hang kann das Wetter abweichen. Der Tagesverlauf mischt Messung und Vorhersage. Fällt die Schnittstelle aus, zeigt die Seite das an und rechnet nichts hinzu."],
+  ]));
+
+  out.push(`<h2>Sonnenstand</h2>` + block([
+    ["Herkunft", "Eigene Berechnung nach dem NOAA-Algorithmus (Jean Meeus) in <code>sun.js</code>, für den Marktplatz. Zeitzone Europe/Berlin mit Sommerzeit."],
+    ["Prüfung", "Gegen die Python-Bibliothek astral: Auf- und Untergang weichen unter einer Minute ab. Beide nutzen dieselben Formeln, der Test prüft die Umsetzung, nicht die Methode."],
+    ["Bekannte Lücken", "Schatten werden nur in einem Umkreis von 700 m um den Blickpunkt berechnet (Schattenkarte 2048 px). Weiter entfernte Berge werfen im Modell keinen Schatten ins Tal. Horizontabschattung durch Gelände außerhalb des Modells fehlt."],
+  ]));
+
+  out.push(`<h2>Was diese Seite nicht ist</h2><ul>
+    <li>Keine amtliche Karte und kein Ersatz für Liegenschaftskataster, Bebauungspläne oder Flurkarten.</li>
+    <li>Keine Aussage über Zustand, Sicherheit, Wert oder Nutzung einzelner Gebäude.</li>
+    <li>Keine personenbezogenen Daten: Adressen stammen aus dem offenen LoD2-Datensatz, Eigentümer oder Bewohner sind nicht enthalten.</li>
+    <li>Kein offizielles Angebot der Stadt Sulzburg oder eines Unternehmens; kein Wappen, kein Logo.</li>
+  </ul>`);
+  out.push(`<p class="muted">Technik: three.js (MIT), statische Dateien ohne Server-Logik, keine Cookies, keine Zähler. Quellcode und Datenpipeline: <a href="https://github.com/FlorianDavidZeiser/sulzburg-3d" target="_blank" rel="noopener">github.com/FlorianDavidZeiser/sulzburg-3d</a>. Stand der Aufbereitung: ${de(idx.quelle.verarbeitet_am)}.</p>`);
+  document.getElementById("content").innerHTML = out.join("\n");
+})().catch((e) => { document.getElementById("content").textContent = "Fehler beim Laden der Metadaten: " + e.message; });

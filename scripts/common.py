@@ -24,8 +24,12 @@ CENTER_LATLON = (47.8405182, 7.7081700)
 AOI_SIZE_M = 600          # Kantenlänge des quadratischen Ausschnitts in Metern
 BUILDING_COUNT = 50       # Anzahl Gebäude im Spike (die dem Marktplatz nächsten)
 
-# Kacheln des LGL Open GeoData Portals (2 km x 2 km, Benennung "E_N" in km, ungerade Kilometer)
+# Kacheln des LGL Open GeoData Portals (2 km x 2 km, Benennung "E_N" in km; Ost ungerade, Nord gerade Kilometer).
+# Phase 0: nur die Kachel des Ortskerns. Ab Phase 1 liefert scripts/00_gemeinde.py die Liste in data/kacheln.json.
 TILES = ["403_5298"]
+_KACHELN = ROOT / "data" / "kacheln.json"
+if _KACHELN.exists():
+    TILES = [k["kachel"] for k in json.loads(_KACHELN.read_text(encoding="utf-8"))["kacheln"]]
 
 LICENSE = {
     "name": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
@@ -78,7 +82,10 @@ def save_sources(doc: dict) -> None:
     doc["lizenz"] = LICENSE
     doc["aktualisiert"] = now_iso()
     SOURCES.parent.mkdir(parents=True, exist_ok=True)
-    SOURCES.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    payload = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
+    SOURCES.write_text(payload, encoding="utf-8")
+    WEB_DATA.mkdir(parents=True, exist_ok=True)
+    (WEB_DATA / "sources.json").write_text(payload, encoding="utf-8")  # Kopie für die Quellenseite
 
 
 def local_xyz(e: float, n: float, z: float, box: dict) -> tuple[float, float, float]:

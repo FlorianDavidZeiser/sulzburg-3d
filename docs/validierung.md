@@ -1,90 +1,63 @@
-# Validierung Phase 0 (automatisch erzeugt)
+# Validierung Phase 1 (automatisch erzeugt)
 
-Erzeugt am 2026-11-08T19:46:59+00:00 durch `scripts/05_validate.py`.
+Erzeugt am 2026-11-08T20:27:03+00:00 durch `scripts/05_validate.py`.
 
 ## 1. Gebäude gegen Gelände
 
-Verglichen wird die Höhe jedes Eckpunkts der LoD2-Bodenflächen (GroundSurface) mit der bilinear interpolierten DGM1-Höhe an derselben Lage. Positive Werte: Gebäudeboden liegt über dem Gelände.
+Jeder Eckpunkt der LoD2-Bodenflächen (GroundSurface) wird mit der Geländehöhe an derselben Lage verglichen, einmal gegen das DGM1 in 1 m (Quelle) und einmal gegen das im Browser dargestellte Gelände (5 m im Siedlungsbereich, 20 m sonst). Positive Werte: Gebäudeboden über dem Gelände.
 
-- Bodenpunkte geprüft: **369** an 50 Gebäuden
-- Mittlere Abweichung: **-0.41 m**, Median -0.34 m, mittlerer Betrag 0.69 m
-- Innerhalb ±0,5 m: **58 %**, innerhalb ±1,0 m: **83 %**, größter Betrag 13.26 m
-- Gebäude mit Median über 1 m oder weniger als der Hälfte der Punkte innerhalb ±0,5 m: **13**
+- Geprüft: **2366 Gebäude, 18786 Bodenpunkte**
+- Gegen DGM1: Mittel -0.67 m, Median -0.39 m, innerhalb ±0,5 m **54 %**, innerhalb ±1 m **72 %**, Extreme -7.1 / +13.5 m
+- Gegen dargestelltes Gelände: Mittel -0.67 m, innerhalb ±1 m **73 %**, Punkte höher als der Sockel (2.0 m) reicht: **0.7 %**
+- Gebäude, die komplett sichtbar schweben (alle Bodenpunkte höher als der Sockel): **0**; Gebäude mit einzelnen Ecken über dem Sockel: **8**
 
-Auffällige Gebäude:
+Gebäude mit einzelnen Ecken über dem Sockel (größte zuerst):
 
-- Nr. 0, Hauptstraße 56, Sulzburg (Museum): Median -1.31 m, Spanne -1.43 bis +13.26 m, 13 % innerhalb ±0,5 m, Bauteile: 2
-- Nr. 2, Hauptstraße 62, Sulzburg (Geschäftsgebäude): Median -1.47 m, Spanne -2.38 bis +0.01 m, 8 % innerhalb ±0,5 m, Bauteile: 9
-- Nr. 4, Hauptstraße 60, Sulzburg (Rathaus): Median -0.63 m, Spanne -0.84 bis -0.01 m, 20 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 8, Hauptstraße 57, Sulzburg (Wohn- und Geschäftsgebäude): Median -0.56 m, Spanne -0.67 bis +0.02 m, 38 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 9, Alte Postgasse 2, Sulzburg (Wohnhaus): Median -0.90 m, Spanne -1.52 bis +0.01 m, 33 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 15, Hauptstraße 52, 54, Sulzburg (Wohn- und Betriebsgebäude): Median -0.95 m, Spanne -1.79 bis +0.04 m, 25 % innerhalb ±0,5 m, Bauteile: 2
-- Nr. 18, Hauptstraße 58, Sulzburg (Wohnhaus): Median -1.27 m, Spanne -2.14 bis -0.04 m, 12 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 22, Hauptstraße, Sulzburg (Schuppen): Median -0.88 m, Spanne -1.61 bis -0.01 m, 40 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 27, Hauptstraße, Sulzburg (Schuppen): Median -2.23 m, Spanne -3.03 bis +0.02 m, 14 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 32, Hauptstraße, Sulzburg (Schuppen): Median -0.66 m, Spanne -0.71 bis +0.01 m, 40 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 39, Hauptstraße 48, Sulzburg (Wohn- und Geschäftsgebäude): Median -0.98 m, Spanne -1.56 bis +0.00 m, 33 % innerhalb ±0,5 m, Bauteile: 0
-- Nr. 42, Hauptstraße, Sulzburg (Betriebsgebäude): Median -0.74 m, Spanne -0.83 bis -0.06 m, 10 % innerhalb ±0,5 m, Bauteile: 2
-- Nr. 47, Hauptstraße, Sulzburg (Betriebsgebäude): Median -0.52 m, Spanne -0.88 bis +0.00 m, 44 % innerhalb ±0,5 m, Bauteile: 0
+- Nr. 548, Ernst-Leitz-Weg 1, Sulzburg (Kirche): Ecke bis +13.47 m über dargestelltem Gelände, gegen DGM1 Median -0.51 m, Bauteile 4
+- Nr. 1777, Weinstraße 4, Sulzburg (Kirche): Ecke bis +13.35 m über dargestelltem Gelände, gegen DGM1 Median -0.41 m, Bauteile 3
+- Nr. 0, Hauptstraße 56, Sulzburg (Museum): Ecke bis +13.29 m über dargestelltem Gelände, gegen DGM1 Median -1.31 m, Bauteile 2
+- Nr. 1515, ohne Adresse (Brücke): Ecke bis +8.35 m über dargestelltem Gelände, gegen DGM1 Median +5.04 m, Bauteile 0
+- Nr. 1510, ohne Adresse (Brücke): Ecke bis +5.28 m über dargestelltem Gelände, gegen DGM1 Median +2.04 m, Bauteile 0
+- Nr. 1487, ohne Adresse (Brücke): Ecke bis +3.44 m über dargestelltem Gelände, gegen DGM1 Median +1.12 m, Bauteile 0
+- Nr. 184, ohne Adresse (Brücke): Ecke bis +2.38 m über dargestelltem Gelände, gegen DGM1 Median +2.72 m, Bauteile 0
+- Nr. 580, ohne Adresse (Brücke): Ecke bis +2.28 m über dargestelltem Gelände, gegen DGM1 Median +2.45 m, Bauteile 0
 
-Einordnung: Das LoD2-Modell wurde vom LGL aus Grundrissen, Laserscan und dem jeweils aktuellen DGM1 abgeleitet. Das hier genutzte DGM1 stammt vom Laserscan 2019; bei Bauteilen, die auf anderen Bauteilen sitzen (z. B. Türme, Dachaufbauten), liegt die Bodenfläche des Bauteils bewusst über dem Gelände. Große Spannen innerhalb eines Gebäudes sind daher nicht automatisch Fehler.
+Einordnung: Das LGL setzt die LoD2-Bodenfläche am tiefsten Geländepunkt des Grundrisses an, am Hang stecken die Wände daher im Gelände (negative Werte, gewollt). Positive Werte gegen das DGM1 entstehen bei Bauteilen, die auf anderen Bauteilen sitzen (Türme, Aufbauten), und bei Geländeänderungen nach der Laserscan-Befliegung. Positive Werte gegen das dargestellte Gelände entstehen zusätzlich durch die Mittelung auf 5 m beziehungsweise 20 m; dafür gibt es den Sockel.
 
-| Nr. | Adresse | Punkte | Median | Min | Max | ±0,5 m | Bauteile |
-|---|---|---|---|---|---|---|---|
-| 0 | Hauptstraße 56, Sulzburg | 15 | -1.31 | -1.43 | +13.26 | 13 % | 2 |
-| 1 | Hauptstraße 61, Sulzburg | 4 | -0.49 | -0.78 | -0.02 | 50 % | 0 |
-| 2 | Hauptstraße 62, Sulzburg | 49 | -1.47 | -2.38 | +0.01 | 8 % | 9 |
-| 3 | Hauptstraße 65, Sulzburg | 5 | -0.22 | -0.37 | +0.01 | 100 % | 0 |
-| 4 | Hauptstraße 60, Sulzburg | 10 | -0.63 | -0.84 | -0.01 | 20 % | 0 |
-| 5 | Hauptstraße 59, Sulzburg | 9 | -0.22 | -0.33 | -0.02 | 100 % | 0 |
-| 6 | Hauptstraße 63, Sulzburg | 6 | -0.45 | -0.49 | -0.02 | 100 % | 0 |
-| 7 | Sulzburg | 4 | -0.02 | -0.04 | -0.00 | 100 % | 0 |
-| 8 | Hauptstraße 57, Sulzburg | 8 | -0.56 | -0.67 | +0.02 | 38 % | 0 |
-| 9 | Alte Postgasse 2, Sulzburg | 9 | -0.90 | -1.52 | +0.01 | 33 % | 0 |
-| 10 | Hauptstraße 67, Sulzburg | 6 | -0.21 | -0.50 | -0.00 | 83 % | 0 |
-| 11 | Hauptstraße 64, Sulzburg | 5 | -0.39 | -0.99 | -0.00 | 60 % | 0 |
-| 12 | Hauptstraße, Sulzburg | 4 | -0.14 | -0.18 | +0.04 | 100 % | 0 |
-| 13 | Hauptstraße, Sulzburg | 4 | -0.31 | -0.36 | +0.34 | 100 % | 0 |
-| 14 | Hauptstraße, Sulzburg | 4 | -0.04 | -0.09 | -0.03 | 100 % | 0 |
-| 15 | Hauptstraße 52, 54, Sulzburg | 12 | -0.95 | -1.79 | +0.04 | 25 % | 2 |
-| 16 | Hauptstraße, Sulzburg | 9 | -0.14 | -0.47 | +0.17 | 100 % | 0 |
-| 17 | Hauptstraße 55, Sulzburg | 4 | -0.25 | -0.68 | -0.05 | 75 % | 0 |
-| 18 | Hauptstraße 58, Sulzburg | 8 | -1.27 | -2.14 | -0.04 | 12 % | 0 |
-| 19 | Hauptstraße, Sulzburg | 5 | -0.29 | -0.47 | -0.01 | 100 % | 0 |
-| 20 | Hauptstraße, Sulzburg | 4 | -0.41 | -0.76 | +0.11 | 50 % | 0 |
-| 21 | Hauptstraße 50, Sulzburg | 4 | -0.47 | -1.07 | -0.02 | 50 % | 0 |
-| 22 | Hauptstraße, Sulzburg | 5 | -0.88 | -1.61 | -0.01 | 40 % | 0 |
-| 23 | Hauptstraße, Sulzburg | 4 | -0.12 | -0.24 | -0.01 | 100 % | 0 |
-| 24 | Hauptstraße, Sulzburg | 13 | -0.20 | -0.72 | -0.02 | 69 % | 0 |
-| 25 | Hauptstraße 69, Sulzburg | 7 | -0.30 | -0.76 | +0.04 | 57 % | 0 |
-| 26 | Hauptstraße, Sulzburg | 6 | -0.49 | -0.60 | +0.01 | 67 % | 0 |
-| 27 | Hauptstraße, Sulzburg | 7 | -2.23 | -3.03 | +0.02 | 14 % | 0 |
-| 28 | Hauptstraße, Sulzburg | 6 | -0.24 | -0.37 | -0.03 | 100 % | 0 |
-| 29 | Hauptstraße, Sulzburg | 4 | -0.05 | -0.15 | +0.02 | 100 % | 0 |
-| 30 | Ernst-Bark-Gasse 2, Sulzburg | 8 | -0.42 | -0.66 | -0.00 | 62 % | 0 |
-| 31 | Sulzburg | 6 | -0.12 | -0.18 | +0.01 | 100 % | 0 |
-| 32 | Hauptstraße, Sulzburg | 5 | -0.66 | -0.71 | +0.01 | 40 % | 0 |
-| 33 | Hauptstraße, Sulzburg | 4 | -0.08 | -0.22 | -0.01 | 100 % | 0 |
-| 34 | Hauptstraße, Sulzburg | 5 | -0.04 | -0.19 | +0.03 | 100 % | 0 |
-| 35 | Alte Postgasse, Sulzburg | 5 | -0.09 | -0.37 | -0.01 | 100 % | 0 |
-| 36 | Sulzburg | 6 | -0.21 | -0.36 | +0.00 | 100 % | 0 |
-| 37 | Hauptstraße, Sulzburg | 4 | -0.23 | -1.01 | +0.01 | 75 % | 0 |
-| 38 | Hauptstraße 66, Sulzburg | 13 | -0.16 | -0.57 | -0.00 | 69 % | 0 |
-| 39 | Hauptstraße 48, Sulzburg | 6 | -0.98 | -1.56 | +0.00 | 33 % | 0 |
-| 40 | Alte Postgasse, Sulzburg | 5 | -0.13 | -0.20 | -0.08 | 100 % | 0 |
-| 41 | Hauptstraße, Sulzburg | 4 | -0.13 | -0.22 | +0.00 | 100 % | 0 |
-| 42 | Hauptstraße, Sulzburg | 10 | -0.74 | -0.83 | -0.06 | 10 % | 2 |
-| 43 | Hauptstraße 71, Sulzburg | 6 | -0.18 | -0.34 | -0.06 | 100 % | 0 |
-| 44 | Alte Postgasse 4, Sulzburg | 5 | -0.13 | -0.39 | -0.01 | 100 % | 0 |
-| 45 | Hauptstraße, Sulzburg | 8 | -0.23 | -0.73 | -0.01 | 75 % | 0 |
-| 46 | Hauptstraße, Sulzburg | 6 | -0.36 | -1.34 | +0.01 | 67 % | 0 |
-| 47 | Hauptstraße, Sulzburg | 9 | -0.52 | -0.88 | +0.00 | 44 % | 0 |
-| 48 | Ernst-Bark-Gasse, Sulzburg | 8 | -0.20 | -0.37 | +0.00 | 100 % | 0 |
-| 49 | Ernst-Bark-Gasse, Sulzburg | 6 | -0.31 | -0.36 | -0.01 | 100 % | 0 |
+## 2. Stichprobe Adressen gegen OpenStreetMap
 
-## 2. Sonnenstand gegen unabhängige Referenz
+20 zufällig gewählte Wohngebäude mit Hausnummer (fester Zufallsstartwert) wurden über Nominatim in OpenStreetMap gesucht. Verglichen wird der Abstand zwischen LoD2-Grundrissmittel und OSM-Koordinate. Quelle: © OpenStreetMap-Mitwirkende, ODbL.
 
-Die eigene Berechnung in `web/sun.js` (NOAA-Algorithmus) wird mit der Python-Bibliothek `astral` verglichen (Standort 47.84052° N, 7.70817° O, Zeiten in UTC).
+- OSM-Treffer mit Hausnummer: **18 von 20**, Abstand Median **2 m**, größter 7 m, 18 innerhalb 25 m
+
+| Nr. | Adresse (LoD2) | OSM-Treffer | Abstand | Hausnummer gefunden |
+|---|---|---|---|---|
+| 894 | Bleigrubenweg 5 | building Nr. 5 | 3 m | ja |
+| 1224 | Neubergweg 31 | building Nr. 31 | 1 m | ja |
+| 628 | Bannholzweg 5 | building Nr. 5 | 3 m | ja |
+| 819 | Ernst-Leitz-Weg 4 a | building Nr. 4a | 0 m | ja |
+| 1043 | Am Schlittenbuck 10 | building Nr. 10 | 1 m | ja |
+| 1553 | Wüstgasse 1 | building Nr. 1 | 2 m | ja |
+| 43 | Hauptstraße 71 | place Nr. 71 | 7 m | ja |
+| 1537 | Wüstgasse 6 | building Nr. 6 | 3 m | ja |
+| 2183 | Hohlenmatt 1 | building Nr. 1 | 2 m | ja |
+| 1952 | Hohlenbergstraße 3 | building Nr. 3 | 1 m | ja |
+| 1148 | Neubergweg 23 | place Nr. 23 | 2 m | ja |
+| 237 | Im Brühl 18 | building Nr. 18 | 3 m | ja |
+| 1146 | Salzmatten 5 | building Nr. 5 | 4 m | ja |
+| 2033 | In den Bachteln 2 | building Nr. 2 | 0 m | ja |
+| 306 | Kirchbachweg 8 | building Nr. 8 | 1 m | ja |
+| 1 | Hauptstraße 61 | building Nr. 61 | 1 m | ja |
+| 1021 | Im Eichhölzle 7 | building Nr. 7 | 6 m | ja |
+| 815 | Käppelematten 12 | residential | 88 m | nur Straße/Ort |
+| 1948 | Am Rebberg 5 | building Nr. 5 | 3 m | ja |
+| 1092 | Im Wachental 1 a | residential | 13 m | nur Straße/Ort |
+
+Einordnung: In OSM ist die Adresse oft am Gebäudeumriss oder als Punkt erfasst; Abstände bis rund 25 m sind bei größeren Grundstücken normal. Fehlt die Hausnummer in OSM, liefert Nominatim nur die Straße, dann ist der Abstand nicht aussagekräftig. Die Stichprobe prüft die Lage der amtlichen Adresse, nicht die Geometrie.
+
+## 3. Sonnenstand gegen Referenz
+
+`web/sun.js` (NOAA) gegen die Python-Bibliothek `astral`, Zeiten UTC. Beide nutzen dieselben Formeln; der Test prüft die Umsetzung.
 
 | Datum | Aufgang sun.js | Aufgang astral | Diff | Untergang sun.js | Untergang astral | Diff |
 |---|---|---|---|---|---|---|
@@ -94,28 +67,17 @@ Die eigene Berechnung in `web/sun.js` (NOAA-Algorithmus) wird mit der Python-Bib
 | 2026-12-21 | 07:15:32 | 07:15:45 | -0.2 min | 15:38:55 | 15:38:41 | +0.2 min |
 | 2026-11-08 | 06:24:31 | 06:24:29 | +0.0 min | 16:01:11 | 16:00:39 | +0.5 min |
 
-| Zeitpunkt (UTC) | Azimut sun.js | Azimut astral | Höhe sun.js | Höhe astral |
-|---|---|---|---|---|
-| 2026-03-20T06:00 | 94.42° | 94.42° | 4.00° | 4.00° |
-| 2026-03-20T09:00 | 132.36° | 132.36° | 31.31° | 31.31° |
-| 2026-03-20T12:00 | 187.86° | 187.86° | 41.86° | 41.86° |
-| 2026-03-20T15:00 | 238.90° | 238.90° | 25.11° | 25.11° |
-| 2026-03-20T18:00 | 274.39° | 274.39° | -3.81° | -3.81° |
-| 2026-06-21T06:00 | 78.75° | 78.75° | 21.92° | 21.92° |
-| 2026-06-21T09:00 | 115.75° | 115.75° | 51.44° | 51.44° |
-| 2026-06-21T12:00 | 195.86° | 195.86° | 64.93° | 64.93° |
-| 2026-06-21T15:00 | 258.36° | 258.36° | 42.23° | 42.23° |
-| 2026-06-21T18:00 | 291.18° | 291.18° | 12.62° | 12.62° |
-| 2026-09-22T06:00 | 96.87° | 96.87° | 6.71° | 6.71° |
-| 2026-09-22T09:00 | 135.98° | 135.98° | 33.37° | 33.37° |
-| 2026-09-22T12:00 | 192.79° | 192.79° | 41.66° | 41.66° |
-| 2026-09-22T15:00 | 242.26° | 242.26° | 23.08° | 23.08° |
-| 2026-12-21T09:00 | 145.90° | 145.90° | 11.52° | 11.52° |
-| 2026-12-21T12:00 | 187.91° | 187.91° | 18.39° | 18.39° |
-| 2026-12-21T15:00 | 227.43° | 227.43° | 4.44° | 4.44° |
-| 2026-11-08T06:00 | 109.74° | 109.74° | -4.52° | -4.52° |
-| 2026-11-08T09:00 | 146.27° | 146.27° | 19.08° | 19.08° |
-| 2026-11-08T12:00 | 192.43° | 192.43° | 24.68° | 24.68° |
-| 2026-11-08T15:00 | 234.02° | 234.02° | 8.12° | 8.12° |
+Größte Abweichung: **0.8 min**.
 
-Größte Abweichung: Auf-/Untergang **0.8 min**, Azimut **0.00°**, Höhe **0.00°**.
+## 4. Ladevolumen
+
+| Bestandteil | Dateien | MB |
+|---|---|---|
+| Gelände (Höhen + Index) | 2 | 1.2 |
+| Luftbild (JPEG-Kacheln) | 147 | 9.0 |
+| Gebäude (GLB + JSON) | 2 | 6.6 |
+| Sonstige Daten | 2 | 0.0 |
+| three.js + Anwendung | 11 | 2.4 |
+| **Gesamt** | | **19.3** |
+
+Bei 20 Mbit/s entspricht das rund 8 s, bei 50 Mbit/s rund 3 s. Gelände und Gebäude kommen zuerst, Luftbildkacheln laden nach (Siedlung zuerst).

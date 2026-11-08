@@ -5,3 +5,5 @@ __pycache__/
 *.pyc
 .DS_Store
 node_modules/
+# Zwischenergebnisse nur für die Validierung
+data/processed/

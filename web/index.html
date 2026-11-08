@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sulzburg 3D · Spike</title>
-<meta name="description" content="Privater Prototyp: Ortskern von Sulzburg aus offenen Geodaten des LGL Baden-Württemberg. Kein offizielles Angebot.">
+<title>Sulzburg 3D</title>
+<meta name="description" content="Privater Prototyp: die Gemeinde Sulzburg als 3D-Modell aus offenen Geodaten des LGL Baden-Württemberg und Wetterdaten des DWD. Kein offizielles Angebot.">
 <link rel="stylesheet" href="style.css">
 <script type="importmap">
 { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
@@ -14,22 +14,27 @@
 <canvas id="c"></canvas>
 <div id="hud">
   <section class="panel" id="sunpanel">
-    <h1>Sulzburg 3D <span>Spike, Phase 0 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
-    <label for="date">Datum</label>
+    <h1>Sulzburg 3D <span>Phase 1 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
+    <label for="date">Datum <span class="seasons"><button data-d="03-20">Frühling</button><button data-d="06-21">Sommer</button><button data-d="09-22">Herbst</button><button data-d="12-21">Winter</button></span></label>
     <input type="date" id="date">
     <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b></label>
     <input type="range" id="time" min="0" max="1439" step="5" value="720">
     <div id="suninfo">–</div>
-    <div style="margin-top:8px">
+    <div class="toggles">
       <label class="inline"><input type="checkbox" id="shadows" checked> Schatten</label>
       <label class="inline"><input type="checkbox" id="ortho" checked> Luftbild</label>
-      <label class="inline"><input type="checkbox" id="wire"> Gitter</label>
-      <label class="inline">Gelände <select id="step"><option value="1">1 m</option><option value="2">2 m</option><option value="4">4 m</option></select></label>
+      <label class="inline"><input type="checkbox" id="grenze" checked> Gemeindegrenze</label>
+      <label class="inline">Gelände <select id="lod"><option value="1">fein</option><option value="2">grob</option></select></label>
     </div>
     <div id="fps">–</div>
   </section>
+  <section class="panel" id="weather">
+    <h2>Wetter</h2>
+    <div id="weatherbody">lädt …</div>
+    <label class="inline small"><input type="checkbox" id="clouds"> Bewölkung dämpft die Sonne</label>
+  </section>
   <section class="panel" id="info" hidden></section>
-  <div id="loading" class="panel">Lade Gelände, Luftbild und Gebäude …</div>
+  <div id="loading" class="panel">Lade Gelände, Luftbild und Gebäude …<div id="progress"></div></div>
   <section class="panel" id="sources">–</section>
 </div>
 <script type="module" src="app.js"></script>
