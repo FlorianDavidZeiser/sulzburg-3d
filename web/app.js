@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { sunPosition, sunTimes, zonedToUtc, formatLocal } from "./sun.js";
+import { sunPosition, sunTimes, zonedToUtc, formatLocal, tzOffsetMs } from "./sun.js";
 
 const TZ = "Europe/Berlin";
 const params = new URLSearchParams(location.search);
@@ -341,6 +341,7 @@ function setupPicking() {
       `<dt>Gelände hier</dt><dd>${dgm == null ? "–" : fmt(dgm) + " m NHN (DGM1, Darstellung)"}</dd>` +
       `<dt>Grundriss</dt><dd>Stand ${g.grundriss_aktualitaet || "–"}, Modell ${g.erstellt || "–"}</dd>` +
       `<dt>ID</dt><dd style="font-family:monospace;font-size:11px">${g.id}</dd></dl>` +
+      sunlightInfo(idx) +
       `<div class="hint">LGL LoD2, dl-de/by-2-0. Bauteile: ${g.bauteile}. Klick ins Leere schließt.</div>`;
   });
 }
@@ -385,6 +386,93 @@ function setupNavigation() {
   }
 }
 
+// ---------- Sonne auf dem Dach (vorberechnet in scripts/06_sunlight.py) ----------
+function monthIndex() { return parseInt($("date").value.slice(5, 7), 10) - 1; }
+function utcMinutesToLocal(dayIso, minutes) {
+  if (minutes < 0) return "–";
+  const d = new Date(`${dayIso}T00:00:00Z`);
+  const local = (minutes + tzOffsetMs(d, TZ) / 60000 + 1440) % 1440;
+  return `${String(Math.floor(local / 60)).padStart(2, "0")}:${String(Math.round(local % 60)).padStart(2, "0")}`;
+}
+function hm(min) { return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")} min`; }
+function sunlightInfo(idx) {
+  const sl = meta.sunlight;
+  if (!sl) return "";
+  const vals = sl.werte[idx];
+  const row = (m) => {
+    const [first, last, minutes] = vals.slice(m * 3, m * 3 + 3);
+    const day = sl.tage[m];
+    const label = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short" }).format(new Date(day + "T12:00:00Z"));
+    return `<dt>${label}</dt><dd>${minutes > 0 ? `${utcMinutesToLocal(day, first)} bis ${utcMinutesToLocal(day, last)} Uhr, ${hm(minutes)} von ${hm(sl.moegliche_minuten[m])}` : "keine direkte Sonne am First"}</dd>`;
+  };
+  const m = monthIndex();
+  const months = m === 11 ? [11, 5] : m === 5 ? [5, 11] : [m, 11, 5];
+  return `<h3>Sonne auf dem First</h3><dl>${months.map(row).join("")}</dl>` +
+    `<div class="hint">Geländehorizont aus dem DGM1, ohne Nachbargebäude und Bäume. Referenztag ist der 21. des Monats.</div>`;
+}
+function setupSunlightLayer() {
+  const sl = meta.sunlight;
+  if (!sl) { $("sunlayerWrap").hidden = true; return; }
+  const attr = buildingsMesh.geometry.getAttribute("color");
+  const bid = buildingsMesh.geometry.getAttribute("_building");
+  const orig = meta.originalColors;
+  // Dachflächen erkennen: Originalfarbe der Dächer (linear, aus scripts/04_buildings.py)
+  const roofRef = [0.71, 0.36, 0.28].map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  const isRoof = new Uint8Array(attr.count);
+  for (let i = 0; i < attr.count; i++) {
+    const o = i * 3;
+    if (Math.abs(orig[o] - roofRef[0]) < 0.03 && Math.abs(orig[o + 1] - roofRef[1]) < 0.03 && Math.abs(orig[o + 2] - roofRef[2]) < 0.03) isRoof[i] = 1;
+  }
+  // Farbskala mit klaren Stufen (angelehnt an Viridis): wenig Sonne violett, viel Sonne gelb
+  const stops = [0x440154, 0x3b528b, 0x21918c, 0x5ec962, 0xfde725].map((c) => new THREE.Color(c));
+  const tmp = new THREE.Color();
+  const ramp = (f) => { const x = Math.min(0.9999, Math.max(0, f)) * (stops.length - 1); const i = Math.floor(x); return tmp.copy(stops[i]).lerp(stops[i + 1], x - i); };
+  // Spannweite je Monat über alle Gebäude, damit Unterschiede sichtbar werden (Legende nennt die Grenzen)
+  const range = sl.tage.map((_, m) => { const xs = sl.werte.map((v) => v[m * 3 + 2]).sort((a, b) => a - b); return [xs[Math.floor(xs.length * 0.05)], xs[Math.floor(xs.length * 0.95)]]; });
+  const apply = () => {
+    const on = $("sunlayer").checked;
+    const m = monthIndex();
+    const possible = sl.moegliche_minuten[m];
+    const [lo, hi] = range[m];
+    for (let i = 0; i < attr.count; i++) {
+      const o = i * 3;
+      if (!on || !isRoof[i]) { attr.setXYZ(i, orig[o], orig[o + 1], orig[o + 2]); continue; }
+      const b = Math.round(bid.getX(i));
+      const minutes = sl.werte[b][m * 3 + 2];
+      const f = hi > lo ? Math.min(1, Math.max(0, (minutes - lo) / (hi - lo))) : 1;
+      ramp(f).convertSRGBToLinear();
+      attr.setXYZ(i, tmp.r, tmp.g, tmp.b);
+    }
+    attr.needsUpdate = true;
+    const label = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" }).format(new Date(sl.tage[m] + "T12:00:00Z"));
+    $("sunlegend").hidden = !on;
+    const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => `<span class="swatch" style="background:#${ramp(f).getHexString()}"></span>`).join("");
+    $("sunlegend").innerHTML = `Direkte Sonne am First am ${label}: ${hm(lo)} ${ticks} ${hm(hi)}<br><span class="muted">Skala zwischen den 5 % sonnenärmsten und 5 % sonnenreichsten Gebäuden; möglich wären ${hm(possible)}.</span>`;
+  };
+  $("sunlayer").addEventListener("change", apply);
+  $("date").addEventListener("input", () => { if ($("sunlayer").checked) apply(); });
+  document.querySelectorAll(".seasons button").forEach((b) => b.addEventListener("click", () => { if ($("sunlayer").checked) setTimeout(apply, 0); }));
+}
+
+// ---------- DWD-Warnungen (über Bright Sky) ----------
+const SEVERITY = { minor: "Wetterwarnung", moderate: "Markante Wetterwarnung", severe: "Unwetterwarnung", extreme: "Extreme Unwetterwarnung" };
+async function loadAlerts() {
+  const [lat, lon] = latLon;
+  const box = $("alerts");
+  try {
+    const d = await loadJson(`https://api.brightsky.dev/alerts?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+    const fmt = (iso) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+    if (!d.alerts || !d.alerts.length) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = d.alerts.map((a) => `<div class="alert ${a.severity}"><b>${a.headline_de || a.event_de}</b> <span class="muted">(${SEVERITY[a.severity] || a.severity}, ${fmt(a.onset)} bis ${fmt(a.expires)} Uhr)</span>` +
+      `<details><summary>Details</summary>${a.description_de || ""}${a.instruction_de ? "<br>" + a.instruction_de : ""}</details></div>`).join("") +
+      `<div class="muted small">Amtliche Warnungen des Deutschen Wetterdienstes für ${d.location?.name || "Sulzburg"}, abgerufen über Bright Sky.</div>`;
+  } catch (e) {
+    box.hidden = false;
+    box.innerHTML = `<span class="muted small">DWD-Warnungen derzeit nicht abrufbar.</span>`;
+  }
+}
+
 function setupToggles() {
   $("shadows").addEventListener("change", (e) => { renderer.shadowMap.enabled = e.target.checked; sun.castShadow = e.target.checked;
     scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; }); });
@@ -414,11 +502,12 @@ function resize() {
 
 async function main() {
   const t0 = performance.now();
-  const [index, buildings, gemeinde, heightsBuf] = await Promise.all([
+  const [index, buildings, gemeinde, heightsBuf, sunlight] = await Promise.all([
     loadJson("data/terrain/index.json"), loadJson("data/buildings.json"), loadJson("data/gemeinde.geojson"),
     fetch("data/terrain/heights.bin").then((r) => r.arrayBuffer()),
+    loadJson("data/sunlight.json").catch(() => null),
   ]);
-  Object.assign(meta, { index, buildings, gemeinde });
+  Object.assign(meta, { index, buildings, gemeinde, sunlight });
   latLon = utmToLatLon(index.e0, index.n0);
   buildTerrain(heightsBuf);
   centerY = terrainHeightAt(0, 0) ?? 340;
@@ -442,8 +531,16 @@ async function main() {
   buildingsMesh.castShadow = true;
   buildingsMesh.receiveShadow = true;
   scene.add(buildingsMesh);
+  { // Originalfarben als normalisierte Werte sichern (COLOR_0 liegt als normalisiertes Uint8 vor)
+    const ca = buildingsMesh.geometry.getAttribute("color");
+    const orig = new Float32Array(ca.count * 3);
+    for (let i = 0; i < ca.count; i++) { orig[i * 3] = ca.getX(i); orig[i * 3 + 1] = ca.getY(i); orig[i * 3 + 2] = ca.getZ(i); }
+    meta.originalColors = orig;
+  }
   setupNavigation();
+  setupSunlightLayer();
   showSources();
+  loadAlerts();
   updateProgress();
   window.__loadMs = Math.round(performance.now() - t0);
 

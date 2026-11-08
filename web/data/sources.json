@@ -656,9 +656,18 @@
         "Aktualität DGM": "(von 2000 bis 2025)",
         "Aktualität DOM": "(von 2000 bis 2025)"
       }
+    },
+    "sonne_dach": {
+      "ebene": "Sonne auf dem Dach",
+      "gebaeude": 2366,
+      "dezember_minuten_median": 374,
+      "dezember_ohne_sonne": 10,
+      "juni_minuten_median": 876,
+      "moegliche_minuten_dez": 500,
+      "moegliche_minuten_jun": 957
     }
   },
-  "aktualisiert": "2026-11-08T20:27:03+00:00",
+  "aktualisiert": "2026-11-08T20:52:30+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,

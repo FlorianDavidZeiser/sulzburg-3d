@@ -50,6 +50,23 @@ function block(rows) {
     ["Bekannte Lücken", "Es gibt keine DWD-Station in Sulzburg. Angezeigt wird die nächstgelegene Station (meist Müllheim, rund 6 km westlich, 275 m Höhe). Im Tal und am Hang kann das Wetter abweichen. Der Tagesverlauf mischt Messung und Vorhersage. Fällt die Schnittstelle aus, zeigt die Seite das an und rechnet nichts hinzu."],
   ]));
 
+  try {
+    const sl = await j("data/sunlight.json");
+    const dec = sl.tage.indexOf("2026-12-21");
+    out.push(`<h2>Sonne auf dem Dach</h2>` + block([
+      ["Herkunft", "Eigene Berechnung aus dem DGM1 (Geländehorizont) und der Sonnenbahn, vorberechnet für den 21. jedes Monats (<code>scripts/06_sunlight.py</code>)."],
+      ["Methode", esc(sl.methode.horizont) + ". " + esc(sl.methode.sonnenbahn) + "."],
+      ["Darstellung", `Klick-Info je Gebäude (erste und letzte Minute direkter Sonne am First, Dauer gegenüber dem möglichen Maximum) und Einfärbung der Dächer für den gewählten Monat. Am 21. Dezember sind ${sl.moegliche_minuten[dec]} Minuten möglich.`],
+      ["Bekannte Lücken", `Nicht berücksichtigt: ${sl.methode.nicht_beruecksichtigt.join(", ")}. Der Horizont reicht im Median ${Math.round(sl.methode.reichweite_median_m)} m weit, am Rand des Modells weniger (mindestens ${Math.round(sl.methode.reichweite_min_m)} m); weiter entfernte Berge fehlen. Der Wert gilt für den First, nicht für einzelne Dachflächen.`],
+    ]));
+  } catch (e) { /* ohne sunlight.json keine Angabe */ }
+
+  out.push(`<h2>Wetterwarnungen</h2>` + block([
+    ["Herkunft", "Amtliche Warnungen des Deutschen Wetterdienstes für die Warnzelle der Stadt Sulzburg, live über Bright Sky."],
+    ["Darstellung", "Banner mit Überschrift, Stufe, Gültigkeit und aufklappbarer Beschreibung. Ohne Warnung bleibt das Feld unsichtbar."],
+    ["Bekannte Lücken", "Nur Warnungen, keine Vorwarninformationen. Fällt die Schnittstelle aus, wird das angezeigt."],
+  ]));
+
   out.push(`<h2>Sonnenstand</h2>` + block([
     ["Herkunft", "Eigene Berechnung nach dem NOAA-Algorithmus (Jean Meeus) in <code>sun.js</code>, für den Marktplatz. Zeitzone Europe/Berlin mit Sommerzeit."],
     ["Prüfung", "Gegen die Python-Bibliothek astral: Auf- und Untergang weichen unter einer Minute ab. Beide nutzen dieselben Formeln, der Test prüft die Umsetzung, nicht die Methode."],

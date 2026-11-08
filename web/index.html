@@ -28,6 +28,8 @@
       <label class="inline">Gelände <select id="lod"><option value="1">fein</option><option value="2">grob</option></select></label>
       <label class="inline"><input type="checkbox" id="autorotate"> Drehen</label>
     </div>
+    <div id="sunlayerWrap"><label class="inline"><input type="checkbox" id="sunlayer"> Sonne auf den Dächern einfärben</label>
+      <div id="sunlegend" class="small muted" hidden></div></div>
     <div class="jumps" id="jumps"><span>Springe zu:</span></div>
     <details class="help"><summary>Bedienung</summary>
       Ziehen dreht, rechte Maustaste oder zwei Finger verschieben, Rad zoomt zur Mausposition.
@@ -35,6 +37,7 @@
     </details>
     <div id="fps">–</div>
   </section>
+  <section class="panel" id="alerts" hidden></section>
   <section class="panel" id="weather">
     <h2>Wetter</h2>
     <div id="weatherbody">lädt …</div>
