@@ -29,6 +29,16 @@ controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI / 2 - 0.02;
 controls.minDistance = 20;
 controls.maxDistance = 9000;
+controls.screenSpacePanning = false;   // Verschieben parallel zum Boden
+controls.zoomToCursor = true;          // Rad zoomt zur Mausposition
+controls.listenToKeyEvents(window);    // Pfeiltasten verschieben
+controls.keyPanSpeed = 40;
+controls.autoRotateSpeed = 0.4;
+const keys = new Set();
+window.addEventListener("keydown", (e) => { if (e.target.tagName !== "INPUT" && e.target.tagName !== "SELECT") keys.add(e.key.toLowerCase()); });
+window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+window.addEventListener("blur", () => keys.clear());
+let targetGoal = null; // Zielpunkt für sanftes Umsetzen des Blickpunkts (Doppelklick, Sprungknöpfe)
 
 const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x6b5a46, 1.0);
 scene.add(hemi);
@@ -335,6 +345,46 @@ function setupPicking() {
   });
 }
 
+function setupNavigation() {
+  const ray = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  canvas.addEventListener("dblclick", (e) => {
+    mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const objs = [...terrainGroup.children]; if (buildingsMesh) objs.push(buildingsMesh);
+    const hit = ray.intersectObjects(objs, false)[0];
+    if (hit) targetGoal = hit.point.clone();
+  });
+  $("autorotate").addEventListener("change", (e) => { controls.autoRotate = e.target.checked; });
+  canvas.addEventListener("pointerdown", () => { if (controls.autoRotate) { controls.autoRotate = false; $("autorotate").checked = false; } });
+  // Sprungziele: Marktplatz, Gemarkungen (Schwerpunkt der Gebäude je Gemarkung), Überblick
+  const { e0, n0 } = meta.index;
+  const inRing = (x, y, ring) => { let inside = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside; } return inside; };
+  const jumps = [{ name: "Marktplatz", x: 0, z: 0, dist: 450 }];
+  for (const f of meta.gemeinde.features.filter((f) => f.properties.typ === "Gemarkung")) {
+    const ring = f.geometry.coordinates[0];
+    const pts = meta.buildings.gebaeude.filter((g) => inRing(g.e, g.n, ring));
+    if (pts.length < 10) continue;
+    const e = pts.reduce((a, g) => a + g.e, 0) / pts.length, n = pts.reduce((a, g) => a + g.n, 0) / pts.length;
+    if (Math.hypot(e - e0, n - n0) < 400) continue; // Gemarkung Sulzburg = Marktplatz
+    jumps.push({ name: f.properties.name, x: e - e0, z: -(n - n0), dist: 700 });
+  }
+  jumps.push({ name: "Überblick", x: 0, z: 0, dist: 2600, overview: true });
+  const box = $("jumps");
+  for (const jmp of jumps) {
+    const b = document.createElement("button"); b.textContent = jmp.name;
+    b.addEventListener("click", () => {
+      const y = terrainHeightAt(jmp.x, jmp.z) ?? centerY;
+      const goal = new THREE.Vector3(jmp.x, y, jmp.z);
+      const dir = jmp.overview ? new THREE.Vector3(-0.75, 0.55, 0.6) : new THREE.Vector3(-0.45, 0.55, 0.7);
+      camera.position.copy(goal).addScaledVector(dir.normalize(), jmp.dist);
+      controls.target.copy(goal); targetGoal = null;
+    });
+    box.appendChild(b);
+  }
+}
+
 function setupToggles() {
   $("shadows").addEventListener("change", (e) => { renderer.shadowMap.enabled = e.target.checked; sun.castShadow = e.target.checked;
     scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; }); });
@@ -392,13 +442,40 @@ async function main() {
   buildingsMesh.castShadow = true;
   buildingsMesh.receiveShadow = true;
   scene.add(buildingsMesh);
+  setupNavigation();
   showSources();
   updateProgress();
   window.__loadMs = Math.round(performance.now() - t0);
 
   let frames = 0, last = performance.now();
+  const fwd = new THREE.Vector3(), right = new THREE.Vector3(), delta = new THREE.Vector3();
   renderer.setAnimationLoop((now) => {
+    // WASD / QE: über das Gelände fahren, Geschwindigkeit abhängig vom Abstand zum Blickpunkt
+    if (keys.size) {
+      const dist = camera.position.distanceTo(controls.target);
+      const speed = Math.max(0.5, dist * 0.012);
+      camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+      right.crossVectors(fwd, camera.up).normalize();
+      delta.set(0, 0, 0);
+      if (keys.has("w")) delta.addScaledVector(fwd, speed);
+      if (keys.has("s")) delta.addScaledVector(fwd, -speed);
+      if (keys.has("d")) delta.addScaledVector(right, speed);
+      if (keys.has("a")) delta.addScaledVector(right, -speed);
+      if (keys.has("q")) delta.y -= speed * 0.5;
+      if (keys.has("e")) delta.y += speed * 0.5;
+      if (delta.lengthSq()) { camera.position.add(delta); controls.target.add(delta); }
+    }
+    // Blickpunkt sanft zum Ziel ziehen (Doppelklick, Sprungknöpfe)
+    if (targetGoal) {
+      delta.copy(targetGoal).sub(controls.target);
+      if (delta.length() < 0.5) { targetGoal = null; } else { delta.multiplyScalar(0.12); camera.position.add(delta); controls.target.add(delta); }
+    }
     controls.update();
+    // Blickpunkt auf dem Boden halten, Kamera nicht unter das Gelände lassen
+    const th = terrainHeightAt(controls.target.x, controls.target.z);
+    if (th != null && !targetGoal) { const dy = th - controls.target.y; if (Math.abs(dy) > 0.05) { controls.target.y += dy; camera.position.y += dy; } }
+    const ch = terrainHeightAt(camera.position.x, camera.position.z);
+    if (ch != null && camera.position.y < ch + 4) camera.position.y = ch + 4;
     updateSunPosition();
     renderer.render(scene, camera);
     frames++;

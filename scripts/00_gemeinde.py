@@ -46,6 +46,17 @@ def main() -> int:
     gemeinden = {f"0{sr.record['gemeinde_i']}": sr.record["gemeinde_n"] for sr in records
                  if shape(sr.shape.__geo_interface__).intersects(umgriff)}
 
+    # Gemarkungen der Gemeinde (amtliche Ortsteil-Gliederung im Kataster)
+    gbase = next(n for n in z.namelist() if n.endswith("v_al_gemarkung.shp"))[:-4]
+    gr = shapefile.Reader(shp=io.BytesIO(z.read(gbase + ".shp")), dbf=io.BytesIO(z.read(gbase + ".dbf")), shx=io.BytesIO(z.read(gbase + ".shx")))
+    gemarkungen = []
+    for sr in gr.iterShapeRecords():
+        if sr.record["gemeinde_i"] != GEMEINDESCHLUESSEL:
+            continue
+        gg = shape(sr.shape.__geo_interface__)
+        gemarkungen.append({"type": "Feature", "properties": {"typ": "Gemarkung", "name": sr.record["gemarkun_1"], "gemarkung_id": sr.record["gemarkung_"],
+                                                              "flaeche_km2": round(gg.area / 1e6, 2)}, "geometry": mapping(gg.simplify(2.0))})
+
     gemeinde = {
         "type": "FeatureCollection",
         "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::25832"}},
@@ -54,7 +65,7 @@ def main() -> int:
             "url": URL, "aktualitaet": aktualitaet, "shape": base.split("/")[0], "lizenz": common.LICENSE,
         },
         "features": [{"type": "Feature", "properties": {k: v for k, v in props.items() if k in ("gml_id", "gemeinde_i", "gemeinde_n", "kreis_name", "region_nam", "beginn")}
-                      | {"flaeche_km2": round(geom.area / 1e6, 2)}, "geometry": mapping(geom)}],
+                      | {"typ": "Gemeinde", "flaeche_km2": round(geom.area / 1e6, 2)}, "geometry": mapping(geom)}] + gemarkungen,
     }
     payload = json.dumps(gemeinde, ensure_ascii=False, separators=(",", ":")) + "\n"
     (common.ROOT / "data" / "gemeinde.geojson").write_text(payload, encoding="utf-8")
@@ -81,7 +92,8 @@ def main() -> int:
                "bbox": [round(v) for v in geom.bounds], "bbox_mit_rand": [round(v) for v in buffered.bounds],
                "flaeche_km2": round(geom.area / 1e6, 2), "gemeinden_im_umgriff": gemeinden, "kacheln": tiles}
     (common.ROOT / "data" / "kacheln.json").write_text(json.dumps(kacheln, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    print(f"Gemeinde {props['gemeinde_n']}: {geom.area/1e6:.2f} km², bbox {[round(v) for v in geom.bounds]}, Stand {aktualitaet}")
+    print(f"Gemeinde {props['gemeinde_n']}: {geom.area/1e6:.2f} km², bbox {[round(v) for v in geom.bounds]}, Stand {aktualitaet}, "
+          f"Gemarkungen: {', '.join(g['properties']['name'] for g in gemarkungen)}")
     print(f"{len(tiles)} Kacheln:", " ".join(t["kachel"] for t in tiles))
     return 0
 

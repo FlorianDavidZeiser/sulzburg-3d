@@ -37,6 +37,11 @@ input[type=date], select { font: inherit; background: #1b2028; color: var(--fg);
 #progress { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .warn { color: var(--accent); }
 #startHint { font-size: 11px; margin-top: 4px; }
+.jumps { margin-top: 8px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.jumps button { font: inherit; font-size: 12px; color: var(--fg); background: #1b2028; border: 1px solid #333a45; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.jumps button:hover { border-color: var(--accent); }
+details.help { margin-top: 8px; font-size: 11px; color: var(--muted); }
+details.help summary { cursor: pointer; color: var(--fg); }
 @media (max-width: 900px) {
   #hud { grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; gap: 8px; padding: 8px; }
   #sunpanel { grid-column: 1; grid-row: 1; }
