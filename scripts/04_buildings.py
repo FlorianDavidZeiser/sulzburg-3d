@@ -119,6 +119,25 @@ def newell_normal(pts) -> np.ndarray:
     return n / length if length > 0 else n
 
 
+def roof_metrics(rings) -> tuple[float, float, float]:
+    """Fläche (m², Außenring minus Löcher), Neigung (Grad), Ausrichtung (Grad, 0 = Süd, 90 = West, -90 = Ost)."""
+    def newell(pts):
+        n = np.zeros(3)
+        for i in range(len(pts)):
+            x1, y1, z1 = pts[i]; x2, y2, z2 = pts[(i + 1) % len(pts)]
+            n += ((y1 - y2) * (z1 + z2), (z1 - z2) * (x1 + x2), (x1 - x2) * (y1 + y2))
+        return n
+    outer = newell(rings[0])
+    area = np.linalg.norm(outer) / 2 - sum(np.linalg.norm(newell(r)) / 2 for r in rings[1:])
+    n = outer / (np.linalg.norm(outer) or 1)
+    if n[2] < 0:
+        n = -n
+    tilt = float(np.degrees(np.arccos(min(1.0, n[2]))))
+    az = float(np.degrees(np.arctan2(n[0], n[1])) % 360)   # 0 = Nord, 90 = Ost
+    aspect = (az - 180 + 180) % 360 - 180                  # 0 = Süd, 90 = West, -90 = Ost
+    return float(area), tilt, float(aspect)
+
+
 def triangulate(rings: list[list[tuple[float, float, float]]]) -> tuple[np.ndarray, np.ndarray] | None:
     """Planares Polygon (Außenring + Löcher) -> (Punkte Nx3, Dreiecksindizes Mx3 mit Umlauf gegen die Außennormale)."""
     outer = rings[0]
@@ -233,10 +252,12 @@ class MeshBuilder:
         self.col: list[np.ndarray] = []
         self.bid: list[np.ndarray] = []
         self.uv: list[np.ndarray] = []
+        self.pv: list[np.ndarray] = []
         self.idx: list[np.ndarray] = []
         self.count = 0
 
-    def add(self, pts3: np.ndarray, tri: np.ndarray, color: np.ndarray, building: int, uv: np.ndarray | None = None) -> None:
+    def add(self, pts3: np.ndarray, tri: np.ndarray, color: np.ndarray, building: int, uv: np.ndarray | None = None, pv: int = 0) -> None:
+        self.pv.append(np.full(len(pts3), pv, dtype=np.float32))
         local = np.column_stack([pts3[:, 0] - self.box["e0"], pts3[:, 2], -(pts3[:, 1] - self.box["n0"])]).astype(np.float32)
         self.pos.append(local)
         self.col.append(np.tile(color, (len(local), 1)))
@@ -270,6 +291,7 @@ class MeshBuilder:
 
     def arrays(self):
         uv = np.vstack(self.uv) if self.with_uv and self.uv else None
+        self.pv_array = np.concatenate(self.pv) if self.pv else None
         return np.vstack(self.pos), np.vstack(self.col), np.concatenate(self.bid), np.concatenate(self.idx), uv
 
     @property
@@ -307,6 +329,8 @@ def write_glb(path: Path, primitives: list[dict], images: list[str]) -> None:
         }
         if pr.get("uv") is not None:
             attrs["TEXCOORD_0"] = add_accessor(pr["uv"], "<f4", 5126, "VEC2", 34962)
+        if pr.get("pv") is not None:
+            attrs["_PV"] = add_accessor(pr["pv"], "<f4", 5126, "SCALAR", 34962)
         idx_acc = add_accessor(pr["indices"], "<u4", 5125, "SCALAR", 34963)
         mat = {"name": pr["name"], "doubleSided": False, "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.9}}
         if pr.get("texture") is not None:
@@ -440,6 +464,7 @@ def main() -> int:
     roofs = [MeshBuilder(box, with_uv=True) for _ in atlases]
     roofs_plain = MeshBuilder(box)
     n_poly = n_skipped = n_sockel = 0
+    roof_rows = []  # Dachflächen-Kennwerte für scripts/10_solar.py
     for i, rec in enumerate(buildings):
         for typ, rings in rec["_surfaces"]:
             n_poly += 1
@@ -448,12 +473,17 @@ def main() -> int:
                 n_skipped += 1
                 continue
             pts3, tri = res
+            pv = 0
+            if typ == "RoofSurface":
+                area, tilt, aspect = roof_metrics(rings)
+                pv = common.pv_eignung(area, tilt, aspect)
+                roof_rows.append([i, round(area, 2), round(tilt, 1), round(aspect, 1), pv])
             if typ == "RoofSurface" and i in placements:
                 a, px, py, e_min_i, n_max_i = placements[i]
                 uv = np.column_stack([(px + (pts3[:, 0] - e_min_i) / ATLAS_RES) / ATLAS_PX, (py + (n_max_i - pts3[:, 1]) / ATLAS_RES) / ATLAS_PX])
-                roofs[a].add(pts3, tri, np.array([255, 255, 255, 255], dtype=np.uint8), i, uv)
+                roofs[a].add(pts3, tri, np.array([255, 255, 255, 255], dtype=np.uint8), i, uv, pv)
             elif typ == "RoofSurface":
-                roofs_plain.add(pts3, tri, COLORS_U8["RoofSurface"], i)
+                roofs_plain.add(pts3, tri, COLORS_U8["RoofSurface"], i, pv=pv)
             else:
                 walls.add(pts3, tri, COLORS_U8.get(typ, COLORS_U8["WallSurface"]), i)
         if args.sockel > 0:
@@ -475,10 +505,10 @@ def main() -> int:
         if rb.empty:
             continue
         rp, rc, rbid, ri, ruv = rb.arrays()
-        primitives.append({"name": f"roofs_{a}", "positions": rp, "colors": rc, "ids": rbid, "indices": ri, "uv": ruv, "texture": a})
+        primitives.append({"name": f"roofs_{a}", "positions": rp, "colors": rc, "ids": rbid, "indices": ri, "uv": ruv, "texture": a, "pv": rb.pv_array})
     if not roofs_plain.empty:
         pp, pc, pb, pi, _ = roofs_plain.arrays()
-        primitives.append({"name": "roofs_plain", "positions": pp, "colors": pc, "ids": pb, "indices": pi})
+        primitives.append({"name": "roofs_plain", "positions": pp, "colors": pc, "ids": pb, "indices": pi, "pv": roofs_plain.pv_array})
     glb = common.WEB_DATA / "buildings.glb"
     write_glb(glb, primitives, images)
     n_tri = sum(len(p["indices"]) // 3 for p in primitives)
@@ -539,6 +569,7 @@ def main() -> int:
     (common.WEB_DATA / "buildings.json").write_text(json.dumps(buildings_json, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     proc = common.ROOT / "data" / "processed"
     proc.mkdir(parents=True, exist_ok=True)
+    (proc / "dachflaechen.json").write_text(json.dumps({"spalten": ["gebaeude", "flaeche_m2", "neigung_grad", "ausrichtung_grad", "pv_eignung"], "werte": roof_rows}, separators=(",", ":")), encoding="utf-8")
     (proc / "bodenpunkte.json").write_text(json.dumps(ground_out, separators=(",", ":")), encoding="utf-8")
 
     doc["ebenen"]["gebaeude"] = {k: buildings_json[k] for k in ("ebene", "anzahl", "anzahl_in_gemeinde", "anzahl_im_umgriff", "auswahl", "sockel_m", "dreiecke", "polygone_uebersprungen", "erstellt_von_bis", "grundriss_aktualitaet_von_bis")}

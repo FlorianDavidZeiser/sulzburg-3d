@@ -5,12 +5,12 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1116; col
 a { color: inherit; }
 canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 #hud { position: fixed; inset: 0; pointer-events: none; display: grid;
-  grid-template-columns: 300px 1fr 320px; grid-template-rows: auto auto auto 1fr auto; gap: 12px; padding: 12px; }
+  grid-template-columns: 320px 1fr 340px; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 12px; padding: 12px; }
 .panel { pointer-events: auto; background: var(--panel); backdrop-filter: blur(8px); border-radius: 10px;
   padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
-#sunpanel { grid-column: 1; grid-row: 1; }
-#weather { grid-column: 1; grid-row: 3; font-size: 12px; }
-#alerts { grid-column: 1; grid-row: 2; font-size: 12px; border-left: 4px solid var(--accent); }
+#sunpanel { grid-column: 1; grid-row: 1 / 4; align-self: start; max-height: 100%; overflow: auto; scrollbar-width: thin; }
+#weather { grid-column: 3; grid-row: 2; font-size: 12px; }
+#alerts { grid-column: 3; grid-row: 1; font-size: 12px; border-left: 4px solid var(--accent); }
 #alerts .alert.severe, #alerts .alert.extreme { color: #ffb4a2; }
 #alerts details { margin-top: 4px; } #alerts summary { cursor: pointer; color: var(--muted); }
 .muted { color: var(--muted); } .small { font-size: 11px; }
@@ -27,8 +27,8 @@ table.deps td { padding: 1px 8px 1px 0; vertical-align: top; }
 #weather h2 { font-size: 13px; margin: 0 0 4px; }
 #weather .src { color: var(--muted); margin-top: 6px; font-size: 11px; }
 #weather b { font-size: 15px; }
-#info { grid-column: 3; grid-row: 1 / 4; align-self: start; max-height: calc(100vh - 140px); overflow: auto; }
-#sources { grid-column: 1 / 4; grid-row: 5; font-size: 12px; color: var(--muted); }
+#info { grid-column: 3; grid-row: 3; align-self: start; max-height: 100%; overflow: auto; scrollbar-width: thin; }
+#sources { grid-column: 1 / 4; grid-row: 4; font-size: 12px; color: var(--muted); }
 #sources b { color: var(--fg); }
 h1 { font-size: 16px; margin: 0 0 8px; font-weight: 600; }
 h1 span { display: block; font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 2px; }
@@ -46,7 +46,7 @@ input[type=date], select { font: inherit; background: #1b2028; color: var(--fg);
 #info dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 12px; }
 #info dt { color: var(--muted); } #info dd { margin: 0; }
 #info .hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
-#loading { grid-column: 2; grid-row: 4; align-self: center; justify-self: center; text-align: center; }
+#loading { grid-column: 2; grid-row: 3; align-self: center; justify-self: center; text-align: center; }
 #loading.done { display: none; }
 #progress { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .warn { color: var(--accent); }
@@ -57,12 +57,40 @@ input[type=date], select { font: inherit; background: #1b2028; color: var(--fg);
 details.help { margin-top: 8px; font-size: 11px; color: var(--muted); }
 details.help summary { cursor: pointer; color: var(--fg); }
 @media (max-width: 900px) {
-  #hud { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto 1fr auto; gap: 8px; padding: 8px; }
-  #sunpanel { grid-column: 1; grid-row: 1; }
-  #alerts { grid-column: 1; grid-row: 2; }
-  #weather { grid-column: 1; grid-row: 3; }
-  #info { grid-column: 1; grid-row: 4; max-height: 40vh; }
-  #loading { grid-column: 1; grid-row: 5; }
-  #sources { grid-column: 1; grid-row: 6; max-height: 24vh; overflow: auto; }
+  #hud { grid-template-columns: 1fr; grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: 6px; padding: 6px; }
+  #sunpanel { grid-column: 1; grid-row: 1; max-height: 38vh; padding: 10px; }
+  #alerts { grid-column: 1; grid-row: 2; padding: 6px 10px; }
+  #alerts details, #alerts .small { display: none; }
+  #weather { display: none; }
+  #info { grid-column: 1; grid-row: 3; max-height: 30vh; }
+  #loading { grid-column: 1; grid-row: 4; }
+  #sources { grid-column: 1; grid-row: 5; max-height: 10vh; overflow: auto; font-size: 10px; padding: 6px 10px; }
   .seasons { float: none; display: block; margin-top: 4px; }
+  h1 { font-size: 14px; margin-bottom: 4px; }
+  #scenarioBanner { top: auto; bottom: 12vh; }
 }
+
+/* Abschnitte im Bedienfeld */
+details.sec { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px; }
+details.sec > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--fg); list-style: none; }
+details.sec > summary::before { content: "▸ "; color: var(--muted); }
+details.sec[open] > summary::before { content: "▾ "; }
+.footlinks { margin-top: 6px; }
+.search input { width: 100%; margin-top: 8px; font: inherit; font-size: 13px; background: #1b2028; color: var(--fg); border: 1px solid #333a45; border-radius: 6px; padding: 5px 8px; }
+#scenarioBanner { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); pointer-events: none; z-index: 5;
+  background: rgba(242,181,68,0.95); color: #1a1408; font-weight: 700; font-size: 12px; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 999px; }
+#tooltip { position: fixed; pointer-events: none; z-index: 6; background: rgba(12,15,20,0.94); color: var(--fg); font-size: 12px; padding: 5px 8px; border-radius: 6px; box-shadow: 0 3px 12px rgba(0,0,0,.4); max-width: 260px; }
+/* Szenario */
+#scenario .kpi { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 6px 0; }
+#scenario .kpi div { background: #1b2028; border-radius: 6px; padding: 6px; text-align: center; }
+#scenario .kpi b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+#scenario .kpi span { font-size: 10px; color: var(--muted); }
+#scenario .kpi .scen { outline: 1px dashed var(--accent); }
+.badge, #scenario .badge { display: inline-block; font-size: 10px; font-weight: 700; color: #1a1408; background: var(--accent); border-radius: 4px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
+#scenario h4 { font-size: 12px; margin: 10px 0 2px; }
+#scenario .legend { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); margin-top: 4px; }
+#scenario .legend .bar { flex: 1; height: 8px; border-radius: 4px; }
+#scenario svg text { fill: var(--muted); font-size: 9px; font-family: inherit; }
+#scenario table { font-size: 11px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+#scenario table td { padding: 0 8px 0 0; }
+#scenario select { font-size: 12px; }

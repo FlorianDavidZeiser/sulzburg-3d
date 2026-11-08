@@ -115,6 +115,11 @@ def main() -> int:
         if i % 500 == 0:
             print(f"  Horizont {i}/{len(G)}")
 
+    proc = common.ROOT / "data" / "processed"
+    proc.mkdir(parents=True, exist_ok=True)
+    np.save(proc / "horizonte.npy", horizons.astype(np.float32))  # (Gebäude, Azimutschritte), für scripts/10_solar.py
+    (proc / "horizonte.json").write_text(json.dumps({"schritt_grad": args.schritt_grad, "azimut_0": "Nord, im Uhrzeigersinn", "bezug": "z_first + 0,5 m je Gebäude"}), encoding="utf-8")
+
     lat, lon = common.CENTER_LATLON
     days = [dt.date(2026, mth, 21) for mth in range(1, 13)]
     result = []

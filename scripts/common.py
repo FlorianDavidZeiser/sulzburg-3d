@@ -91,3 +91,29 @@ def save_sources(doc: dict) -> None:
 def local_xyz(e: float, n: float, z: float, box: dict) -> tuple[float, float, float]:
     """UTM -> lokales three.js-System (x nach Osten, y nach oben = Höhe NHN, z nach Süden)."""
     return e - box["e0"], z, -(n - box["n0"])
+
+
+# Annahmen des Szenarios "PV auf allen geeigneten Dächern" (scripts/04_buildings.py, scripts/10_solar.py).
+# Jede Annahme mit Begründung; sie erscheinen so auf der Seite "Datenquellen und Grenzen".
+PV_ANNAHMEN = {
+    "min_flaeche_m2": {"wert": 10.0, "grund": "Kleinere Dachflächen (Gauben, Erker) gelten als nicht sinnvoll belegbar. Annahme."},
+    "max_neigung_grad": {"wert": 60.0, "grund": "Steilere Flächen gelten als Fassade. Annahme."},
+    "flach_bis_grad": {"wert": 10.0, "grund": "Bis 10 Grad Neigung gilt eine Fläche als Flachdach mit aufgeständerten Modulen. Annahme."},
+    "max_abweichung_sued_grad": {"wert": 100.0, "grund": "Geneigte Flächen zählen von Ost über Süd bis West (plus 10 Grad); nach Norden geneigte Flächen nicht. Annahme."},
+    "belegung_geneigt": {"wert": 0.6, "grund": "60 Prozent der geeigneten geneigten Fläche mit Modulen, wegen Randabständen, Dachfenstern und Kaminen. Annahme."},
+    "belegung_flach": {"wert": 0.4, "grund": "40 Prozent der Flachdachfläche, wegen Reihenabständen der aufgeständerten Module. Annahme."},
+    "aufstaenderung_flach_grad": {"wert": 15.0, "grund": "Module auf Flachdächern 15 Grad nach Süden aufgeständert. Annahme."},
+    "kwp_je_m2": {"wert": 0.2, "grund": "Modulwirkungsgrad rund 20 Prozent bei 1000 W/m² Normbestrahlung (STC) ergibt 0,2 kWp je m² Modulfläche."},
+    "systemverluste": {"wert": 0.14, "grund": "Standardwert für Systemverluste im PVGIS-Rechner der EU-Kommission (14 Prozent)."},
+    "albedo": {"wert": 0.2, "grund": "Übliche Bodenreflexion für Gras und Dächer. Annahme."},
+}
+
+
+def pv_eignung(flaeche_m2: float, neigung_grad: float, ausrichtung_grad: float) -> int:
+    """0 = nicht geeignet, 1 = geneigte Fläche geeignet, 2 = Flachdach geeignet. Ausrichtung: 0 = Süd, 90 = West, -90 = Ost."""
+    a = PV_ANNAHMEN
+    if flaeche_m2 < a["min_flaeche_m2"]["wert"] or neigung_grad > a["max_neigung_grad"]["wert"]:
+        return 0
+    if neigung_grad <= a["flach_bis_grad"]["wert"]:
+        return 2
+    return 1 if abs(ausrichtung_grad) <= a["max_abweichung_sued_grad"]["wert"] else 0

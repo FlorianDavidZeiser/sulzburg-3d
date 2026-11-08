@@ -884,9 +884,50 @@
         "laufen: nächstes Gebäude 13 m: Wohnhaus, Weinstraße 12, Sulzburg"
       ],
       "abgerufen_am": "2026-11-08"
+    },
+    "szenario_pv": {
+      "ebene": "Szenario 2040: PV auf allen geeigneten Dächern",
+      "geeignete_dachflaeche_m2": 157284,
+      "leistung_kwp": 17115,
+      "ertrag_mwh_jahr": 17189,
+      "ertrag_ohne_gelaendehorizont_mwh_jahr": 17369,
+      "verlust_durch_gelaendehorizont_prozent": 1.0,
+      "gebaeude_mit_eignung": 2015,
+      "spezifischer_ertrag_median_kwh_kwp": 1033.0,
+      "spezifischer_ertrag_p05_p95": [
+        914,
+        1070
+      ],
+      "je_einwohner_kwh": 6214,
+      "einwohner": {
+        "wert": 2766,
+        "stichtag": "2025-12-31",
+        "quelle": "Wikipedia: Sulzburg (Infobox), https://de.wikipedia.org/wiki/Sulzburg"
+      },
+      "kalibrierfaktor": 0.9977,
+      "bestand_kwp": 3067.0
+    },
+    "klima": {
+      "ebene": "Klima: beobachtet und Fortschreibung 2040",
+      "zellen": 42,
+      "marktplatz_heisse_tage": [
+        7.0,
+        14.0,
+        22.1
+      ],
+      "gemeinde_mittel_heisse_tage": [
+        5.0,
+        12.0,
+        20.1
+      ],
+      "bw_heisse_tage_periodenmittel": {
+        "1961-1990": 4.7,
+        "1991-2020": 10.5
+      },
+      "gebietsmittel_erstellt": "Zeitreihen fuer Gebietsmittel fuer Bundeslaender und Kombinationen von Bundeslaender, erstellt am: 20261102"
     }
   },
-  "aktualisiert": "2026-11-08T21:31:00+00:00",
+  "aktualisiert": "2026-11-08T21:53:09+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,

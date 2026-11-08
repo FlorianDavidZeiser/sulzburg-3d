@@ -13,36 +13,54 @@
 <body>
 <canvas id="c"></canvas>
 <div id="hud">
+  <div id="scenarioBanner" hidden>SZENARIO · <span id="scenarioBannerText"></span> · keine Beobachtung</div>
   <section class="panel" id="sunpanel">
-    <h1>Sulzburg 3D <span>Phase 2 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
+    <h1>Sulzburg 3D <span>Phase 3 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
     <label for="date">Datum <span class="seasons"><button data-d="03-20">Frühling</button><button data-d="06-21">Sommer</button><button data-d="09-22">Herbst</button><button data-d="12-21">Winter</button></span></label>
     <input type="date" id="date">
-    <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b> <span class="seasons"><button id="now">Jetzt</button></span></label>
+    <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b> <span class="seasons"><button id="play" title="Tagesablauf abspielen">▶ Tag</button><button id="now">Jetzt</button></span></label>
     <input type="range" id="time" min="0" max="1439" step="5" value="720">
     <div id="startHint" class="warn small" hidden>Draußen ist es dunkel. Die Ansicht startet mittags, „Jetzt“ zeigt die echte Uhrzeit.</div>
     <div id="suninfo">–</div>
-    <div class="toggles">
-      <label class="inline"><input type="checkbox" id="shadows" checked> Schatten</label>
-      <label class="inline"><input type="checkbox" id="ortho" checked> Luftbild</label>
-      <label class="inline"><input type="checkbox" id="rooftex" checked> Dächer aus Luftbild</label>
-      <label class="inline"><input type="checkbox" id="grenze" checked> Gemeindegrenze</label>
-      <label class="inline">Gelände <select id="lod"><option value="1">fein</option><option value="2">grob</option></select></label>
-      <label class="inline"><input type="checkbox" id="autorotate"> Drehen</label>
-    </div>
-    <div id="sunlayerWrap"><label class="inline"><input type="checkbox" id="sunlayer"> Sonne auf den Dächern einfärben</label>
-      <div id="sunlegend" class="small muted" hidden></div></div>
-    <div id="treesWrap"><label class="inline"><input type="checkbox" id="trees" checked> Bäume</label>
-      <div id="treesInfo" class="small muted"></div></div>
-    <div id="transitWrap"><label class="inline"><input type="checkbox" id="transit" checked> Haltestellen (Klick: Abfahrten)</label>
-      <div id="transitInfo" class="small muted"></div></div>
-    <div class="jumps" id="jumps"><span>Springe zu:</span></div>
-    <div id="placesWrap"><label class="inline"><input type="checkbox" id="places" checked> Orte mit Geschichte</label>
-      <div class="jumps" id="placesList"></div></div>
+    <div class="search"><input type="search" id="search" placeholder="Adresse suchen, z. B. Hauptstraße 60" autocomplete="off" list="searchList"><datalist id="searchList"></datalist></div>
+
+    <details class="sec" open><summary>Ansicht</summary>
+      <div class="toggles">
+        <label class="inline"><input type="checkbox" id="shadows" checked> Schatten</label>
+        <label class="inline"><input type="checkbox" id="ortho" checked> Luftbild</label>
+        <label class="inline"><input type="checkbox" id="rooftex" checked> Dächer aus Luftbild</label>
+        <label class="inline"><input type="checkbox" id="grenze" checked> Gemeindegrenze</label>
+        <label class="inline">Gelände <select id="lod"><option value="1">fein</option><option value="2">grob</option></select></label>
+        <label class="inline"><input type="checkbox" id="autorotate"> Drehen</label>
+      </div>
+      <div class="jumps" id="jumps"><span>Springe zu:</span></div>
+    </details>
+
+    <details class="sec" open><summary>Ebenen</summary>
+      <div id="treesWrap"><label class="inline"><input type="checkbox" id="trees" checked> Bäume</label>
+        <div id="treesInfo" class="small muted"></div></div>
+      <div id="transitWrap"><label class="inline"><input type="checkbox" id="transit" checked> Haltestellen (Klick: Abfahrten)</label>
+        <label class="inline"><input type="checkbox" id="buses" checked> Busse nach Fahrplan</label>
+        <div id="transitInfo" class="small muted"></div></div>
+      <div id="sunlayerWrap"><label class="inline"><input type="checkbox" id="sunlayer"> Sonne auf den Dächern einfärben</label>
+        <div id="sunlegend" class="small muted" hidden></div></div>
+    </details>
+
+    <details class="sec" open><summary>Orte mit Geschichte</summary>
+      <div id="placesWrap"><label class="inline"><input type="checkbox" id="places" checked> Marker zeigen</label>
+        <div class="jumps" id="placesList"></div></div>
+    </details>
+
+    <details class="sec" id="scenarioSec"><summary>Klima und Szenario 2040</summary>
+      <div id="scenario">lädt …</div>
+    </details>
+
     <details class="help"><summary>Bedienung</summary>
       Ziehen dreht, rechte Maustaste oder zwei Finger verschieben, Rad zoomt zur Mausposition.
-      Doppelklick setzt den Blickpunkt. Pfeiltasten oder W A S D fahren, Q und E senken und heben. Klick auf ein Gebäude zeigt die Daten.
+      Doppelklick setzt den Blickpunkt. Pfeiltasten oder W A S D fahren, Q und E senken und heben. Klick auf ein Gebäude, eine Haltestelle oder einen Ort zeigt die Daten.
     </details>
     <div id="fps">–</div>
+    <div class="small muted footlinks"><a href="quellen.html">Datenquellen und Grenzen</a> · <a href="impressum.html">Impressum und Datenschutz</a></div>
   </section>
   <section class="panel" id="alerts" hidden></section>
   <section class="panel" id="weather">
@@ -53,6 +71,7 @@
   <section class="panel" id="info" hidden></section>
   <div id="loading" class="panel">Lade Gelände, Luftbild und Gebäude …<div id="progress"></div></div>
   <section class="panel" id="sources">–</section>
+  <div id="tooltip" hidden></div>
 </div>
 <script type="module" src="app.js"></script>
 </body>

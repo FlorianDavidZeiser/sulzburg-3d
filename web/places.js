@@ -53,6 +53,26 @@ export async function setupPlaces(ctx) {
   }
   scene.add(group);
 
+  // Überlappende Beschriftungen ausblenden: nähere Orte haben Vorrang, Prüfung fünfmal pro Sekunde
+  const sprites = group.children.filter((c) => c.isSprite);
+  let lastCheck = 0;
+  const v = new THREE.Vector3();
+  ctx.frameHooks.push((now) => {
+    if (now - lastCheck < 200 || !group.visible) return;
+    lastCheck = now;
+    const W = innerWidth, H = innerHeight, placed = [];
+    const items = sprites.map((s) => ({ s, d: ctx.camera.position.distanceTo(s.position) })).sort((a, b) => a.d - b.d);
+    for (const { s } of items) {
+      v.copy(s.position).project(ctx.camera);
+      const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;
+      const w = s.scale.x / 0.0011 * (H / 900) * 0.9, h = s.scale.y / 0.0011 * (H / 900) * 0.9;
+      const r = { x0: x - w / 2, x1: x + w / 2, y0: y - h, y1: y };
+      const hit = v.z > 1 || placed.some((p) => r.x0 < p.x1 && r.x1 > p.x0 && r.y0 < p.y1 && r.y1 > p.y0);
+      s.visible = !hit;
+      if (!hit) placed.push(r);
+    }
+  });
+
   const show = (o) => {
     const info = $("info");
     info.hidden = false;

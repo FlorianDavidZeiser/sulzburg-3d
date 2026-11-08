@@ -6,6 +6,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { sunPosition, sunTimes, zonedToUtc, formatLocal, tzOffsetMs } from "./sun.js";
 import { setupPlaces } from "./places.js";
+import { setupScenario } from "./scenario.js";
 
 const TZ = "Europe/Berlin";
 const params = new URLSearchParams(location.search);
@@ -44,6 +45,7 @@ let targetGoal = null; // Zielpunkt für sanftes Umsetzen des Blickpunkts (Doppe
 let flight = null;     // laufender Kameraflug { p0, t0, p1, t1, start, dur }
 const frameHooks = []; // Funktionen (now, dt), die jedes Bild aufgerufen werden
 const pickHooks = [];  // Funktionen (raycaster) -> true, wenn der Klick behandelt wurde
+const infoHooks = [];  // Funktionen (index, gebaeude) -> HTML, wird an die Gebäude-Info angehängt
 // Sanfter Kameraflug zu einem Blickpunkt: Abstand und Blickrichtung frei wählbar
 function flyTo(goal, dist = 450, dir = new THREE.Vector3(-0.45, 0.55, 0.7), dur = 1600) {
   const d = dir.clone().normalize();
@@ -360,6 +362,7 @@ function setupPicking() {
       `<dt>Grundriss</dt><dd>Stand ${g.grundriss_aktualitaet || "–"}, Modell ${g.erstellt || "–"}</dd>` +
       `<dt>ID</dt><dd style="font-family:monospace;font-size:11px">${g.id}</dd></dl>` +
       sunlightInfo(idx) +
+      infoHooks.map((h) => h(idx, g) || "").join("") +
       externalLinks(g) +
       `<div class="hint">LGL LoD2, dl-de/by-2-0. Bauteile: ${g.bauteile}. Klick ins Leere schließt.</div>`;
   });
@@ -672,9 +675,11 @@ async function main() {
   setupSunlightLayer();
   setupTransit();
   setupTrees();
-  const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, buildingMeshes, utmToLatLon, TZ, centerY };
+  const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, infoHooks, buildingMeshes, roofMeshes, utmToLatLon, TZ, centerY,
+    setSun: () => setSun(currentDate()), localToday };
   window.__ctx = ctx;
   await setupPlaces(ctx);
+  await setupScenario(ctx);
   showSources();
   loadAlerts();
   updateProgress();
