@@ -17,8 +17,9 @@
     <h1>Sulzburg 3D <span>Phase 1 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
     <label for="date">Datum <span class="seasons"><button data-d="03-20">Frühling</button><button data-d="06-21">Sommer</button><button data-d="09-22">Herbst</button><button data-d="12-21">Winter</button></span></label>
     <input type="date" id="date">
-    <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b></label>
+    <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b> <span class="seasons"><button id="now">Jetzt</button></span></label>
     <input type="range" id="time" min="0" max="1439" step="5" value="720">
+    <div id="startHint" class="warn small" hidden>Draußen ist es dunkel. Die Ansicht startet mittags, „Jetzt“ zeigt die echte Uhrzeit.</div>
     <div id="suninfo">–</div>
     <div class="toggles">
       <label class="inline"><input type="checkbox" id="shadows" checked> Schatten</label>

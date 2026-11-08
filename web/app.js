@@ -193,11 +193,13 @@ function setSun(date) {
   sun.visible = up;
   sun.intensity = 2.4 * Math.pow(day, 0.6) * (1 - 0.75 * clouds);
   sun.color.setHSL(0.1, 0.6 * (1 - clouds), THREE.MathUtils.lerp(0.72, 0.98, day));
-  hemi.intensity = THREE.MathUtils.lerp(0.15, 1.0, THREE.MathUtils.clamp((p.elevation + 8) / 20, 0, 1)) * (1 + 0.3 * clouds);
+  // Nachts bleibt eine aufgehellte Grunddarstellung, damit Gelände und Gebäude erkennbar sind (kein echtes Mondlicht)
+  hemi.intensity = THREE.MathUtils.lerp(0.55, 1.0, THREE.MathUtils.clamp((p.elevation + 8) / 20, 0, 1)) * (1 + 0.3 * clouds);
+  hemi.color.set(up ? 0xcfe3ff : 0x7f93b8);
   const sky = new THREE.Color();
   if (p.elevation > 8) sky.set(0xb9d4ee).lerp(new THREE.Color(0x9aa5b1), clouds);
   else if (p.elevation > -6) sky.lerpColors(new THREE.Color(0x1b2436), new THREE.Color(0xe7a86a), (p.elevation + 6) / 14);
-  else sky.set(0x0e1322);
+  else sky.set(0x141b2c);
   scene.background = sky;
   scene.fog = new THREE.Fog(sky, 7000, 22000);
   const day0 = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -238,8 +240,14 @@ function initTimeControls() {
     $("time").value = String(h * 60 + mi);
   }
   const update = () => setSun(currentDate());
+  // Bei Nacht mit einer Mittagsansicht starten, damit die Szene nicht schwarz ist; "Jetzt" springt zur echten Zeit
+  if (!params.get("t")) {
+    const el = sunPosition(currentDate(), latLon[0], latLon[1]).elevation;
+    if (el < 3) { $("time").value = "780"; $("startHint").hidden = false; }
+  }
+  $("now").addEventListener("click", () => { const n = localToday(); $("date").value = n.date; $("time").value = String(n.minutes); $("startHint").hidden = true; update(); });
   $("date").addEventListener("input", update);
-  $("time").addEventListener("input", update);
+  $("time").addEventListener("input", () => { $("startHint").hidden = true; update(); });
   $("clouds").addEventListener("change", update);
   document.querySelectorAll(".seasons button").forEach((b) => b.addEventListener("click", () => {
     $("date").value = `${$("date").value.slice(0, 4)}-${b.dataset.d}`; update();
