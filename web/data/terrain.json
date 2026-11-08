@@ -1,0 +1,54 @@
+{
+  "ebene": "Gelände",
+  "format": "Float32 LE, zeilenweise, Zeile 0 = Nordrand, Spalte 0 = Westrand, Werte = Höhe NHN (DHHN2016) an der Zellmitte",
+  "epsg": 25832,
+  "e_min": 403039,
+  "e_max": 403639,
+  "n_min": 5299083,
+  "n_max": 5299683,
+  "e0": 403339,
+  "n0": 5299383,
+  "cellsize_m": 1.0,
+  "cols": 600,
+  "rows": 600,
+  "z_min": 318.57,
+  "z_max": 423.17,
+  "zellen_ohne_wert": 0,
+  "quelle": {
+    "titel": "Digitales Geländemodell DGM1, Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+    "portal": "https://opengeodata.lgl-bw.de/",
+    "dateien": [
+      "dgm1_32_403_5298_2_bw/dgm1_32_403_5299_1_bw_2019.xyz"
+    ],
+    "aktualitaet_laserscan": [
+      "2019-03-29"
+    ],
+    "hoehengenauigkeit_m": [
+      "0.15"
+    ],
+    "hoehensystem": [
+      "DE_DHHN2016_NH"
+    ],
+    "metadaten_csv": [
+      {
+        "Kachelname": "dgm1_32_403_5299_1_bw_2019",
+        "Aktualitaet": "2019-03-29",
+        "Erfassungsmethode": "5020",
+        "Fortfuehrung": "2019-03-29",
+        "Fortfuehrungsmethode": "5020",
+        "Genauigkeit": "0.15",
+        "Koordinatenreferenzsystem_Lage": "ETRS89_UTM32",
+        "Koordinatenreferenzsystem_Hoehe": "DE_DHHN2016_NH",
+        "Hoehenanomalie": "DE_AdV_GCG2016_QGH"
+      }
+    ],
+    "lizenz": {
+      "name": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
+      "url": "https://www.govdata.de/dl-de/by-2-0",
+      "namensnennung": "Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0",
+      "herausgeber": "Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+      "portal": "https://opengeodata.lgl-bw.de/"
+    },
+    "verarbeitet_am": "2026-11-08T19:33:38+00:00"
+  }
+}

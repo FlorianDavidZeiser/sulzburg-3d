@@ -1,0 +1,7 @@
+# Rohdaten des LGL (groß, per scripts/01_download.py reproduzierbar)
+data/raw/
+# Lokale Hilfsdateien
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/

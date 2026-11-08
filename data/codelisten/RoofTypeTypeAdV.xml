@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+External Code List enumerating the values for the attribute RoofTypeType.
+City GML Version No. 1.0.0, January 14th, 2008.
+Compiled by Sandra Schlueter, Ulrich Gruber, 10/02/25
+-->
+<gml:Dictionary
+        xmlns="http://www.opengis.net/gml"
+        xmlns:gml="http://www.opengis.net/gml"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/SimpleDictionary/1.0.0/gmlSimpleDictionaryProfile.xsd" gml:id="RoofTypeType">
+  <name>RoofTypeType</name>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid357">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">1000</gml:name>
+      <gml:name>Flachdach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid358">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">2100</gml:name>
+      <gml:name>Pultdach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid359">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">2200</gml:name>
+      <gml:name>Versetztes Pultdach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid360">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3100</gml:name>
+      <gml:name>Satteldach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid361">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3200</gml:name>
+      <gml:name>Walmdach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid362">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3300</gml:name>
+      <gml:name>Krüppelwalmdach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid363">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3400</gml:name>
+      <gml:name>Mansardendach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid364">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3500</gml:name>
+      <gml:name>Zeltdach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid365">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3600</gml:name>
+      <gml:name>Kegeldach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid366">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3700</gml:name>
+      <gml:name>Kuppeldach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid367">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3800</gml:name>
+      <gml:name>Sheddach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid368">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">3900</gml:name>
+      <gml:name>Bogendach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid369">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">4000</gml:name>
+      <gml:name>Turmdach</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid370">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">5000</gml:name>
+      <gml:name>Mischform</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+  <dictionaryEntry>
+    <gml:Definition gml:id="AdVid371">
+      <gml:description></gml:description>
+      <gml:name codeSpace="http://www.adv-online.de/codespaces">9999</gml:name>
+      <gml:name>Sonstiges</gml:name>
+    </gml:Definition>
+  </dictionaryEntry>
+</gml:Dictionary>

@@ -1,0 +1,62 @@
+{
+  "ebene": "Luftbild",
+  "datei": "ortho.jpg",
+  "epsg": 25832,
+  "e_min": 403039,
+  "e_max": 403639,
+  "n_min": 5299083,
+  "n_max": 5299683,
+  "pixel_m": 0.2,
+  "width_px": 3000,
+  "height_px": 3000,
+  "pixel_ohne_inhalt": 0,
+  "quelle": {
+    "titel": "Digitales Orthophoto DOP20 RGB (TrueDOP), Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+    "portal": "https://opengeodata.lgl-bw.de/",
+    "dateien": [
+      "dop20rgb_32_403_5298_2_bw/dop20rgb_32_403_5299_1_bw_2025.tif"
+    ],
+    "bildflugdatum": [
+      "2025-08-25"
+    ],
+    "kamera": [
+      "Leica DMC-4 44615"
+    ],
+    "metadaten_csv": [
+      {
+        "Kachelname": "dop20rgb_32_403_5299_1_bw_2025",
+        "Aktualitaet": "2025-08-25",
+        "Erfassungsmethode": "0",
+        "Bildflugnummer": "787",
+        "Kamera_Sensor": "Leica DMC-4 44615",
+        "Bodenpixelgroesse": "20",
+        "Spektralkanaele": "RGBI",
+        "Koordinatenreferenzsystem_Lage": "25832",
+        "Koordinatenreferenzsystem_Hoehe": "7837",
+        "Bezugsflaeche": "bDOM",
+        "Koordinatenursprung_East": "40300",
+        "Koordinatenursprung_North": "5299000",
+        "Anzahl_Spalten": "5000",
+        "Anzahl_Zeilen": "5000",
+        "Farbtiefe": "8",
+        "Standardabweichung": "40",
+        "Dateiformat": "TIFF",
+        "Hintergrund": "0",
+        "Hintergrundwert": "255",
+        "Quelldatenqualitaet": "0",
+        "Kompression": "0",
+        "Komprimierung": "0",
+        "Belaubungszustand": "3",
+        "Bemerkungen": "Keine"
+      }
+    ],
+    "lizenz": {
+      "name": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
+      "url": "https://www.govdata.de/dl-de/by-2-0",
+      "namensnennung": "Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0",
+      "herausgeber": "Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+      "portal": "https://opengeodata.lgl-bw.de/"
+    },
+    "verarbeitet_am": "2026-11-08T19:33:39+00:00"
+  }
+}

@@ -1,0 +1,3050 @@
+{
+ "ebene": "Gebäude (LoD2)",
+ "datei": "buildings.glb",
+ "koordinaten": "lokal: x = E - e0, y = Höhe NHN, z = -(N - n0)",
+ "e0": 403339,
+ "n0": 5299383,
+ "epsg": 25832,
+ "anzahl": 50,
+ "anzahl_im_ausschnitt": 661,
+ "auswahl": "die 50 dem Marktplatz nächsten Gebäude (Radius 73 m) von 661 im Ausschnitt",
+ "polygone": 719,
+ "polygone_uebersprungen": 0,
+ "dreiecke": 1645,
+ "gemeindeschluessel": [
+  "08315111"
+ ],
+ "quelle": {
+  "titel": "3D-Gebäudemodell LoD2 (CityGML), Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+  "portal": "https://opengeodata.lgl-bw.de/",
+  "dateien": [
+   "LoD2_32_403_5298_2_bw/LoD2_32_403_5299_1_BW.gml"
+  ],
+  "lieferinformation": {
+   "Anzahl der 3D-Gebäude": "6 483 003 (inklusive 11 BWK aus Hessen)",
+   "Auslesedatum": "2026-02-04 - 2026-02-06",
+   "Aktualität": "ATKIS Bauwerke: 2025-09-22",
+   "Aktualität DGM": "(von 2000 bis 2025)",
+   "Aktualität DOM": "(von 2000 bis 2025)"
+  },
+  "codelisten": {
+   "dachform": "AdV RoofTypeTypeAdV.xml (repository.gdi-de.org/schemas/adv/citygml/Codelisten/)",
+   "gebaeudefunktion": "AdV BuildingFunctionTypeAdV.xml (repository.gdi-de.org/schemas/adv/citygml/Codelisten/)"
+  },
+  "lizenz": {
+   "name": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
+   "url": "https://www.govdata.de/dl-de/by-2-0",
+   "namensnennung": "Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0",
+   "herausgeber": "Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+   "portal": "https://opengeodata.lgl-bw.de/"
+  },
+  "verarbeitet_am": "2026-11-08T19:37:03+00:00"
+ },
+ "gebaeude": [
+  {
+   "i": 0,
+   "id": "DEBW_0010007pXz5",
+   "alkis_id": "DEBWL0010007pXz5",
+   "adresse": "Hauptstraße 56, Sulzburg",
+   "funktion": "31001_3034",
+   "funktion_name": "Museum",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": [
+    "3100",
+    "4000"
+   ],
+   "hoehe_m": 21.677,
+   "bauteile": 2,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": null,
+   "e": 403311.85,
+   "n": 5299393.59,
+   "z_boden_min": 335.87,
+   "z_boden_max": 350.3,
+   "z_first": 371.98,
+   "abstand_m": 29.1,
+   "bodenpunkte": [
+    [
+     403305.75,
+     5299390.36,
+     335.87
+    ],
+    [
+     403306.16,
+     5299390.92,
+     335.87
+    ],
+    [
+     403302.31,
+     5299393.75,
+     335.87
+    ],
+    [
+     403317.9,
+     5299414.12,
+     335.87
+    ],
+    [
+     403323.6,
+     5299409.82,
+     335.87
+    ],
+    [
+     403329.41,
+     5299405.43,
+     335.87
+    ],
+    [
+     403313.76,
+     5299385.03,
+     335.87
+    ],
+    [
+     403313.62,
+     5299385.14,
+     335.87
+    ],
+    [
+     403309.96,
+     5299387.93,
+     335.87
+    ],
+    [
+     403309.55,
+     5299387.4,
+     335.87
+    ],
+    [
+     403307.55,
+     5299388.93,
+     335.87
+    ],
+    [
+     403308.79,
+     5299394.79,
+     350.3
+    ],
+    [
+     403313.24,
+     5299391.41,
+     350.3
+    ],
+    [
+     403310.18,
+     5299387.74,
+     350.3
+    ],
+    [
+     403306.05,
+     5299391.08,
+     350.3
+    ]
+   ]
+  },
+  {
+   "i": 1,
+   "id": "DEBW_0010007pXxR",
+   "alkis_id": "DEBWL0010007pXxR",
+   "adresse": "Hauptstraße 61, Sulzburg",
+   "funktion": "31001_1123",
+   "funktion_name": "Wohn- und Geschäftsgebäude",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 12.915,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403369.08,
+   "n": 5299409.57,
+   "z_boden_min": 336.74,
+   "z_boden_max": 336.74,
+   "z_first": 349.66,
+   "abstand_m": 40.1,
+   "bodenpunkte": [
+    [
+     403370.14,
+     5299402.11,
+     336.74
+    ],
+    [
+     403362.14,
+     5299407.09,
+     336.74
+    ],
+    [
+     403367.97,
+     5299416.94,
+     336.74
+    ],
+    [
+     403376.08,
+     5299412.14,
+     336.74
+    ]
+   ]
+  },
+  {
+   "i": 2,
+   "id": "DEBW_0010007pXz4",
+   "alkis_id": "DEBWL0010007pXz4",
+   "adresse": "Hauptstraße 62, Sulzburg",
+   "funktion": "31001_2050",
+   "funktion_name": "Geschäftsgebäude",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": [
+    "3100",
+    "3200",
+    "5000"
+   ],
+   "hoehe_m": 17.75,
+   "bauteile": 9,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": null,
+   "e": 403343.11,
+   "n": 5299341.75,
+   "z_boden_min": 337.69,
+   "z_boden_max": 337.69,
+   "z_first": 355.44,
+   "abstand_m": 41.5,
+   "bodenpunkte": [
+    [
+     403338.81,
+     5299343.85,
+     337.69
+    ],
+    [
+     403332.6,
+     5299334.51,
+     337.69
+    ],
+    [
+     403327.59,
+     5299337.12,
+     337.69
+    ],
+    [
+     403317.25,
+     5299342.57,
+     337.69
+    ],
+    [
+     403317.34,
+     5299342.71,
+     337.69
+    ],
+    [
+     403323.3,
+     5299352.07,
+     337.69
+    ],
+    [
+     403362.01,
+     5299331.68,
+     337.69
+    ],
+    [
+     403356.78,
+     5299321.73,
+     337.69
+    ],
+    [
+     403348.84,
+     5299325.95,
+     337.69
+    ],
+    [
+     403354.03,
+     5299335.9,
+     337.69
+    ],
+    [
+     403352.77,
+     5299364.83,
+     337.69
+    ],
+    [
+     403356.8,
+     5299370.9,
+     337.69
+    ],
+    [
+     403367.08,
+     5299362.79,
+     337.69
+    ],
+    [
+     403363.57,
+     5299357.59,
+     337.69
+    ],
+    [
+     403363.48,
+     5299357.65,
+     337.69
+    ],
+    [
+     403356.3,
+     5299346.67,
+     337.69
+    ],
+    [
+     403352.32,
+     5299340.59,
+     337.69
+    ],
+    [
+     403344.31,
+     5299328.36,
+     337.69
+    ],
+    [
+     403343.77,
+     5299328.65,
+     337.69
+    ],
+    [
+     403343.74,
+     5299328.6,
+     337.69
+    ],
+    [
+     403341.63,
+     5299329.72,
+     337.69
+    ],
+    [
+     403341.66,
+     5299329.79,
+     337.69
+    ],
+    [
+     403332.6,
+     5299334.51,
+     337.69
+    ],
+    [
+     403338.81,
+     5299343.85,
+     337.69
+    ],
+    [
+     403352.77,
+     5299364.83,
+     337.69
+    ],
+    [
+     403363.48,
+     5299357.65,
+     337.69
+    ],
+    [
+     403360.52,
+     5299343.8,
+     337.69
+    ],
+    [
+     403356.3,
+     5299346.67,
+     337.69
+    ],
+    [
+     403363.48,
+     5299357.65,
+     337.69
+    ],
+    [
+     403363.57,
+     5299357.59,
+     337.69
+    ],
+    [
+     403367.79,
+     5299354.76,
+     337.69
+    ],
+    [
+     403327.59,
+     5299337.12,
+     337.69
+    ],
+    [
+     403325.42,
+     5299333.84,
+     337.69
+    ],
+    [
+     403315.48,
+     5299339.79,
+     337.69
+    ],
+    [
+     403317.25,
+     5299342.57,
+     337.69
+    ],
+    [
+     403355.6,
+     5299338.91,
+     337.69
+    ],
+    [
+     403354.03,
+     5299335.9,
+     337.69
+    ],
+    [
+     403348.84,
+     5299325.95,
+     337.69
+    ],
+    [
+     403344.31,
+     5299328.36,
+     337.69
+    ],
+    [
+     403352.32,
+     5299340.59,
+     337.69
+    ],
+    [
+     403317.34,
+     5299342.71,
+     337.69
+    ],
+    [
+     403316.81,
+     5299343.04,
+     337.69
+    ],
+    [
+     403317.29,
+     5299344.11,
+     337.69
+    ],
+    [
+     403322.71,
+     5299352.38,
+     337.69
+    ],
+    [
+     403323.3,
+     5299352.07,
+     337.69
+    ],
+    [
+     403340.65,
+     5299327.74,
+     337.69
+    ],
+    [
+     403341.63,
+     5299329.72,
+     337.69
+    ],
+    [
+     403343.74,
+     5299328.6,
+     337.69
+    ],
+    [
+     403342.69,
+     5299326.69,
+     337.69
+    ]
+   ]
+  },
+  {
+   "i": 3,
+   "id": "DEBW_0010007pXxV",
+   "alkis_id": "DEBWL0010007pXxV",
+   "adresse": "Hauptstraße 65, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 11.943,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403378.95,
+   "n": 5299399.61,
+   "z_boden_min": 337.19,
+   "z_boden_max": 337.19,
+   "z_first": 349.13,
+   "abstand_m": 43.3,
+   "bodenpunkte": [
+    [
+     403380.13,
+     5299393.34,
+     337.19
+    ],
+    [
+     403374.37,
+     5299396.93,
+     337.19
+    ],
+    [
+     403375.21,
+     5299398.54,
+     337.19
+    ],
+    [
+     403379.65,
+     5299406.5,
+     337.19
+    ],
+    [
+     403385.39,
+     5299402.75,
+     337.19
+    ]
+   ]
+  },
+  {
+   "i": 4,
+   "id": "DEBW_0010007pXz6",
+   "alkis_id": "DEBWL0010007pXz6",
+   "adresse": "Hauptstraße 60, Sulzburg",
+   "funktion": "31001_3012",
+   "funktion_name": "Rathaus",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 15.657,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403303.68,
+   "n": 5299357.66,
+   "z_boden_min": 337.65,
+   "z_boden_max": 337.65,
+   "z_first": 353.31,
+   "abstand_m": 43.5,
+   "bodenpunkte": [
+    [
+     403300.31,
+     5299378.58,
+     337.65
+    ],
+    [
+     403322.36,
+     5299363.34,
+     337.65
+    ],
+    [
+     403312.81,
+     5299349.31,
+     337.65
+    ],
+    [
+     403312.62,
+     5299349.44,
+     337.65
+    ],
+    [
+     403306.65,
+     5299353.48,
+     337.65
+    ],
+    [
+     403302.65,
+     5299356.27,
+     337.65
+    ],
+    [
+     403300.78,
+     5299357.57,
+     337.65
+    ],
+    [
+     403298.66,
+     5299359.05,
+     337.65
+    ],
+    [
+     403293.97,
+     5299352.06,
+     337.65
+    ],
+    [
+     403285.99,
+     5299357.51,
+     337.65
+    ]
+   ]
+  },
+  {
+   "i": 5,
+   "id": "DEBW_0010007pXxI",
+   "alkis_id": "DEBWL0010007pXxI",
+   "adresse": "Hauptstraße 59, Sulzburg",
+   "funktion": "31001_1123",
+   "funktion_name": "Wohn- und Geschäftsgebäude",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 15.003,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403349.08,
+   "n": 5299426.6,
+   "z_boden_min": 335.83,
+   "z_boden_max": 335.83,
+   "z_first": 350.83,
+   "abstand_m": 44.7,
+   "bodenpunkte": [
+    [
+     403340.1,
+     5299422.51,
+     335.83
+    ],
+    [
+     403344.57,
+     5299429.03,
+     335.83
+    ],
+    [
+     403347.26,
+     5299432.97,
+     335.83
+    ],
+    [
+     403348.94,
+     5299435.42,
+     335.83
+    ],
+    [
+     403353.12,
+     5299432.72,
+     335.83
+    ],
+    [
+     403358.91,
+     5299428.67,
+     335.83
+    ],
+    [
+     403354.61,
+     5299422.28,
+     335.83
+    ],
+    [
+     403350.21,
+     5299415.76,
+     335.83
+    ],
+    [
+     403343.97,
+     5299420.02,
+     335.83
+    ]
+   ]
+  },
+  {
+   "i": 6,
+   "id": "DEBW_0010007pXxU",
+   "alkis_id": "DEBWL0010007pXxU",
+   "adresse": "Hauptstraße 63, Sulzburg",
+   "funktion": "31001_1123",
+   "funktion_name": "Wohn- und Geschäftsgebäude",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 12.914,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403376.58,
+   "n": 5299408.52,
+   "z_boden_min": 337.03,
+   "z_boden_max": 337.03,
+   "z_first": 349.94,
+   "abstand_m": 45.4,
+   "bodenpunkte": [
+    [
+     403382.25,
+     5299411.17,
+     337.03
+    ],
+    [
+     403375.31,
+     5299398.72,
+     337.03
+    ],
+    [
+     403370.14,
+     5299402.11,
+     337.03
+    ],
+    [
+     403376.08,
+     5299412.14,
+     337.03
+    ],
+    [
+     403377.1,
+     5299413.87,
+     337.03
+    ],
+    [
+     403378.61,
+     5299413.08,
+     337.03
+    ]
+   ]
+  },
+  {
+   "i": 7,
+   "id": "DEBW_001000taLXH",
+   "alkis_id": "DEBWL001000taLXH",
+   "adresse": "Sulzburg",
+   "funktion": "51009_1610",
+   "funktion_name": "Überdachung",
+   "dachform": "9999",
+   "dachform_name": "Sonstiges",
+   "dachformen_teile": null,
+   "hoehe_m": 3.0,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403301.05,
+   "n": 5299355.97,
+   "z_boden_min": 338.24,
+   "z_boden_max": 338.24,
+   "z_first": 341.24,
+   "abstand_m": 46.6,
+   "bodenpunkte": [
+    [
+     403300.78,
+     5299357.57,
+     338.24
+    ],
+    [
+     403302.65,
+     5299356.27,
+     338.24
+    ],
+    [
+     403301.33,
+     5299354.37,
+     338.24
+    ],
+    [
+     403299.46,
+     5299355.67,
+     338.24
+    ]
+   ]
+  },
+  {
+   "i": 8,
+   "id": "DEBW_0010007pXxF",
+   "alkis_id": "DEBWL0010007pXxF",
+   "adresse": "Hauptstraße 57, Sulzburg",
+   "funktion": "31001_1123",
+   "funktion_name": "Wohn- und Geschäftsgebäude",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 14.299,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403338.54,
+   "n": 5299430.49,
+   "z_boden_min": 335.4,
+   "z_boden_max": 335.4,
+   "z_first": 349.7,
+   "abstand_m": 47.5,
+   "bodenpunkte": [
+    [
+     403337.63,
+     5299439.39,
+     335.4
+    ],
+    [
+     403347.26,
+     5299432.97,
+     335.4
+    ],
+    [
+     403340.1,
+     5299422.51,
+     335.4
+    ],
+    [
+     403340.02,
+     5299422.56,
+     335.4
+    ],
+    [
+     403340.06,
+     5299422.63,
+     335.4
+    ],
+    [
+     403330.59,
+     5299428.92,
+     335.4
+    ],
+    [
+     403335.89,
+     5299436.8,
+     335.4
+    ],
+    [
+     403336.78,
+     5299438.12,
+     335.4
+    ]
+   ]
+  },
+  {
+   "i": 9,
+   "id": "DEBW_0010007pXxO",
+   "alkis_id": "DEBWL0010007pXxO",
+   "adresse": "Alte Postgasse 2, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 12.907,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403365.08,
+   "n": 5299423.13,
+   "z_boden_min": 335.65,
+   "z_boden_max": 335.65,
+   "z_first": 348.56,
+   "abstand_m": 47.9,
+   "bodenpunkte": [
+    [
+     403366.9,
+     5299421.58,
+     335.65
+    ],
+    [
+     403366.81,
+     5299421.4,
+     335.65
+    ],
+    [
+     403359.65,
+     5299408.68,
+     335.65
+    ],
+    [
+     403357.04,
+     5299410.44,
+     335.65
+    ],
+    [
+     403353.7,
+     5299412.68,
+     335.65
+    ],
+    [
+     403367.93,
+     5299436.89,
+     335.65
+    ],
+    [
+     403370.86,
+     5299435.19,
+     335.65
+    ],
+    [
+     403373.04,
+     5299433.92,
+     335.65
+    ],
+    [
+     403369.81,
+     5299427.42,
+     335.65
+    ]
+   ]
+  },
+  {
+   "i": 10,
+   "id": "DEBW_0010007pXxZ",
+   "alkis_id": "DEBWL0010007pXxZ",
+   "adresse": "Hauptstraße 67, Sulzburg",
+   "funktion": "31001_1123",
+   "funktion_name": "Wohn- und Geschäftsgebäude",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 13.366,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403386.33,
+   "n": 5299394.77,
+   "z_boden_min": 337.34,
+   "z_boden_max": 337.34,
+   "z_first": 350.7,
+   "abstand_m": 48.8,
+   "bodenpunkte": [
+    [
+     403378.61,
+     5299390.89,
+     337.34
+    ],
+    [
+     403380.13,
+     5299393.34,
+     337.34
+    ],
+    [
+     403385.39,
+     5299402.75,
+     337.34
+    ],
+    [
+     403386.33,
+     5299402.18,
+     337.34
+    ],
+    [
+     403397.07,
+     5299395.7,
+     337.34
+    ],
+    [
+     403390.43,
+     5299383.75,
+     337.34
+    ]
+   ]
+  },
+  {
+   "i": 11,
+   "id": "DEBW_0010007pXz2",
+   "alkis_id": "DEBWL0010007pXz2",
+   "adresse": "Hauptstraße 64, Sulzburg",
+   "funktion": "31001_1121",
+   "funktion_name": "Wohn- und Verwaltungsgebäude",
+   "dachform": "3200",
+   "dachform_name": "Walmdach",
+   "dachformen_teile": null,
+   "hoehe_m": 13.244,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403380.33,
+   "n": 5299356.07,
+   "z_boden_min": 338.1,
+   "z_boden_max": 338.1,
+   "z_first": 351.34,
+   "abstand_m": 49.3,
+   "bodenpunkte": [
+    [
+     403389.4,
+     5299358.38,
+     338.1
+    ],
+    [
+     403383.4,
+     5299348.98,
+     338.1
+    ],
+    [
+     403377.28,
+     5299352.72,
+     338.1
+    ],
+    [
+     403372.79,
+     5299355.46,
+     338.1
+    ],
+    [
+     403378.8,
+     5299364.81,
+     338.1
+    ]
+   ]
+  },
+  {
+   "i": 12,
+   "id": "DEBW_001000taLWy",
+   "alkis_id": "DEBWL001000taLWy",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2112",
+   "funktion_name": "Betriebsgebäude",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 8.103,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403305.39,
+   "n": 5299345.3,
+   "z_boden_min": 338.36,
+   "z_boden_max": 338.36,
+   "z_first": 346.46,
+   "abstand_m": 50.5,
+   "bodenpunkte": [
+    [
+     403298.15,
+     5299341.12,
+     338.36
+    ],
+    [
+     403306.65,
+     5299353.48,
+     338.36
+    ],
+    [
+     403312.62,
+     5299349.44,
+     338.36
+    ],
+    [
+     403304.16,
+     5299337.15,
+     338.36
+    ]
+   ]
+  },
+  {
+   "i": 13,
+   "id": "DEBW_0010007pXxP",
+   "alkis_id": "DEBWL0010007pXxP",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 5.542,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403369.83,
+   "n": 5299423.71,
+   "z_boden_min": 336.89,
+   "z_boden_max": 336.89,
+   "z_first": 342.43,
+   "abstand_m": 51.1,
+   "bodenpunkte": [
+    [
+     403369.7,
+     5299420.19,
+     336.89
+    ],
+    [
+     403366.9,
+     5299421.58,
+     336.89
+    ],
+    [
+     403369.81,
+     5299427.42,
+     336.89
+    ],
+    [
+     403372.91,
+     5299425.63,
+     336.89
+    ]
+   ]
+  },
+  {
+   "i": 14,
+   "id": "DEBW_0010007pXxY",
+   "alkis_id": "DEBWL0010007pXxY",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 7.883,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403386.23,
+   "n": 5299403.1,
+   "z_boden_min": 337.5,
+   "z_boden_max": 337.5,
+   "z_first": 345.38,
+   "abstand_m": 51.3,
+   "bodenpunkte": [
+    [
+     403385.39,
+     5299402.75,
+     337.5
+    ],
+    [
+     403386.11,
+     5299404.04,
+     337.5
+    ],
+    [
+     403387.1,
+     5299403.45,
+     337.5
+    ],
+    [
+     403386.33,
+     5299402.18,
+     337.5
+    ]
+   ]
+  },
+  {
+   "i": 15,
+   "id": "DEBW_0010007pXzc",
+   "alkis_id": "DEBWL0010007pXzc",
+   "adresse": "Hauptstraße 52, 54, Sulzburg",
+   "funktion": "31001_1131",
+   "funktion_name": "Wohn- und Betriebsgebäude",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": [
+    "2100",
+    "5000"
+   ],
+   "hoehe_m": 10.309,
+   "bauteile": 2,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": null,
+   "e": 403295.88,
+   "n": 5299411.68,
+   "z_boden_min": 335.59,
+   "z_boden_max": 335.59,
+   "z_first": 345.9,
+   "abstand_m": 51.8,
+   "bodenpunkte": [
+    [
+     403289.6,
+     5299408.67,
+     335.59
+    ],
+    [
+     403288.25,
+     5299409.79,
+     335.59
+    ],
+    [
+     403290.45,
+     5299412.99,
+     335.59
+    ],
+    [
+     403291.08,
+     5299413.94,
+     335.59
+    ],
+    [
+     403293.26,
+     5299412.58,
+     335.59
+    ],
+    [
+     403289.6,
+     5299408.67,
+     335.59
+    ],
+    [
+     403293.26,
+     5299412.58,
+     335.59
+    ],
+    [
+     403296.99,
+     5299416.92,
+     335.59
+    ],
+    [
+     403305.21,
+     5299425.33,
+     335.59
+    ],
+    [
+     403315.14,
+     5299416.73,
+     335.59
+    ],
+    [
+     403299.88,
+     5299400.14,
+     335.59
+    ],
+    [
+     403297.83,
+     5299401.84,
+     335.59
+    ]
+   ]
+  },
+  {
+   "i": 16,
+   "id": "DEBW_0010007pXz1",
+   "alkis_id": "DEBWL0010007pXz1",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 9.95,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403375.01,
+   "n": 5299343.36,
+   "z_boden_min": 338.95,
+   "z_boden_max": 338.95,
+   "z_first": 348.9,
+   "abstand_m": 53.6,
+   "bodenpunkte": [
+    [
+     403376.34,
+     5299349.24,
+     338.95
+    ],
+    [
+     403375.42,
+     5299349.82,
+     338.95
+    ],
+    [
+     403377.28,
+     5299352.72,
+     338.95
+    ],
+    [
+     403381.32,
+     5299350.25,
+     338.95
+    ],
+    [
+     403383.4,
+     5299348.98,
+     338.95
+    ],
+    [
+     403373.22,
+     5299332.99,
+     338.95
+    ],
+    [
+     403371.12,
+     5299334.32,
+     338.95
+    ],
+    [
+     403369.0,
+     5299335.65,
+     338.95
+    ],
+    [
+     403368.0,
+     5299336.28,
+     338.95
+    ]
+   ]
+  },
+  {
+   "i": 17,
+   "id": "DEBW_0010007pXxu",
+   "alkis_id": "DEBWL0010007pXxu",
+   "adresse": "Hauptstraße 55, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 12.462,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403328.24,
+   "n": 5299436.08,
+   "z_boden_min": 335.24,
+   "z_boden_max": 335.24,
+   "z_first": 347.7,
+   "abstand_m": 54.2,
+   "bodenpunkte": [
+    [
+     403330.59,
+     5299428.92,
+     335.24
+    ],
+    [
+     403320.74,
+     5299435.68,
+     335.24
+    ],
+    [
+     403325.74,
+     5299442.92,
+     335.24
+    ],
+    [
+     403335.89,
+     5299436.8,
+     335.24
+    ]
+   ]
+  },
+  {
+   "i": 18,
+   "id": "DEBW_0010007pXzd",
+   "alkis_id": "DEBWL0010007pXzd",
+   "adresse": "Hauptstraße 58, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 9.362,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403285.03,
+   "n": 5299396.18,
+   "z_boden_min": 336.77,
+   "z_boden_max": 336.77,
+   "z_first": 346.13,
+   "abstand_m": 55.6,
+   "bodenpunkte": [
+    [
+     403284.22,
+     5299403.13,
+     336.77
+    ],
+    [
+     403289.27,
+     5299399.71,
+     336.77
+    ],
+    [
+     403287.76,
+     5299397.56,
+     336.77
+    ],
+    [
+     403293.48,
+     5299393.58,
+     336.77
+    ],
+    [
+     403288.13,
+     5299386.36,
+     336.77
+    ],
+    [
+     403277.23,
+     5299393.79,
+     336.77
+    ],
+    [
+     403279.83,
+     5299397.79,
+     336.77
+    ],
+    [
+     403280.33,
+     5299397.5,
+     336.77
+    ]
+   ]
+  },
+  {
+   "i": 19,
+   "id": "DEBW_0010007pXxH",
+   "alkis_id": "DEBWL0010007pXxH",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 9.766,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403359.56,
+   "n": 5299435.28,
+   "z_boden_min": 335.54,
+   "z_boden_max": 335.54,
+   "z_first": 345.3,
+   "abstand_m": 56.2,
+   "bodenpunkte": [
+    [
+     403353.12,
+     5299432.72,
+     335.54
+    ],
+    [
+     403360.09,
+     5299444.5,
+     335.54
+    ],
+    [
+     403365.88,
+     5299440.54,
+     335.54
+    ],
+    [
+     403359.81,
+     5299429.95,
+     335.54
+    ],
+    [
+     403358.91,
+     5299428.67,
+     335.54
+    ]
+   ]
+  },
+  {
+   "i": 20,
+   "id": "DEBW_0010007pXxS",
+   "alkis_id": "DEBWL0010007pXxS",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2112",
+   "funktion_name": "Betriebsgebäude",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 9.858,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403383.67,
+   "n": 5299417.53,
+   "z_boden_min": 336.74,
+   "z_boden_max": 336.74,
+   "z_first": 346.6,
+   "abstand_m": 56.5,
+   "bodenpunkte": [
+    [
+     403382.25,
+     5299411.17,
+     336.74
+    ],
+    [
+     403378.61,
+     5299413.08,
+     336.74
+    ],
+    [
+     403384.75,
+     5299424.37,
+     336.74
+    ],
+    [
+     403389.09,
+     5299421.51,
+     336.74
+    ]
+   ]
+  },
+  {
+   "i": 21,
+   "id": "DEBW_0010007pXzf",
+   "alkis_id": "DEBWL0010007pXzf",
+   "adresse": "Hauptstraße 50, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 13.229,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403298.81,
+   "n": 5299423.29,
+   "z_boden_min": 335.32,
+   "z_boden_max": 335.32,
+   "z_first": 348.55,
+   "abstand_m": 56.9,
+   "bodenpunkte": [
+    [
+     403300.74,
+     5299429.64,
+     335.32
+    ],
+    [
+     403305.21,
+     5299425.33,
+     335.32
+    ],
+    [
+     403296.99,
+     5299416.92,
+     335.32
+    ],
+    [
+     403292.3,
+     5299421.27,
+     335.32
+    ]
+   ]
+  },
+  {
+   "i": 22,
+   "id": "DEBW_0010007pXxQ",
+   "alkis_id": "DEBWL0010007pXxQ",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "1000",
+   "dachform_name": "Flachdach",
+   "dachformen_teile": null,
+   "hoehe_m": 4.951,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403376.21,
+   "n": 5299427.05,
+   "z_boden_min": 335.67,
+   "z_boden_max": 335.67,
+   "z_first": 340.62,
+   "abstand_m": 57.7,
+   "bodenpunkte": [
+    [
+     403369.81,
+     5299427.42,
+     335.67
+    ],
+    [
+     403373.04,
+     5299433.92,
+     335.67
+    ],
+    [
+     403384.06,
+     5299427.44,
+     335.67
+    ],
+    [
+     403381.22,
+     5299420.83,
+     335.67
+    ],
+    [
+     403372.91,
+     5299425.63,
+     335.67
+    ]
+   ]
+  },
+  {
+   "i": 23,
+   "id": "DEBW_0010007pXze",
+   "alkis_id": "DEBWL0010007pXze",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 5.085,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403287.43,
+   "n": 5299413.07,
+   "z_boden_min": 336.22,
+   "z_boden_max": 336.22,
+   "z_first": 341.3,
+   "abstand_m": 59.7,
+   "bodenpunkte": [
+    [
+     403290.45,
+     5299412.99,
+     336.22
+    ],
+    [
+     403288.25,
+     5299409.79,
+     336.22
+    ],
+    [
+     403284.2,
+     5299413.31,
+     336.22
+    ],
+    [
+     403286.81,
+     5299416.19,
+     336.22
+    ]
+   ]
+  },
+  {
+   "i": 24,
+   "id": "DEBW_001000qIQmC",
+   "alkis_id": "DEBWL001000qIQmC",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 8.556,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403347.76,
+   "n": 5299443.42,
+   "z_boden_min": 335.36,
+   "z_boden_max": 335.36,
+   "z_first": 343.92,
+   "abstand_m": 61.1,
+   "bodenpunkte": [
+    [
+     403337.63,
+     5299439.39,
+     335.36
+    ],
+    [
+     403345.68,
+     5299451.36,
+     335.36
+    ],
+    [
+     403350.17,
+     5299456.73,
+     335.36
+    ],
+    [
+     403353.96,
+     5299453.97,
+     335.36
+    ],
+    [
+     403349.43,
+     5299447.82,
+     335.36
+    ],
+    [
+     403348.69,
+     5299448.34,
+     335.36
+    ],
+    [
+     403342.84,
+     5299439.93,
+     335.36
+    ],
+    [
+     403345.91,
+     5299437.86,
+     335.36
+    ],
+    [
+     403349.47,
+     5299443.43,
+     335.36
+    ],
+    [
+     403352.35,
+     5299441.6,
+     335.36
+    ],
+    [
+     403348.52,
+     5299435.7,
+     335.36
+    ],
+    [
+     403348.94,
+     5299435.42,
+     335.36
+    ],
+    [
+     403347.26,
+     5299432.97,
+     335.36
+    ]
+   ]
+  },
+  {
+   "i": 25,
+   "id": "DEBW_0010007pXy4",
+   "alkis_id": "DEBWL0010007pXy4",
+   "adresse": "Hauptstraße 69, Sulzburg",
+   "funktion": "31001_2071",
+   "funktion_name": "Hotel, Motel, Pension",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 17.02,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403399.7,
+   "n": 5299390.53,
+   "z_boden_min": 337.54,
+   "z_boden_max": 337.54,
+   "z_first": 354.56,
+   "abstand_m": 61.2,
+   "bodenpunkte": [
+    [
+     403390.43,
+     5299383.75,
+     337.54
+    ],
+    [
+     403397.07,
+     5299395.7,
+     337.54
+    ],
+    [
+     403397.65,
+     5299396.75,
+     337.54
+    ],
+    [
+     403398.09,
+     5299397.59,
+     337.54
+    ],
+    [
+     403405.89,
+     5299392.06,
+     337.54
+    ],
+    [
+     403408.26,
+     5299390.38,
+     337.54
+    ],
+    [
+     403400.53,
+     5299377.51,
+     337.54
+    ]
+   ]
+  },
+  {
+   "i": 26,
+   "id": "DEBW_0010007pXy2",
+   "alkis_id": "DEBWL0010007pXy2",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 5.676,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403398.47,
+   "n": 5299401.06,
+   "z_boden_min": 337.01,
+   "z_boden_max": 337.01,
+   "z_first": 342.68,
+   "abstand_m": 62.1,
+   "bodenpunkte": [
+    [
+     403398.35,
+     5299398.08,
+     337.01
+    ],
+    [
+     403398.09,
+     5299397.59,
+     337.01
+    ],
+    [
+     403394.68,
+     5299399.39,
+     337.01
+    ],
+    [
+     403397.93,
+     5299405.53,
+     337.01
+    ],
+    [
+     403401.31,
+     5299403.7,
+     337.01
+    ],
+    [
+     403400.45,
+     5299402.06,
+     337.01
+    ]
+   ]
+  },
+  {
+   "i": 27,
+   "id": "DEBW_0010007pXzh",
+   "alkis_id": "DEBWL0010007pXzh",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 3.088,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403278.32,
+   "n": 5299396.91,
+   "z_boden_min": 336.09,
+   "z_boden_max": 336.09,
+   "z_first": 339.18,
+   "abstand_m": 62.2,
+   "bodenpunkte": [
+    [
+     403277.23,
+     5299393.79,
+     336.09
+    ],
+    [
+     403274.73,
+     5299390.03,
+     336.09
+    ],
+    [
+     403271.75,
+     5299392.15,
+     336.09
+    ],
+    [
+     403280.65,
+     5299404.65,
+     336.09
+    ],
+    [
+     403283.75,
+     5299402.45,
+     336.09
+    ],
+    [
+     403280.33,
+     5299397.5,
+     336.09
+    ],
+    [
+     403279.83,
+     5299397.79,
+     336.09
+    ]
+   ]
+  },
+  {
+   "i": 28,
+   "id": "DEBW_0010007pXxw",
+   "alkis_id": "DEBWL0010007pXxw",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 7.727,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403339.83,
+   "n": 5299445.98,
+   "z_boden_min": 335.11,
+   "z_boden_max": 335.11,
+   "z_first": 342.84,
+   "abstand_m": 63.0,
+   "bodenpunkte": [
+    [
+     403337.63,
+     5299439.39,
+     335.11
+    ],
+    [
+     403336.78,
+     5299438.12,
+     335.11
+    ],
+    [
+     403333.36,
+     5299440.43,
+     335.11
+    ],
+    [
+     403342.1,
+     5299453.74,
+     335.11
+    ],
+    [
+     403343.44,
+     5299452.86,
+     335.11
+    ],
+    [
+     403345.68,
+     5299451.36,
+     335.11
+    ]
+   ]
+  },
+  {
+   "i": 29,
+   "id": "DEBW_0010007pXy3",
+   "alkis_id": "DEBWL0010007pXy3",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 10.606,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403400.41,
+   "n": 5299399.53,
+   "z_boden_min": 337.52,
+   "z_boden_max": 337.52,
+   "z_first": 348.12,
+   "abstand_m": 63.6,
+   "bodenpunkte": [
+    [
+     403402.48,
+     5299400.99,
+     337.52
+    ],
+    [
+     403400.38,
+     5299397.0,
+     337.52
+    ],
+    [
+     403398.35,
+     5299398.08,
+     337.52
+    ],
+    [
+     403400.45,
+     5299402.06,
+     337.52
+    ]
+   ]
+  },
+  {
+   "i": 30,
+   "id": "DEBW_0010007pXxt",
+   "alkis_id": "DEBWL0010007pXxt",
+   "adresse": "Ernst-Bark-Gasse 2, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 12.746,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403322.69,
+   "n": 5299444.76,
+   "z_boden_min": 334.81,
+   "z_boden_max": 334.81,
+   "z_first": 347.55,
+   "abstand_m": 63.9,
+   "bodenpunkte": [
+    [
+     403331.4,
+     5299451.13,
+     334.81
+    ],
+    [
+     403323.61,
+     5299439.85,
+     334.81
+    ],
+    [
+     403320.74,
+     5299435.68,
+     334.81
+    ],
+    [
+     403320.57,
+     5299435.43,
+     334.81
+    ],
+    [
+     403314.73,
+     5299439.78,
+     334.81
+    ],
+    [
+     403318.02,
+     5299444.47,
+     334.81
+    ],
+    [
+     403326.11,
+     5299455.98,
+     334.81
+    ],
+    [
+     403326.33,
+     5299455.78,
+     334.81
+    ]
+   ]
+  },
+  {
+   "i": 31,
+   "id": "DEBW_0010007pY0T",
+   "alkis_id": "DEBWL0010007pY0T",
+   "adresse": "Sulzburg",
+   "funktion": "51007_1510",
+   "funktion_name": "Stadtmauer",
+   "dachform": "9999",
+   "dachform_name": "Sonstiges",
+   "dachformen_teile": null,
+   "hoehe_m": 4.047,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403357.8,
+   "n": 5299321.8,
+   "z_boden_min": 339.9,
+   "z_boden_max": 339.9,
+   "z_first": 343.94,
+   "abstand_m": 64.0,
+   "bodenpunkte": [
+    [
+     403356.57,
+     5299321.33,
+     339.9
+    ],
+    [
+     403356.78,
+     5299321.73,
+     339.9
+    ],
+    [
+     403357.31,
+     5299322.72,
+     339.9
+    ],
+    [
+     403358.34,
+     5299322.35,
+     339.9
+    ],
+    [
+     403359.26,
+     5299322.02,
+     339.9
+    ],
+    [
+     403358.56,
+     5299320.62,
+     339.9
+    ]
+   ]
+  },
+  {
+   "i": 32,
+   "id": "DEBW_0010007pXzi",
+   "alkis_id": "DEBWL0010007pXzi",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 6.618,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403284.44,
+   "n": 5299416.63,
+   "z_boden_min": 335.57,
+   "z_boden_max": 335.57,
+   "z_first": 342.19,
+   "abstand_m": 64.1,
+   "bodenpunkte": [
+    [
+     403284.2,
+     5299413.31,
+     335.57
+    ],
+    [
+     403280.2,
+     5299416.79,
+     335.57
+    ],
+    [
+     403283.7,
+     5299420.26,
+     335.57
+    ],
+    [
+     403287.3,
+     5299416.62,
+     335.57
+    ],
+    [
+     403286.81,
+     5299416.19,
+     335.57
+    ]
+   ]
+  },
+  {
+   "i": 33,
+   "id": "DEBW_0010007pXyZ",
+   "alkis_id": "DEBWL0010007pXyZ",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 10.128,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403386.57,
+   "n": 5299339.53,
+   "z_boden_min": 339.19,
+   "z_boden_max": 339.19,
+   "z_first": 349.32,
+   "abstand_m": 64.4,
+   "bodenpunkte": [
+    [
+     403387.95,
+     5299336.8,
+     339.19
+    ],
+    [
+     403383.63,
+     5299338.52,
+     339.19
+    ],
+    [
+     403385.4,
+     5299342.16,
+     339.19
+    ],
+    [
+     403389.31,
+     5299340.62,
+     339.19
+    ]
+   ]
+  },
+  {
+   "i": 34,
+   "id": "DEBW_0010007pXxv",
+   "alkis_id": "DEBWL0010007pXxv",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "1000",
+   "dachform_name": "Flachdach",
+   "dachformen_teile": null,
+   "hoehe_m": 4.214,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403330.67,
+   "n": 5299447.73,
+   "z_boden_min": 335.05,
+   "z_boden_max": 335.05,
+   "z_first": 339.26,
+   "abstand_m": 65.3,
+   "bodenpunkte": [
+    [
+     403329.17,
+     5299443.26,
+     335.05
+    ],
+    [
+     403326.99,
+     5299444.73,
+     335.05
+    ],
+    [
+     403331.4,
+     5299451.13,
+     335.05
+    ],
+    [
+     403332.33,
+     5299450.28,
+     335.05
+    ],
+    [
+     403333.47,
+     5299449.23,
+     335.05
+    ]
+   ]
+  },
+  {
+   "i": 35,
+   "id": "DEBW_001000qlbBj",
+   "alkis_id": "DEBWL001000qlbBj",
+   "adresse": "Alte Postgasse, Sulzburg",
+   "funktion": "31001_2463",
+   "funktion_name": "Garage",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 3.744,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403377.05,
+   "n": 5299436.13,
+   "z_boden_min": 335.62,
+   "z_boden_max": 335.62,
+   "z_first": 339.37,
+   "abstand_m": 65.3,
+   "bodenpunkte": [
+    [
+     403373.0,
+     5299435.19,
+     335.62
+    ],
+    [
+     403375.45,
+     5299439.27,
+     335.62
+    ],
+    [
+     403378.5,
+     5299437.5,
+     335.62
+    ],
+    [
+     403380.39,
+     5299436.38,
+     335.62
+    ],
+    [
+     403377.92,
+     5299432.29,
+     335.62
+    ]
+   ]
+  },
+  {
+   "i": 36,
+   "id": "DEBW_0010007pY0W",
+   "alkis_id": "DEBWL0010007pY0W",
+   "adresse": "Sulzburg",
+   "funktion": "51007_1510",
+   "funktion_name": "Stadtmauer",
+   "dachform": "9999",
+   "dachform_name": "Sonstiges",
+   "dachformen_teile": null,
+   "hoehe_m": 6.0,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403377.38,
+   "n": 5299329.91,
+   "z_boden_min": 339.38,
+   "z_boden_max": 339.38,
+   "z_first": 345.38,
+   "abstand_m": 65.5,
+   "bodenpunkte": [
+    [
+     403370.96,
+     5299330.87,
+     339.38
+    ],
+    [
+     403372.56,
+     5299333.41,
+     339.38
+    ],
+    [
+     403373.22,
+     5299332.99,
+     339.38
+    ],
+    [
+     403372.02,
+     5299331.1,
+     339.38
+    ],
+    [
+     403387.85,
+     5299325.78,
+     339.38
+    ],
+    [
+     403387.65,
+     5299325.31,
+     339.38
+    ]
+   ]
+  },
+  {
+   "i": 37,
+   "id": "DEBW_0010007pXxW",
+   "alkis_id": "DEBWL0010007pXxW",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2463",
+   "funktion_name": "Garage",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 2.762,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403394.39,
+   "n": 5299421.5,
+   "z_boden_min": 336.29,
+   "z_boden_max": 336.29,
+   "z_first": 339.06,
+   "abstand_m": 67.5,
+   "bodenpunkte": [
+    [
+     403393.65,
+     5299425.5,
+     336.29
+    ],
+    [
+     403398.37,
+     5299422.67,
+     336.29
+    ],
+    [
+     403394.87,
+     5299417.56,
+     336.29
+    ],
+    [
+     403390.66,
+     5299420.26,
+     336.29
+    ]
+   ]
+  },
+  {
+   "i": 38,
+   "id": "DEBW_0010007pXyY",
+   "alkis_id": "DEBWL0010007pXyY",
+   "adresse": "Hauptstraße 66, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 13.481,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403397.88,
+   "n": 5299349.31,
+   "z_boden_min": 338.69,
+   "z_boden_max": 338.69,
+   "z_first": 352.17,
+   "abstand_m": 67.8,
+   "bodenpunkte": [
+    [
+     403402.49,
+     5299354.37,
+     338.69
+    ],
+    [
+     403403.35,
+     5299353.86,
+     338.69
+    ],
+    [
+     403403.48,
+     5299352.87,
+     338.69
+    ],
+    [
+     403403.09,
+     5299351.94,
+     338.69
+    ],
+    [
+     403403.55,
+     5299351.76,
+     338.69
+    ],
+    [
+     403397.75,
+     5299337.3,
+     338.69
+    ],
+    [
+     403391.56,
+     5299339.74,
+     338.69
+    ],
+    [
+     403389.31,
+     5299340.62,
+     338.69
+    ],
+    [
+     403385.4,
+     5299342.16,
+     338.69
+    ],
+    [
+     403392.45,
+     5299356.59,
+     338.69
+    ],
+    [
+     403397.89,
+     5299353.94,
+     338.69
+    ],
+    [
+     403400.81,
+     5299352.51,
+     338.69
+    ],
+    [
+     403401.25,
+     5299353.41,
+     338.69
+    ]
+   ]
+  },
+  {
+   "i": 39,
+   "id": "DEBW_0010007pXzj",
+   "alkis_id": "DEBWL0010007pXzj",
+   "adresse": "Hauptstraße 48, Sulzburg",
+   "funktion": "31001_1123",
+   "funktion_name": "Wohn- und Geschäftsgebäude",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 17.69,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403289.19,
+   "n": 5299429.05,
+   "z_boden_min": 334.83,
+   "z_boden_max": 334.83,
+   "z_first": 352.52,
+   "abstand_m": 67.8,
+   "bodenpunkte": [
+    [
+     403292.3,
+     5299421.27,
+     334.83
+    ],
+    [
+     403291.42,
+     5299420.23,
+     334.83
+    ],
+    [
+     403290.88,
+     5299420.78,
+     334.83
+    ],
+    [
+     403275.6,
+     5299436.56,
+     334.83
+    ],
+    [
+     403284.21,
+     5299445.8,
+     334.83
+    ],
+    [
+     403300.74,
+     5299429.64,
+     334.83
+    ]
+   ]
+  },
+  {
+   "i": 40,
+   "id": "DEBW_0010007pXxN",
+   "alkis_id": "DEBWL0010007pXxN",
+   "adresse": "Alte Postgasse, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 6.602,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403379.14,
+   "n": 5299437.75,
+   "z_boden_min": 335.75,
+   "z_boden_max": 335.75,
+   "z_first": 342.35,
+   "abstand_m": 67.9,
+   "bodenpunkte": [
+    [
+     403379.16,
+     5299438.69,
+     335.75
+    ],
+    [
+     403380.12,
+     5299438.06,
+     335.75
+    ],
+    [
+     403379.5,
+     5299436.93,
+     335.75
+    ],
+    [
+     403378.5,
+     5299437.5,
+     335.75
+    ],
+    [
+     403378.42,
+     5299437.56,
+     335.75
+    ]
+   ]
+  },
+  {
+   "i": 41,
+   "id": "DEBW_0010007pXz0",
+   "alkis_id": "DEBWL0010007pXz0",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2523",
+   "funktion_name": "Umformer",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 9.115,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403367.38,
+   "n": 5299321.2,
+   "z_boden_min": 339.85,
+   "z_boden_max": 339.85,
+   "z_first": 348.96,
+   "abstand_m": 68.0,
+   "bodenpunkte": [
+    [
+     403368.27,
+     5299319.14,
+     339.85
+    ],
+    [
+     403365.32,
+     5299320.31,
+     339.85
+    ],
+    [
+     403366.49,
+     5299323.26,
+     339.85
+    ],
+    [
+     403369.44,
+     5299322.09,
+     339.85
+    ]
+   ]
+  },
+  {
+   "i": 42,
+   "id": "DEBW_0010007pXzb",
+   "alkis_id": "DEBWL0010007pXzb",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2112",
+   "funktion_name": "Betriebsgebäude",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 9.983,
+   "bauteile": 2,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": null,
+   "e": 403287.57,
+   "n": 5299336.23,
+   "z_boden_min": 337.78,
+   "z_boden_max": 337.78,
+   "z_first": 347.76,
+   "abstand_m": 69.5,
+   "bodenpunkte": [
+    [
+     403292.44,
+     5299333.02,
+     337.78
+    ],
+    [
+     403298.15,
+     5299341.12,
+     337.78
+    ],
+    [
+     403304.16,
+     5299337.15,
+     337.78
+    ],
+    [
+     403298.49,
+     5299328.89,
+     337.78
+    ],
+    [
+     403292.44,
+     5299333.02,
+     337.78
+    ],
+    [
+     403298.49,
+     5299328.89,
+     337.78
+    ],
+    [
+     403292.99,
+     5299320.87,
+     337.78
+    ],
+    [
+     403262.84,
+     5299341.45,
+     337.78
+    ],
+    [
+     403267.48,
+     5299348.38,
+     337.78
+    ],
+    [
+     403268.24,
+     5299349.52,
+     337.78
+    ]
+   ]
+  },
+  {
+   "i": 43,
+   "id": "DEBW_0010007pXy7",
+   "alkis_id": "DEBWL0010007pXy7",
+   "adresse": "Hauptstraße 71, Sulzburg",
+   "funktion": "31001_1123",
+   "funktion_name": "Wohn- und Geschäftsgebäude",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 20.104,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403410.37,
+   "n": 5299386.09,
+   "z_boden_min": 338.1,
+   "z_boden_max": 338.1,
+   "z_first": 358.21,
+   "abstand_m": 71.4,
+   "bodenpunkte": [
+    [
+     403406.4,
+     5299373.97,
+     338.1
+    ],
+    [
+     403400.53,
+     5299377.51,
+     338.1
+    ],
+    [
+     403410.94,
+     5299394.84,
+     338.1
+    ],
+    [
+     403415.23,
+     5299392.26,
+     338.1
+    ],
+    [
+     403413.71,
+     5299389.52,
+     338.1
+    ],
+    [
+     403415.41,
+     5299388.47,
+     338.1
+    ]
+   ]
+  },
+  {
+   "i": 44,
+   "id": "DEBW_0010007pXxM",
+   "alkis_id": "DEBWL0010007pXxM",
+   "adresse": "Alte Postgasse 4, Sulzburg",
+   "funktion": "31001_1010",
+   "funktion_name": "Wohnhaus",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 11.492,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403378.08,
+   "n": 5299443.1,
+   "z_boden_min": 335.48,
+   "z_boden_max": 335.48,
+   "z_first": 346.97,
+   "abstand_m": 71.7,
+   "bodenpunkte": [
+    [
+     403378.42,
+     5299437.56,
+     335.48
+    ],
+    [
+     403371.61,
+     5299442.42,
+     335.48
+    ],
+    [
+     403377.13,
+     5299450.58,
+     335.48
+    ],
+    [
+     403384.09,
+     5299446.26,
+     335.48
+    ],
+    [
+     403379.16,
+     5299438.69,
+     335.48
+    ]
+   ]
+  },
+  {
+   "i": 45,
+   "id": "DEBW_0010007pXyX",
+   "alkis_id": "DEBWL0010007pXyX",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "3100",
+   "dachform_name": "Satteldach",
+   "dachformen_teile": null,
+   "hoehe_m": 6.373,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403391.47,
+   "n": 5299333.36,
+   "z_boden_min": 339.19,
+   "z_boden_max": 339.19,
+   "z_first": 345.57,
+   "abstand_m": 72.2,
+   "bodenpunkte": [
+    [
+     403389.31,
+     5299340.62,
+     339.19
+    ],
+    [
+     403393.27,
+     5299339.06,
+     339.19
+    ],
+    [
+     403397.75,
+     5299337.3,
+     339.19
+    ],
+    [
+     403395.69,
+     5299331.52,
+     339.19
+    ],
+    [
+     403393.67,
+     5299325.77,
+     339.19
+    ],
+    [
+     403389.07,
+     5299327.25,
+     339.19
+    ],
+    [
+     403385.02,
+     5299328.56,
+     339.19
+    ],
+    [
+     403387.95,
+     5299336.8,
+     339.19
+    ]
+   ]
+  },
+  {
+   "i": 46,
+   "id": "DEBW_0010007pXy0",
+   "alkis_id": "DEBWL0010007pXy0",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2140",
+   "funktion_name": "Gebäude für Vorratshaltung",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 6.501,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403405.0,
+   "n": 5299412.58,
+   "z_boden_min": 336.27,
+   "z_boden_max": 336.27,
+   "z_first": 342.77,
+   "abstand_m": 72.3,
+   "bodenpunkte": [
+    [
+     403401.31,
+     5299403.7,
+     336.27
+    ],
+    [
+     403397.93,
+     5299405.53,
+     336.27
+    ],
+    [
+     403405.52,
+     5299418.61,
+     336.27
+    ],
+    [
+     403408.9,
+     5299416.79,
+     336.27
+    ],
+    [
+     403408.32,
+     5299415.71,
+     336.27
+    ],
+    [
+     403408.01,
+     5299415.14,
+     336.27
+    ]
+   ]
+  },
+  {
+   "i": 47,
+   "id": "DEBW_0010007pXy5",
+   "alkis_id": "DEBWL0010007pXy5",
+   "adresse": "Hauptstraße, Sulzburg",
+   "funktion": "31001_2112",
+   "funktion_name": "Betriebsgebäude",
+   "dachform": "1000",
+   "dachform_name": "Flachdach",
+   "dachformen_teile": null,
+   "hoehe_m": 6.015,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403409.84,
+   "n": 5299398.2,
+   "z_boden_min": 337.42,
+   "z_boden_max": 337.42,
+   "z_first": 343.43,
+   "abstand_m": 72.5,
+   "bodenpunkte": [
+    [
+     403410.94,
+     5299394.84,
+     337.42
+    ],
+    [
+     403408.26,
+     5299390.38,
+     337.42
+    ],
+    [
+     403405.89,
+     5299392.06,
+     337.42
+    ],
+    [
+     403407.51,
+     5299396.28,
+     337.42
+    ],
+    [
+     403408.48,
+     5299400.2,
+     337.42
+    ],
+    [
+     403408.21,
+     5299400.34,
+     337.42
+    ],
+    [
+     403412.27,
+     5299407.99,
+     337.42
+    ],
+    [
+     403415.86,
+     5299406.5,
+     337.42
+    ],
+    [
+     403411.15,
+     5299395.18,
+     337.42
+    ]
+   ]
+  },
+  {
+   "i": 48,
+   "id": "DEBW_0010007pXxB",
+   "alkis_id": "DEBWL0010007pXxB",
+   "adresse": "Ernst-Bark-Gasse, Sulzburg",
+   "funktion": "31001_2723",
+   "funktion_name": "Schuppen",
+   "dachform": "2100",
+   "dachform_name": "Pultdach",
+   "dachformen_teile": null,
+   "hoehe_m": 7.504,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403346.81,
+   "n": 5299455.54,
+   "z_boden_min": 335.11,
+   "z_boden_max": 335.11,
+   "z_first": 342.62,
+   "abstand_m": 73.0,
+   "bodenpunkte": [
+    [
+     403345.68,
+     5299451.36,
+     335.11
+    ],
+    [
+     403343.44,
+     5299452.86,
+     335.11
+    ],
+    [
+     403343.84,
+     5299453.43,
+     335.11
+    ],
+    [
+     403344.7,
+     5299454.66,
+     335.11
+    ],
+    [
+     403347.84,
+     5299459.16,
+     335.11
+    ],
+    [
+     403348.22,
+     5299458.89,
+     335.11
+    ],
+    [
+     403350.58,
+     5299457.22,
+     335.11
+    ],
+    [
+     403350.17,
+     5299456.73,
+     335.11
+    ]
+   ]
+  },
+  {
+   "i": 49,
+   "id": "DEBW_0010007pXxx",
+   "alkis_id": "DEBWL0010007pXxx",
+   "adresse": "Ernst-Bark-Gasse, Sulzburg",
+   "funktion": "31001_2726",
+   "funktion_name": "Scheune und Stall",
+   "dachform": "5000",
+   "dachform_name": "Mischform",
+   "dachformen_teile": null,
+   "hoehe_m": 10.544,
+   "bauteile": 0,
+   "erstellt": "2025-11-18",
+   "grundriss_aktualitaet": "2025-04-01",
+   "e": 403333.38,
+   "n": 5299455.91,
+   "z_boden_min": 334.71,
+   "z_boden_max": 334.71,
+   "z_first": 345.25,
+   "abstand_m": 73.1,
+   "bodenpunkte": [
+    [
+     403338.83,
+     5299457.2,
+     334.71
+    ],
+    [
+     403332.33,
+     5299450.28,
+     334.71
+    ],
+    [
+     403331.4,
+     5299451.13,
+     334.71
+    ],
+    [
+     403326.33,
+     5299455.78,
+     334.71
+    ],
+    [
+     403333.17,
+     5299463.22,
+     334.71
+    ],
+    [
+     403338.23,
+     5299457.84,
+     334.71
+    ]
+   ]
+  }
+ ]
+}

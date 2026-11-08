@@ -1,0 +1,119 @@
+{
+  "lizenz": {
+    "name": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
+    "url": "https://www.govdata.de/dl-de/by-2-0",
+    "namensnennung": "Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0",
+    "herausgeber": "Landesamt für Geoinformation und Landentwicklung Baden-Württemberg (LGL)",
+    "portal": "https://opengeodata.lgl-bw.de/"
+  },
+  "downloads": {
+    "dgm1_32_403_5298_2_bw.zip": {
+      "produkt": "dgm1",
+      "titel": "Digitales Geländemodell DGM1 (Rasterweite 1 m, Format XYZ)",
+      "kachel": "403_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/dgm/dgm1_32_403_5298_2_bw.zip",
+      "bytes": 15521965,
+      "sha256": "c050c42f00e9e117bfc5804cb2ff6beef7d659719fec4963a508da3b72fe15f1",
+      "server_last_modified": "Sat, 18 Jul 2026 00:23:01 GMT",
+      "heruntergeladen_am": "2026-11-08T19:32:42+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "LoD2_32_403_5298_2_bw.zip": {
+      "produkt": "lod2",
+      "titel": "3D-Gebäudemodell LoD2 (CityGML 1.0)",
+      "kachel": "403_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/lod2/LoD2_32_403_5298_2_bw.zip",
+      "bytes": 2650996,
+      "sha256": "5c6f456041370df722eb16aad1e1ce4be87a614b908914dd6137aae0824afb15",
+      "server_last_modified": "Mon, 20 Apr 2026 13:25:26 GMT",
+      "heruntergeladen_am": "2026-11-08T19:32:43+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    },
+    "dop20rgb_32_403_5298_2_bw.zip": {
+      "produkt": "dop20rgb",
+      "titel": "Digitales Orthophoto DOP20 RGB (Bodenauflösung 20 cm, TIFF + TFW)",
+      "kachel": "403_5298",
+      "url": "https://opengeodata.lgl-bw.de/data/dop20/dop20rgb_32_403_5298_2_bw.zip",
+      "bytes": 227603075,
+      "sha256": "252a0408050376ee872cabc75e93a64de869770afd4d4630abc8c31ac1a6e9dd",
+      "server_last_modified": "Thu, 26 Mar 2026 12:12:41 GMT",
+      "heruntergeladen_am": "2026-11-08T19:32:44+00:00",
+      "lizenz": "https://www.govdata.de/dl-de/by-2-0"
+    }
+  },
+  "ebenen": {
+    "gelaende": {
+      "ebene": "Gelände",
+      "e_min": 403039,
+      "e_max": 403639,
+      "n_min": 5299083,
+      "n_max": 5299683,
+      "z_min": 318.57,
+      "z_max": 423.17,
+      "cols": 600,
+      "rows": 600,
+      "aktualitaet_laserscan": [
+        "2019-03-29"
+      ],
+      "hoehengenauigkeit_m": [
+        "0.15"
+      ],
+      "dateien": [
+        "dgm1_32_403_5298_2_bw/dgm1_32_403_5299_1_bw_2019.xyz"
+      ]
+    },
+    "luftbild": {
+      "ebene": "Luftbild",
+      "bildflugdatum": [
+        "2025-08-25"
+      ],
+      "kamera": [
+        "Leica DMC-4 44615"
+      ],
+      "pixel_m": 0.2,
+      "width_px": 3000,
+      "height_px": 3000,
+      "dateien": [
+        "dop20rgb_32_403_5298_2_bw/dop20rgb_32_403_5299_1_bw_2025.tif"
+      ],
+      "jpeg_bytes": 2447880
+    },
+    "gebaeude": {
+      "ebene": "Gebäude (LoD2)",
+      "anzahl": 50,
+      "anzahl_im_ausschnitt": 661,
+      "auswahl": "die 50 dem Marktplatz nächsten Gebäude (Radius 73 m) von 661 im Ausschnitt",
+      "dreiecke": 1645,
+      "polygone_uebersprungen": 0,
+      "dateien": [
+        "LoD2_32_403_5298_2_bw/LoD2_32_403_5299_1_BW.gml"
+      ],
+      "lieferinformation": {
+        "Anzahl der 3D-Gebäude": "6 483 003 (inklusive 11 BWK aus Hessen)",
+        "Auslesedatum": "2026-02-04 - 2026-02-06",
+        "Aktualität": "ATKIS Bauwerke: 2025-09-22",
+        "Aktualität DGM": "(von 2000 bis 2025)",
+        "Aktualität DOM": "(von 2000 bis 2025)"
+      }
+    }
+  },
+  "aktualisiert": "2026-11-08T19:46:59+00:00",
+  "validierung": {
+    "gelaende_gebaeude": {
+      "punkte": 369,
+      "mittel_m": -0.4051003126852588,
+      "median_m": -0.34335937499997726,
+      "mittlerer_betrag_m": 0.6945043846068373,
+      "anteil_bis_0_5_m": 58.265582655826556,
+      "anteil_bis_1_0_m": 82.65582655826557,
+      "max_betrag_m": 13.261608886718761,
+      "ausreisser": 13
+    },
+    "sonnenstand": {
+      "max_zeitdifferenz_min": 0.7787698,
+      "max_azimut_diff_grad": 2.8421709430404007e-13,
+      "max_hoehe_diff_grad": 8.16212216836476e-06
+    },
+    "datei": "docs/validierung.md"
+  }
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sulzburg 3D · Spike</title>
+<meta name="description" content="Privater Prototyp: Ortskern von Sulzburg aus offenen Geodaten des LGL Baden-Württemberg. Kein offizielles Angebot.">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <section class="panel" id="sunpanel">
+    <h1>Sulzburg 3D <span>Spike, Phase 0 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
+    <label for="date">Datum</label>
+    <input type="date" id="date">
+    <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b></label>
+    <input type="range" id="time" min="0" max="1439" step="5" value="720">
+    <div id="suninfo">–</div>
+    <div style="margin-top:8px">
+      <label class="inline"><input type="checkbox" id="shadows" checked> Schatten</label>
+      <label class="inline"><input type="checkbox" id="ortho" checked> Luftbild</label>
+      <label class="inline"><input type="checkbox" id="wire"> Gitter</label>
+      <label class="inline">Gelände <select id="step"><option value="1">1 m</option><option value="2">2 m</option><option value="4">4 m</option></select></label>
+    </div>
+    <div id="fps">–</div>
+  </section>
+  <section class="panel" id="info" hidden></section>
+  <div id="loading" class="panel">Lade Gelände, Luftbild und Gebäude …</div>
+  <section class="panel" id="sources">–</section>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
