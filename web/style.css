@@ -56,7 +56,15 @@ input[type=date], select { font: inherit; background: #1b2028; color: var(--fg);
 .jumps button:hover { border-color: var(--accent); }
 details.help { margin-top: 8px; font-size: 11px; color: var(--muted); }
 details.help summary { cursor: pointer; color: var(--fg); }
+.menu-toggle { display: none; float: right; font: inherit; font-size: 12px; color: var(--fg); background: #1b2028; border: 1px solid #333a45; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+#attrib { display: none; }
 @media (max-width: 900px) {
+  .menu-toggle { display: inline-block; }
+  #sunpanel.collapsed #panelBody { display: none; }
+  #sunpanel.collapsed h1 span { display: none; }
+  #sources { display: none !important; }
+  #attrib { display: block; position: fixed; left: 6px; right: 6px; bottom: 6px; z-index: 4; pointer-events: auto; font-size: 10px; color: var(--muted);
+    background: var(--panel); border-radius: 8px; padding: 4px 8px; }
   #hud { grid-template-columns: 1fr; grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: 6px; padding: 6px; }
   #sunpanel { grid-column: 1; grid-row: 1; max-height: 38vh; padding: 10px; }
   #alerts { grid-column: 1; grid-row: 2; padding: 6px 10px; }
@@ -94,3 +102,5 @@ details.sec[open] > summary::before { content: "▾ "; }
 #scenario table { font-size: 11px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 #scenario table td { padding: 0 8px 0 0; }
 #scenario select { font-size: 12px; }
+#info .close { float: right; font: inherit; font-size: 18px; line-height: 1; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 0 0 4px 8px; }
+#info .close:hover { color: var(--fg); }

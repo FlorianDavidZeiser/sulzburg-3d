@@ -15,7 +15,8 @@
 <div id="hud">
   <div id="scenarioBanner" hidden>SZENARIO · <span id="scenarioBannerText"></span> · keine Beobachtung</div>
   <section class="panel" id="sunpanel">
-    <h1>Sulzburg 3D <span>Phase 3 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
+    <h1>Sulzburg 3D <button id="menuToggle" class="menu-toggle" aria-expanded="true">Menü ▴</button><span>Phase 3 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
+    <div id="panelBody">
     <label for="date">Datum <span class="seasons"><button data-d="03-20">Frühling</button><button data-d="06-21">Sommer</button><button data-d="09-22">Herbst</button><button data-d="12-21">Winter</button></span></label>
     <input type="date" id="date">
     <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b> <span class="seasons"><button id="play" title="Tagesablauf abspielen">▶ Tag</button><button id="now">Jetzt</button></span></label>
@@ -61,6 +62,7 @@
     </details>
     <div id="fps">–</div>
     <div class="small muted footlinks"><a href="quellen.html">Datenquellen und Grenzen</a> · <a href="impressum.html">Impressum und Datenschutz</a></div>
+    </div>
   </section>
   <section class="panel" id="alerts" hidden></section>
   <section class="panel" id="weather">
@@ -71,6 +73,7 @@
   <section class="panel" id="info" hidden></section>
   <div id="loading" class="panel">Lade Gelände, Luftbild und Gebäude …<div id="progress"></div></div>
   <section class="panel" id="sources">–</section>
+  <div id="attrib">Daten: LGL BW (dl-de/by-2-0), DWD, NVBW/MobiData BW, BNetzA · <a href="quellen.html">Quellen</a> · <a href="impressum.html">Impressum</a> · privates Projekt</div>
   <div id="tooltip" hidden></div>
 </div>
 <script type="module" src="app.js"></script>

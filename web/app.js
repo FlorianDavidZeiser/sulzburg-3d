@@ -602,6 +602,25 @@ async function loadAlerts() {
   }
 }
 
+// Schließen-Knopf für das Info-Feld (vor allem auf Touch-Geräten)
+function setupInfoClose() {
+  const info = $("info");
+  new MutationObserver(() => {
+    if (info.hidden || info.querySelector(".close")) return;
+    const b = document.createElement("button");
+    b.className = "close"; b.setAttribute("aria-label", "Schließen"); b.textContent = "×";
+    b.addEventListener("click", () => { info.hidden = true; });
+    info.prepend(b);
+  }).observe(info, { childList: true, attributes: true, attributeFilter: ["hidden"] });
+}
+
+function setupMenu() {
+  const panel = $("sunpanel"), btn = $("menuToggle");
+  const set = (collapsed) => { panel.classList.toggle("collapsed", collapsed); btn.textContent = collapsed ? "Menü ▾" : "Menü ▴"; btn.setAttribute("aria-expanded", String(!collapsed)); };
+  btn.addEventListener("click", () => set(!panel.classList.contains("collapsed")));
+  if (innerWidth < 900) set(true);   // auf dem Handy startet das Menü eingeklappt
+}
+
 function setupToggles() {
   $("shadows").addEventListener("change", (e) => { renderer.shadowMap.enabled = e.target.checked; sun.castShadow = e.target.checked;
     scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; }); });
@@ -654,6 +673,8 @@ async function main() {
   controls.update();
   initTimeControls();
   setupPicking();
+  setupMenu();
+  setupInfoClose();
   setupToggles();
   loadWeather();
 
@@ -691,6 +712,14 @@ async function main() {
   loadAlerts();
   updateProgress();
   window.__loadMs = Math.round(performance.now() - t0);
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!params.get("cam") && params.get("intro") !== "0" && !reduced) {
+    // Einstieg: Blick aus der Rheinebene im Westen, dann Flug ins Tal zum Marktplatz
+    camera.position.set(-3800, centerY + 1400, 1600);
+    controls.target.set(-600, centerY, 0);
+    controls.update();
+    flyTo(new THREE.Vector3(0, centerY, 0), innerWidth < innerHeight ? 1150 : 650, new THREE.Vector3(-0.62, 0.5, 0.6), 7000);
+  }
 
   let frames = 0, last = performance.now(), prev = performance.now();
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), delta = new THREE.Vector3();
