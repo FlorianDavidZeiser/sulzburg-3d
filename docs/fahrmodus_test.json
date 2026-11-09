@@ -1,0 +1,79 @@
+{
+ "erzeugt": "2026-11-09T08:28:34.758Z",
+ "start": {
+  "dateien": 180,
+  "bytes": 21089308,
+  "fahrmodus_dateien_beim_start": []
+ },
+ "ziehen": {
+  "beschriftung": "Bugginger Gasse",
+  "zustand": "enter"
+ },
+ "rueckweg": {
+  "kamera_abweichung_m": 0,
+  "blickpunkt_abweichung_m": 0,
+  "fov_gleich": true,
+  "near_far_gleich": true,
+  "steuerung_aktiv": true,
+  "zustand": "off",
+  "bild_identisch": true
+ },
+ "flug_waehrend_fahrt": {
+  "zustand": "off",
+  "steuerung_aktiv": true,
+  "near": 2,
+  "kamera_frei": true
+ },
+ "physik": {
+  "beschleunigung_kmh_je_s": [
+   0.1,
+   15.6,
+   29.1,
+   39.4,
+   47.2
+  ],
+  "bremsen_kmh_je_s": [
+   46.9,
+   12.4,
+   -6.4
+  ],
+  "rechenzeit_ms_je_fahrsekunde": 0.77,
+  "autopilot": {
+   "wege": 80,
+   "meter": 18972,
+   "ohne_haengen": 76,
+   "probleme": [
+    {
+     "weg": "track",
+     "erreicht": false,
+     "stand_s": 44.7,
+     "hindernis": "unklar"
+    },
+    {
+     "weg": "track",
+     "erreicht": false,
+     "stand_s": 100.1,
+     "hindernis": "Gebäude"
+    },
+    {
+     "weg": "Salzmatten",
+     "erreicht": false,
+     "stand_s": 100.7,
+     "hindernis": "parkendes Auto"
+    },
+    {
+     "weg": "residential",
+     "erreicht": true,
+     "stand_s": 32.9,
+     "hindernis": "unklar"
+    }
+   ],
+   "max_abstandsfeld_spur_m": 0,
+   "min_kreisabstand_wand_m": 0.92
+  }
+ },
+ "notschalter": {
+  "abschnitt_vorhanden": false
+ },
+ "fehler_konsole": []
+}
