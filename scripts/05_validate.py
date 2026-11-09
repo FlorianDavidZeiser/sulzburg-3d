@@ -228,7 +228,9 @@ def check_size() -> tuple[list[str], dict]:
               "Bäume": [web / "data" / "trees.bin", web / "data" / "trees.json"],
               "Sonne, Klima, PV, Orte, Fahrplan, Betriebe, Autos": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json", "business.json", "cars.json")],
               "Sonstige Daten": [web / "data" / "gemeinde.geojson", web / "data" / "sources.json"],
-              "three.js + Anwendung": [p for p in web.rglob("*.js")] + [web / "index.html", web / "style.css"]}
+              "three.js + Anwendung": [p for p in web.rglob("*.js") if p.name not in ("drive.js", "quellen.js")] + [web / "index.html", web / "style.css"]}
+    # Nur bei Nutzung geladen, zählt nicht zum Start
+    lazy = {"Fahrmodus (erst beim ersten Absetzen)": [web / "drive.js", web / "data" / "fahrnetz.json", web / "data" / "grundrisse.json"]}
     import gzip as _gz
     md = ["## 4. Ladevolumen", "", "GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 für GLB, JSON und BIN). JPEG-Bilder sind bereits komprimiert.", "",
           "| Bestandteil | Dateien | MB auf der Platte | MB übertragen (gzip) |", "|---|---|---|---|"]
@@ -238,9 +240,16 @@ def check_size() -> tuple[list[str], dict]:
         gz = sum((f.stat().st_size if f.suffix == ".jpg" else len(_gz.compress(f.read_bytes(), 6))) for f in files if f.exists())
         total += size; total_gz += gz
         md.append(f"| {k} | {len(files)} | {size/1e6:.1f} | {gz/1e6:.1f} |")
-    md += [f"| **Gesamt** | | **{total/1e6:.1f}** | **{total_gz/1e6:.1f}** |", "",
+    md.append(f"| **Gesamt beim Start** | | **{total/1e6:.1f}** | **{total_gz/1e6:.1f}** |")
+    lazy_gz = 0
+    for k, files in lazy.items():
+        size = sum(f.stat().st_size for f in files if f.exists())
+        gz = sum(len(_gz.compress(f.read_bytes(), 6)) for f in files if f.exists())
+        lazy_gz += gz
+        md.append(f"| {k} | {len(files)} | {size/1e6:.2f} | {gz/1e6:.2f} |")
+    md += ["",
            f"Übertragen bei 20 Mbit/s rund {total_gz*8/20e6:.0f} s, bei 50 Mbit/s rund {total_gz*8/50e6:.0f} s. Gelände und Gebäude kommen zuerst, die Luftbildkacheln laden danach (Siedlung zuerst); bedienbar ist die Ansicht vorher.", ""]
-    return md, {"gesamt_mb": total / 1e6, "uebertragen_gzip_mb": total_gz / 1e6}
+    return md, {"gesamt_mb": total / 1e6, "uebertragen_gzip_mb": total_gz / 1e6, "fahrmodus_nachgeladen_gzip_mb": lazy_gz / 1e6}
 
 
 def check_layers() -> tuple[list[str], dict]:
@@ -280,6 +289,24 @@ def check_layers() -> tuple[list[str], dict]:
         md += [f"**Parkende Autos.** {au['anzahl']} Autos aus {au['kandidaten_flecken']} Kandidatenflecken. Sichtprüfung von 48 zufälligen Treffern (`docs/autos_stichprobe.jpg`): etwa 8 von 10 liegen auf einem Auto. "
                "Vollständigkeit am Marktplatz: rund 18 von gut 40 sichtbaren Autos. Momentaufnahme vom Bildflug 25.08.2025.", ""]
         st["autos"] = {"anzahl": au["anzahl"], "trefferquote_stichprobe": "ca. 0,8", "vollstaendigkeit_marktplatz": "ca. 18 von 40"}
+    fm = src["ebenen"].get("fahrmodus")
+    if fm:
+        k = fm["kennzahlen"]
+        md += [f"**Fahrmodus (Spielmodus).** Fahrnetz aus OpenStreetMap (Stand {fm['osm_stand']}): {k['wege']} Wegstücke, {k['namen']} Straßennamen, {k['parkplaetze']} Parkplätze. "
+               f"Länge in km: {', '.join(f'{a} {v}' for a, v in k['laenge_km'].items())}. Ausgeschlossen in km: {', '.join(f'{a} {v}' for a, v in k['ausgeschlossen_km'].items())}. "
+               f"Kollision mit {fm['grundrisse']['gebaeude']} LoD2-Grundrissen ({fm['grundrisse']['ringe']} Ringe); Brücken (LoD2-Funktion 53001_1800) sind Fahrbahn, keine Wand.", ""]
+        st["fahrmodus"] = {"wege": k["wege"], "namen": k["namen"]}
+        tf = common.ROOT / "docs" / "fahrmodus_test.json"
+        if tf.exists():
+            t = json.loads(tf.read_text(encoding="utf-8"))
+            ap, rw = t["physik"]["autopilot"], t["rueckweg"]
+            md += [f"Browsertest vom {t['erzeugt'][:10]} (`scripts/test_drive.cjs`, Ergebnis in `docs/fahrmodus_test.json`): "
+                   f"beim Start {len(t['start']['fahrmodus_dateien_beim_start'])} Dateien des Fahrmodus geladen; Rückweg Kamera {rw['kamera_abweichung_m']:.3f} m, Blickpunkt {rw['blickpunkt_abweichung_m']:.3f} m, "
+                   f"Bild vorher und nachher {'identisch' if rw['bild_identisch'] else 'verschieden'}. Autopilot auf {ap['wege']} Straßen ({ap['meter']/1000:.1f} km): "
+                   f"{ap['ohne_haengen']} ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds {ap['max_abstandsfeld_spur_m']} m), "
+                   f"kleinster Abstand eines Kollisionskreises zur Wand {ap['min_kreisabstand_wand_m']} m (Radius 0,92 m). Hänger: "
+                   + ("; ".join(f"{x['weg']} ({x['hindernis']})" for x in ap["probleme"]) or "keine") + ".", ""]
+            st["fahrmodus"].update({"autopilot_ok": ap["ohne_haengen"], "autopilot_wege": ap["wege"], "rueckweg_bild_identisch": rw["bild_identisch"]})
     if (W / "transit.json").exists():
         tr = json.loads((W / "transit.json").read_text(encoding="utf-8"))
         n_trips = len(tr.get("fahrten") or [])

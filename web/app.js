@@ -49,8 +49,30 @@ let flight = null;     // laufender Kameraflug { p0, t0, p1, t1, start, dur }
 const frameHooks = []; // Funktionen (now, dt), die jedes Bild aufgerufen werden
 const pickHooks = [];  // Funktionen (raycaster) -> true, wenn der Klick behandelt wurde
 const infoHooks = [];  // Funktionen (index, gebaeude) -> HTML, wird an die Gebäude-Info angehängt
+// Fremde Kameraführung (Fahrmodus): solange gesetzt, steuert owner.frame(now, dt) die Kamera, OrbitControls ruhen
+let cameraOwner = null;
+function takeCamera(owner) {
+  if (cameraOwner && cameraOwner !== owner) releaseCamera();
+  cameraOwner = owner; flight = null; targetGoal = null;
+  controls.enabled = false;
+  if (controls.autoRotate) { controls.autoRotate = false; $("autorotate").checked = false; }
+}
+function releaseCamera() {
+  const o = cameraOwner;
+  if (!o) return;
+  cameraOwner = null;
+  keys.clear();
+  // Restschwung der Dämpfung aus der Zeit vor dem Fahrmodus verwerfen, sonst ruckt die Ansicht nach dem Rückweg
+  if (controls._sphericalDelta) controls._sphericalDelta.set(0, 0, 0);
+  if (controls._panOffset) controls._panOffset.set(0, 0, 0);
+  if ("_scale" in controls) controls._scale = 1;
+  controls.enabled = true;
+  if (o.onRelease) o.onRelease();
+  controls.update();
+}
 // Sanfter Kameraflug zu einem Blickpunkt: Abstand und Blickrichtung frei wählbar
 function flyTo(goal, dist = 450, dir = new THREE.Vector3(-0.45, 0.55, 0.7), dur = 1600) {
+  if (cameraOwner) releaseCamera();
   const d = dir.clone().normalize();
   flight = { p0: camera.position.clone(), t0: controls.target.clone(), p1: goal.clone().addScaledVector(d, dist), t1: goal.clone(), start: performance.now(), dur };
   targetGoal = null;
@@ -187,6 +209,26 @@ function terrainHeightAt(x, z) {
   const dx = Math.min(1, Math.max(0, fx - i0)), dz = Math.min(1, Math.max(0, fz - j0));
   const h = (i, j) => t.z_min + heights[j * t.n + i] * t.z_scale;
   return (h(i0, j0) * (1 - dx) + h(i0 + 1, j0) * dx) * (1 - dz) + (h(i0, j0 + 1) * (1 - dx) + h(i0 + 1, j0 + 1) * dx) * dz;
+}
+
+// Höhe der dargestellten Geländefläche (gleiche Dreiecke wie das Mesh, inklusive Vergröberung), für Fahrzeuge auf dem Boden
+function terrainSurfaceAt(x, z) {
+  const { e0, n0, kachel_m: T } = meta.index;
+  const e = x + e0, nn = n0 - z;
+  const tile = tiles.get(`${Math.floor(e / T) * T}_${Math.floor(nn / T) * T}`);
+  if (!tile) return null;
+  const { t, heights } = tile;
+  const n = t.n;
+  const step = LOD > 1 && (n - 1) % LOD === 0 ? LOD : 1;
+  const m = (n - 1) / step + 1, res = t.res * step;
+  const fx = (e - t.e_min) / res, fz = (t.n_min + t.size - nn) / res;
+  const i0 = Math.min(m - 2, Math.max(0, Math.floor(fx))), j0 = Math.min(m - 2, Math.max(0, Math.floor(fz)));
+  const dx = Math.min(1, Math.max(0, fx - i0)), dz = Math.min(1, Math.max(0, fz - j0));
+  const h = (i, j) => t.z_min + heights[j * step * n + i * step] * t.z_scale;
+  // Zellteilung wie in tileGeometry: Dreiecke (a, c, b) und (b, c, d), Diagonale von b nach c
+  if (dx + dz <= 1) { const ha = h(i0, j0); return ha + (h(i0 + 1, j0) - ha) * dx + (h(i0, j0 + 1) - ha) * dz; }
+  const hd = h(i0 + 1, j0 + 1);
+  return hd + (h(i0, j0 + 1) - hd) * (1 - dx) + (h(i0 + 1, j0) - hd) * (1 - dz);
 }
 
 // ---------- Gemeindegrenze ----------
@@ -380,6 +422,7 @@ function setupNavigation() {
   const ray = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   canvas.addEventListener("dblclick", (e) => {
+    if (cameraOwner) return;
     mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(mouse, camera);
     const objs = [...terrainGroup.children, ...buildingMeshes];
@@ -707,13 +750,15 @@ async function main() {
   setupTransit();
   setupTrees();
   const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, infoHooks, buildingMeshes, roofMeshes, utmToLatLon, TZ, centerY,
-    setSun: () => setSun(currentDate()), localToday, showBuilding, sunTimes, latLon };
+    setSun: () => setSun(currentDate()), localToday, showBuilding, sunTimes, latLon,
+    terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup };
   window.__ctx = ctx;
   await setupPlaces(ctx);
   await setupScenario(ctx);
   await setupBusiness(ctx);
   await setupCars(ctx);
   await setupExtras(ctx);
+  setupDriveEntry(ctx);
   showSources();
   loadAlerts();
   updateProgress();
@@ -732,6 +777,8 @@ async function main() {
   renderer.setAnimationLoop((now) => {
     const dt = Math.min(0.1, (now - prev) / 1000); prev = now;
     for (const h of frameHooks) h(now, dt);
+    if (cameraOwner) cameraOwner.frame(now, dt);   // Fahrmodus führt die Kamera
+    else {                                          // Erkunden: Kameraführung unverändert wie vor dem Fahrmodus
     if (flight) {
       const f = Math.min(1, (now - flight.start) / flight.dur);
       const k = f < 0.5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2; // ease in-out
@@ -767,6 +814,7 @@ async function main() {
     if (th != null && !targetGoal && !flight) { const dy = th - controls.target.y; if (Math.abs(dy) > 0.05) { controls.target.y += dy; camera.position.y += dy; } }
     const ch = terrainHeightAt(camera.position.x, camera.position.z);
     if (ch != null && camera.position.y < ch + 4) camera.position.y = ch + 4;
+    }
     updateSunPosition();
     renderer.render(scene, camera);
     frames++;
@@ -777,6 +825,22 @@ async function main() {
     }
   });
   window.__ready = true;
+}
+
+// ---------- Fahrmodus (Spielmodus) ----------
+// Nur Einstieg und Knöpfe. Modul drive.js und seine Daten (Fahrnetz, Grundrisse) werden erst beim ersten Absetzen geladen.
+// Notschalter: ?drive=0 blendet den Fahrmodus komplett aus.
+function setupDriveEntry(ctx) {
+  const wrap = $("driveSec");
+  if (!wrap) return;
+  if (params.get("drive") === "0") { wrap.remove(); return; }
+  wrap.hidden = false;
+  let mod = null;
+  const load = () => (mod ||= import("./drive.js").then((m) => m.createDrive(ctx)).catch((e) => { mod = null; $("driveInfo").textContent = "Fahrmodus konnte nicht geladen werden: " + e.message; throw e; }));
+  $("driveCar").addEventListener("pointerenter", () => { load().catch(() => {}); });   // vorladen, sobald die Maus auf dem Auto ist
+  $("driveCar").addEventListener("pointerdown", (e) => { e.preventDefault(); load().then((d) => d.startDrag(e)).catch(() => {}); });
+  $("driveCenter").addEventListener("click", () => load().then((d) => d.placeNear(controls.target.x, controls.target.z)).catch(() => {}));
+  ctx.loadDrive = load;
 }
 
 // UTM 32N (ETRS89/GRS80) -> Breite/Länge, für den Sonnenstand

@@ -155,6 +155,20 @@ function block(rows) {
     ]));
   } catch (e) { /* ohne cars.json keine Angabe */ }
 
+  try {
+    const fn = await j("data/fahrnetz.json"), k = fn.kennzahlen;
+    out.push(`<h2>Fahren (Spielmodus)</h2>` + block([
+      ["Was es ist", "Ein Spielmodus: Man setzt ein Auto auf eine Straße und fährt selbst. Kein echter Verkehr, keine Ampeln, keine Navigation. Das Auto und sein Fahrverhalten sind Darstellung, keine Daten."],
+      ["Straßen", `${esc(fn.quelle.titel)}, Stand ${esc((fn.quelle.stand_strassen || "").slice(0, 10))}, Gewerbeflächen Stand ${esc((fn.quelle.stand_gewerbeflaechen || "").slice(0, 10))}. ${esc(fn.quelle.lizenz)}. ` +
+        `${k.wege} Wegstücke, ${k.namen} Straßennamen, ${k.parkplaetze} Parkplätze.`],
+      ["Befahrbar", `Straßen und Wege, die in OpenStreetMap für Autos offen sind oder keine Angabe haben. Ausgeschlossen: ${fn.regeln.ausgeschlossen.map(esc).join("; ")}. Damit sind Betriebsgelände nicht befahrbar.`],
+      ["Breite", esc(fn.regeln.breite_hinweis)],
+      ["Hauswände", "Kollision mit den Grundrissen aus den Bodenflächen des LoD2-Modells (LGL, dl-de/by-2-0). Brücken aus dem LoD2-Modell sind Fahrbahn. Parkende Autos aus der Luftbild-Erkennung sind Hindernisse, solange die Ebene eingeschaltet ist."],
+      ["Höhe", "Das Auto fährt auf der dargestellten Geländefläche (DGM1, im Ort 5 m Raster). Kleine Dellen an Bachquerungen und Kanten kommen daher."],
+      ["Laden", "Die Daten des Fahrmodus werden erst beim ersten Absetzen geladen (rund 160 KB). Ohne Fahren ändert sich an Ladezeit und Ansicht nichts."],
+    ]));
+  } catch (e) { /* ohne fahrnetz.json keine Angabe */ }
+
   out.push(`<h2>Bodenrichtwerte</h2>` + block([
     ["Warum keine Ebene", "Die Bodenrichtwerte in Baden-Württemberg stellen die Gutachterausschüsse über das Portal BORIS-BW bereit. Laut dessen Nutzungsbedingungen sind die Werte urheberrechtlich geschützt und ihre Veröffentlichung untersagt; erlaubt sind Ansehen, Ausdrucken und das Einbinden des Kartenviewers für nicht-kommerzielle Zwecke. Der Viewer lässt sich technisch nicht in fremde Seiten einbetten."],
     ["Was die Seite stattdessen tut", 'Die Gebäude-Info verweist auf das amtliche Portal. Dort lässt sich die Adresse eingeben. <a href="https://www.gutachterausschuesse-bw.de/borisbw/termsofuse_bw.html" target="_blank" rel="noopener">Nutzungsbedingungen BORIS-BW</a>'],

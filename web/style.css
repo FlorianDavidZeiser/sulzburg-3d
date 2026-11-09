@@ -110,3 +110,8 @@ details.sec[open] > summary::before { content: "▾ "; }
 .chips .chip { font-size: 12px; margin: 0; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
 #businessList div { margin-top: 6px; line-height: 1.6; }
+/* Fahrmodus: Einstieg im Bedienfeld (Anzeige während der Fahrt liegt in drive.js) */
+.drive-entry { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.drive-car, .drive-btn { font: inherit; font-size: 12px; color: var(--fg); background: #1b2028; border: 1px solid #333a45; border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.drive-car { display: inline-flex; align-items: center; gap: 6px; cursor: grab; touch-action: none; user-select: none; border-color: #6b5a2c; }
+.drive-car:hover, .drive-btn:hover { border-color: var(--accent); }

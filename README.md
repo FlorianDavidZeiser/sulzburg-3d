@@ -40,6 +40,14 @@ Live: https://floriandavidzeiser.github.io/sulzburg-3d/
 - 308 parkende Autos als 3D-Modelle, an den Stellen, an denen sie beim Bildflug am 25.08.2025 standen. Erkannt aus dem Oberflächenmodell nDOM1 und dem Luftbild, nur an Straßen und Parkplätzen aus OpenStreetMap; Farbe aus dem Luftbild, Höhe aus dem nDOM. Sichtprüfung von 48 Treffern: etwa 8 von 10 sind Autos; am Marktplatz rund 18 von gut 40 gefunden. Stichprobe in `docs/autos_stichprobe.jpg`
 - Bodenrichtwerte: keine Ebene. Die Werte in BORIS-BW sind laut Nutzungsbedingungen urheberrechtlich geschützt, ihre Veröffentlichung ist untersagt. Die Gebäude-Info verweist stattdessen auf das amtliche Portal
 
+**Fahren (Spielmodus, Stufe 1)**
+- Auto aus dem Bedienfeld auf eine Straße ziehen oder an der Bildmitte absetzen; fahren mit W A S D oder Pfeiltasten, Leertaste Handbremse, C wechselt zwischen Verfolger- und Fahrersicht, R setzt auf die Straße zurück, Esc fliegt zurück zur vorherigen Ansicht
+- Befahrbar sind nur Straßen und Wege, die laut OpenStreetMap für Autos offen sind. Private Wege, reine Land- und Forstwege, Grundstückszufahrten und Erschließungswege auf Gewerbe- und Industrieflächen sind gesperrt, Betriebsgelände damit auch
+- Kollision mit den LoD2-Grundrissen und den erkannten parkenden Autos; Brücken aus dem LoD2-Modell sind Fahrbahn
+- Anzeige mit Tempo, Straßenname und Tempolimit laut OSM, Kennzeichnung „Spielmodus, kein echter Verkehr“
+- Eigenes Modul (`web/drive.js`), das erst beim ersten Absetzen lädt (rund 160 KB). Ohne Fahren bleibt die Anwendung wie vorher; `?drive=0` blendet den Modus ganz aus
+- Stufe 2 (offen): Luftbild in 20 cm entlang der Straße, feineres Gelände und schärfere Schatten am Auto, Spurhilfe, besseres Automodell, Handysteuerung mit Joystick, Scheinwerfer
+
 **Feinschliff (Phase 4)**
 - Seite „Datenquellen und Grenzen“ (`web/quellen.html`), erzeugt aus den Metadaten der Pipeline
 - Impressum und Datenschutz als Vorlage (`web/impressum.html`), **Platzhalter vor öffentlicher Verbreitung ausfüllen**
@@ -82,6 +90,8 @@ scripts/   Datenpipeline (Python), Reihenfolge siehe unten
   11_climate.py      DWD-Klimaraster, Gebietsmittel BW, Fortschreibung 2040
   12_business.py     Betriebe aus OSM, Ergänzungen, Solar laut MaStR (Variante A)
   13_cars.py         Parkende Autos aus nDOM1 und DOP20 (Momentaufnahme Bildflug)
+  14_drive.py        Fahrnetz aus OSM und Gebäudegrundrisse aus LoD2 für den Fahrmodus
+  test_drive.cjs     Browsertest des Fahrmodus (Playwright) -> docs/fahrmodus_test.json
 data/
   sources.json       Protokoll aller Downloads und Ebenen (URL, SHA-256, Stand, Kennzahlen, Validierung)
   orte.json          kuratierte Orte mit Fakten und Quellen (hier ergänzen oder kürzen)
@@ -90,6 +100,7 @@ data/
   raw/, processed/   Rohdaten und Zwischenstände (nicht im Git, rund 5 GB, per Skript neu ladbar)
 web/
   index.html, app.js, places.js, scenario.js, extras.js, business.js, cars.js, sun.js, style.css
+  drive.js           Fahrmodus, wird erst bei Nutzung geladen
   quellen.html, quellen.js, impressum.html
   data/              aufbereitete Daten (22 MB, übertragen dank gzip rund 16 MB)
   vendor/three/      three.js 0.187.0 (MIT)
@@ -121,9 +132,11 @@ docs/                Screenshots, Validierungsbericht
 | Solaranlagen von Betrieben | Marktstammdatenregister, Bundesnetzagentur | dl-de/by-2-0 | abgerufen 09.11.2026 |
 | Parkende Autos | abgeleitet aus LGL nDOM1 und DOP20, Straßen aus OpenStreetMap | dl-de/by-2-0, ODbL | Bildflug 25.08.2025 |
 | Bodenrichtwerte | nur Verweis auf BORIS-BW, keine Übernahme | Veröffentlichung laut Nutzungsbedingungen untersagt | |
+| Fahrnetz (Spielmodus) | OpenStreetMap über Overpass: Straßen, Parkplätze, Gewerbe- und Industrieflächen | ODbL | Straßen 09.11.2026, Flächen 01.06.2026 |
+| Grundrisse (Spielmodus) | LGL LoD2, Bodenflächen | dl-de/by-2-0 | wie Gebäude |
 | 3D-Darstellung | three.js 0.187.0 | MIT | |
 
-Namensnennung LGL: **„Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0“**. Namensnennung MaStR: „Marktstammdatenregister – © Bundesnetzagentur | dl-de/by-2-0“. Weil `web/data/transit.json` Linienverläufe und `web/data/business.json` Betriebe aus ODbL-Datensätzen enthalten, stehen diese Dateien unter ODbL.
+Namensnennung LGL: **„Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0“**. Namensnennung MaStR: „Marktstammdatenregister – © Bundesnetzagentur | dl-de/by-2-0“. Weil `web/data/transit.json` Linienverläufe, `web/data/business.json` Betriebe und `web/data/fahrnetz.json` Straßen aus ODbL-Datensätzen enthalten, stehen diese Dateien unter ODbL.
 
 ## Pipeline
 
@@ -148,6 +161,10 @@ python3 -I scripts/11_climate.py
 python3 -I scripts/12_business.py --neu-laden          # ruft Overpass und das MaStR ab
 # Straßen und Parkplätze aus OSM nach data/raw/osm/strassen_overpass.json (Abfrage im Kopf von scripts/13_cars.py)
 python3 -I scripts/13_cars.py
+# Gewerbe- und Industrieflächen aus OSM nach data/raw/osm/gewerbeflaechen_overpass.json (Abfrage im Kopf von scripts/14_drive.py)
+python3 -I scripts/14_drive.py
+# Browsertest Fahrmodus: in web/ "python3 -m http.server 8124" starten, dann
+node scripts/test_drive.cjs
 python3 -I scripts/05_validate.py
 ```
 
@@ -174,6 +191,7 @@ Was hakt oder offen ist:
 
 - **Performance auf echter Hardware** ist nur für „grob“ gemessen (60 Bilder/s auf Thomas' Laptop). „Fein“ und die neuen Ebenen (66.580 Bäume, Busse, Klimaraster) sind nur im Software-Rendering getestet.
 - **Schatten** nur im Umkreis von 700 m um den Blickpunkt; ferne Berge werfen keinen Schatten ins Tal.
+- **Fahrmodus.** Bildrate nur im Software-Rendering geprüft, auf echter Hardware offen. Aus Straßenhöhe zeigen sich die Grenzen der Daten: Das Luftbild ist im Ort 0,5 m je Pixel und wirkt unscharf, Fassaden sind einfarbig, OSM-Achsen liegen 1 bis 3 m neben dem Luftbild. Erkannte parkende Autos sind Hindernisse, auch die Fehltreffer. Stufe 2 (schärferes Luftbild am Auto) erst nach dem Test auf echter Hardware.
 - **Klimaprojektion** für Sulzburg selbst ist nicht eingebunden. Ortsgenaue Projektionen (Klimaatlas BW, GERICS-Klimaausblick) waren nicht als offener Download zu finden; die Fortschreibung ist nur ein Trend.
 - **Energieatlas BW** (offizielles Solarpotenzial) ist nicht eingebunden; die eigene Rechnung ersetzt ihn, sollte aber an drei Dächern gegen den Energieatlas geprüft werden (Abnahmekriterium Phase 2).
 - **Luftqualität** (Umweltbundesamt): Schnittstelle antwortete mit Serverfehler. **Termine:** bewusst zurückgestellt.

@@ -1,0 +1,733 @@
+// Fahrmodus „Fahren“ (Spielmodus, kein echter Verkehr), Stufe 1.
+// Wird erst beim ersten Absetzen geladen (dynamischer Import in app.js). Die normale Ansicht bleibt unverändert:
+// beim Einsteigen wird die Ansicht gespeichert, beim Aussteigen fliegt die Kamera exakt dorthin zurück.
+// Daten (scripts/14_drive.py): data/fahrnetz.json aus OpenStreetMap (ODbL), data/grundrisse.json aus LoD2 des LGL (dl-de/by-2-0).
+
+const CELL = 16;                  // Rasterweite des Suchgitters (m)
+const SPUR_ZUGABE = 1.5;          // befahrbare Spur je Seite breiter als die Fahrbahn: OSM-Achsen liegen 1 bis 3 m neben dem Luftbild
+const R_AUTO = 0.92;              // Radius der Kollisionskreise des Autos (m)
+const KREISE = [1.45, 0, -1.45];  // Kreismittelpunkte entlang der Fahrzeugachse, vorn positiv
+const R_PARK = 0.95;              // Kollisionskreise der parkenden Autos
+const RADSTAND = 2.7, SPUR = 1.64, RAD_R = 0.33;
+const VMAX = 19.4;                // 70 km/h auf Straßen
+const VMAX_WEG = 11.1;            // 40 km/h auf Feldwegen, Erschließungswegen, Parkplätzen
+const VMAX_RUECK = 5.5;
+const QUER_MAX = 9;               // höchste Querbeschleunigung beim Lenken (m/s²), begrenzt den Lenkeinschlag bei Tempo
+const FLUG_MS = 1500;
+const ART_NAME = { secondary: "Landstraße", tertiary: "Kreisstraße", tertiary_link: "Zufahrt", unclassified: "Verbindungsstraße", residential: "Wohnstraße",
+  living_street: "Verkehrsberuhigter Bereich", service: "Erschließungsweg", track: "Feld- oder Waldweg" };
+const LANGSAM = new Set(["service", "track"]);
+
+const EMPTY = [];
+class Grid {
+  constructor() { this.cells = new Map(); }
+  static key(i, j) { return (i + 4096) * 8192 + (j + 4096); }
+  add(x0, z0, x1, z1, id) {
+    const i0 = Math.floor(x0 / CELL), i1 = Math.floor(x1 / CELL), j0 = Math.floor(z0 / CELL), j1 = Math.floor(z1 / CELL);
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const k = Grid.key(i, j); let a = this.cells.get(k);
+      if (!a) this.cells.set(k, (a = []));
+      a.push(id);
+    }
+  }
+  at(x, z) { return this.cells.get(Grid.key(Math.floor(x / CELL), Math.floor(z / CELL))) || EMPTY; }
+}
+
+async function fetchJson(url) { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); }
+
+function buildWorld(net, fp, ctx) {
+  // Straßen als Kapseln (Segment plus halbe Breite)
+  const ax = [], az = [], bx = [], bz = [], half = [], way = [];
+  const roads = new Grid();
+  net.wege.forEach((w, wi) => {
+    const h = w[2] / 20 + SPUR_ZUGABE;
+    for (let k = 4; k + 3 < w.length; k += 2) {
+      const id = ax.length;
+      ax.push(w[k]); az.push(w[k + 1]); bx.push(w[k + 2]); bz.push(w[k + 3]); half.push(h); way.push(wi);
+      const m = h + 4;
+      roads.add(Math.min(w[k], w[k + 2]) - m, Math.min(w[k + 1], w[k + 3]) - m, Math.max(w[k], w[k + 2]) + m, Math.max(w[k + 1], w[k + 3]) + m, id);
+    }
+  });
+  const seg = { ax: Float32Array.from(ax), az: Float32Array.from(az), bx: Float32Array.from(bx), bz: Float32Array.from(bz), half: Float32Array.from(half), way: Int32Array.from(way) };
+  // Parkplätze als Flächen
+  const parks = net.parkplaetze.map((f) => {
+    const xs = [], zs = [];
+    for (let k = 0; k + 1 < f.length; k += 2) { xs.push(f[k]); zs.push(f[k + 1]); }
+    return { xs, zs };
+  });
+  const parkGrid = new Grid();
+  parks.forEach((p, i) => parkGrid.add(Math.min(...p.xs) - 4, Math.min(...p.zs) - 4, Math.max(...p.xs) + 4, Math.max(...p.zs) + 4, i));
+  // Gebäudekanten aus den LoD2-Bodenflächen. Brücken (LoD2-Funktion 53001_1800) sind keine Wand, sondern Fahrbahn auf Höhe der Oberkante.
+  const geb = ctx.meta.buildings.gebaeude;
+  const isBridge = (b) => geb[b] && geb[b].funktion === "53001_1800";
+  const decks = [], deckGrid = new Grid();
+  for (const r of fp.ringe) {
+    if (!isBridge(r[0])) continue;
+    const xs = [], zs = []; for (let k = 1; k + 1 < r.length; k += 2) { xs.push(r[k]); zs.push(r[k + 1]); }
+    deckGrid.add(Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs), decks.length);
+    decks.push({ xs, zs, top: geb[r[0]].z_first });
+  }
+  const ex = [], ez = [], fx = [], fz = [], eb = [];
+  const edges = new Grid();
+  for (const r of fp.ringe) {
+    if (isBridge(r[0])) continue;
+    const b = r[0], n = (r.length - 1) / 2;
+    for (let k = 0; k < n; k++) {
+      const x0 = r[1 + k * 2], z0 = r[2 + k * 2], x1 = r[1 + ((k + 1) % n) * 2], z1 = r[2 + ((k + 1) % n) * 2];
+      const id = ex.length;
+      ex.push(x0); ez.push(z0); fx.push(x1); fz.push(z1); eb.push(b);
+      edges.add(Math.min(x0, x1) - 3, Math.min(z0, z1) - 3, Math.max(x0, x1) + 3, Math.max(z0, z1) + 3, id);
+    }
+  }
+  const edge = { ax: Float32Array.from(ex), az: Float32Array.from(ez), bx: Float32Array.from(fx), bz: Float32Array.from(fz), b: Int32Array.from(eb) };
+  // Ringe je Gebäude für den Innen-Test (gerade-ungerade über alle Ringe eines Gebäudes, Innenhöfe zählen als außen)
+  const rings = fp.ringe.filter((r) => !isBridge(r[0])).map((r) => { const xs = [], zs = []; for (let k = 1; k + 1 < r.length; k += 2) { xs.push(r[k]); zs.push(r[k + 1]); } return { b: r[0], xs, zs }; });
+  const ringGrid = new Grid();
+  rings.forEach((r, i) => ringGrid.add(Math.min(...r.xs), Math.min(...r.zs), Math.max(...r.xs), Math.max(...r.zs), i));
+  const tops = Float32Array.from(ctx.meta.buildings.gebaeude.map((g) => g.z_first ?? (g.z_boden_max + (g.hoehe_m || 8))));
+  // Parkende Autos (Momentaufnahme Luftbild) als zwei Kreise je Auto
+  const pc = [], pcGrid = new Grid();
+  for (const [x, z, yaw] of ctx.meta.cars?.autos || []) {
+    const dx = Math.sin(yaw), dz = -Math.cos(yaw);
+    for (const o of [-1.2, 1.2]) { const id = pc.length / 2; pc.push(x + dx * o, z + dz * o); pcGrid.add(x + dx * o - 3, z + dz * o - 3, x + dx * o + 3, z + dz * o + 3, id); }
+  }
+  return { net, seg, roads, parks, parkGrid, edge, edges, tops, rings, ringGrid, decks, deckGrid, pc: Float32Array.from(pc), pcGrid };
+}
+
+function pointInPoly(xs, zs, x, z) {
+  let inside = false;
+  for (let i = 0, j = xs.length - 1; i < xs.length; j = i++) {
+    if ((zs[i] > z) !== (zs[j] > z) && x < ((xs[j] - xs[i]) * (z - zs[i])) / (zs[j] - zs[i]) + xs[i]) inside = !inside;
+  }
+  return inside;
+}
+
+// Abstand eines Punkts zur Strecke a-b; schreibt den nächsten Punkt nach out
+function closest(px, pz, ax, az, bx, bz, out) {
+  const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz;
+  let t = L2 > 0 ? ((px - ax) * dx + (pz - az) * dz) / L2 : 0;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  out.x = ax + dx * t; out.z = az + dz * t; out.t = t;
+  return Math.hypot(px - out.x, pz - out.z);
+}
+
+function buildCarModel(THREE, color, ghost = false) {
+  const g = new THREE.Group();
+  const mat = (o) => {
+    const m = new THREE.MeshStandardMaterial(o);
+    if (ghost) { m.transparent = true; m.opacity = 0.55; m.depthWrite = false; }
+    return m;
+  };
+  const paint = mat({ color, roughness: 0.35, metalness: 0.25 });
+  const glass = mat({ color: 0x2b3b4e, roughness: 0.18, metalness: 0.05 });
+  const dark = mat({ color: 0x16181c, roughness: 0.85 });
+  const rimM = mat({ color: 0xb9bdc4, roughness: 0.35, metalness: 0.7 });
+  const head = mat({ color: 0xfff6dd, emissive: 0xfff0c8, emissiveIntensity: 0.5 });
+  const tail = mat({ color: 0x7a0d10, emissive: 0xff1a1a, emissiveIntensity: 0.35 });
+  // Seitenprofil in (Länge, Höhe), vorn bei negativem z, über die Breite extrudiert; Radläufe als Bögen
+  // bevel: Rundung der Seitenkanten (über die Breite), size: Rundung im Profil
+  const extrude = (shape, width, bevel, size) => {
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: width - 2 * bevel, bevelEnabled: true, bevelThickness: bevel, bevelSize: size, bevelSegments: 3, curveSegments: 10 });
+    geo.rotateY(-Math.PI / 2); geo.translate((width - 2 * bevel) / 2, 0, 0);
+    geo.computeVertexNormals();
+    return geo;
+  };
+  const a0 = Math.asin(0.03 / 0.42);
+  const body = new THREE.Shape();
+  body.moveTo(-2.2, 0.36); body.lineTo(-2.25, 0.58); body.lineTo(-2.12, 0.8); body.lineTo(-0.95, 0.94); body.lineTo(1.6, 0.98);
+  body.lineTo(2.2, 0.93); body.lineTo(2.26, 0.62); body.lineTo(2.2, 0.36); body.lineTo(1.77, 0.36);
+  body.absarc(1.35, 0.33, 0.42, a0, Math.PI - a0, false); body.lineTo(-0.93, 0.36);
+  body.absarc(-1.35, 0.33, 0.42, a0, Math.PI - a0, false); body.closePath();
+  const bodyMesh = new THREE.Mesh(extrude(body, 1.76, 0.13, 0.05), paint);
+  const cabin = new THREE.Shape();
+  cabin.moveTo(-0.98, 0.92); cabin.lineTo(-0.3, 1.38); cabin.lineTo(0.95, 1.4); cabin.lineTo(1.64, 0.96); cabin.lineTo(1.64, 0.92); cabin.closePath();
+  const cabinMesh = new THREE.Mesh(extrude(cabin, 1.54, 0.1, 0.03), glass);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.05, 1.16), paint); roof.position.set(0, 1.425, 0.33);
+  const grill = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.13, 0.04), dark); grill.position.set(0, 0.52, -2.3);
+  // Säulen zwischen den Scheiben, damit die Kabine nicht wie ein dunkler Block wirkt
+  for (const sx of [-1, 1]) for (const [z, y, rx, len] of [[-0.64, 1.15, 0.976, 0.82], [0.25, 1.17, 0, 0.46], [1.295, 1.18, -1.0, 0.82]]) {
+    const pil = new THREE.Mesh(new THREE.BoxGeometry(0.06, len, 0.09), paint); pil.position.set(sx * 0.775, y, z); pil.rotation.x = rx; g.add(pil);
+  }
+  const lights = [];
+  for (const s of [-1, 1]) {
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.1, 0.04), head); hl.position.set(s * 0.56, 0.68, -2.285);
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.11, 0.04), tail); tl.position.set(s * 0.56, 0.8, 2.3);
+    lights.push(hl, tl);
+  }
+  g.add(bodyMesh, cabinMesh, roof, grill, ...lights);
+  // Räder: Reifen, Felge mit Speichen (sichtbare Drehung), vordere Räder in einem Lenkgelenk
+  const tireGeo = new THREE.CylinderGeometry(RAD_R, RAD_R, 0.24, 20).rotateZ(Math.PI / 2);
+  const rimGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.25, 12).rotateZ(Math.PI / 2);
+  const spokeGeo = new THREE.BoxGeometry(0.255, 0.36, 0.05);
+  const wheels = [], pivots = [];
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const pivot = new THREE.Group(); pivot.position.set(sx * SPUR / 2, RAD_R, sz * RADSTAND / 2);
+    const spin = new THREE.Group();
+    spin.add(new THREE.Mesh(tireGeo, dark), new THREE.Mesh(rimGeo, rimM));
+    const s1 = new THREE.Mesh(spokeGeo, dark), s2 = s1.clone(); s2.rotation.x = Math.PI / 2;
+    spin.add(s1, s2);
+    pivot.add(spin); g.add(pivot);
+    wheels.push(spin); if (sz < 0) pivots.push(pivot);
+  }
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = !ghost; o.receiveShadow = !ghost; } });
+  g.userData = { wheels, pivots, tail, head };
+  return g;
+}
+
+const CSS = `
+#driveHud { position: fixed; left: 50%; transform: translateX(-50%); bottom: var(--dh-bottom, 90px); z-index: 7; pointer-events: auto;
+  background: rgba(18,22,28,.84); backdrop-filter: blur(8px); border-radius: 12px; padding: 8px 14px 9px; color: #e8e6e1;
+  font: 13px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; min-width: 320px; max-width: calc(100vw - 24px); box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+#driveHud .dh-top { display: flex; align-items: baseline; justify-content: center; gap: 14px; }
+#driveHud .dh-speed b { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#driveHud .dh-road { font-size: 14px; font-weight: 600; }
+#driveHud .dh-road span { font-weight: 400; color: #a9b0ba; font-size: 12px; }
+#driveHud .dh-note, #driveHud .dh-keys { font-size: 11px; color: #a9b0ba; margin-top: 2px; }
+#driveHud .dh-note b { color: #1a1408; background: #f2b544; border-radius: 4px; padding: 0 5px; font-size: 10px; }
+#driveHud .dh-btns { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
+#driveHud button, #driveTouch button { font: inherit; font-size: 12px; color: #e8e6e1; background: #1b2028; border: 1px solid #333a45; border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+#driveHud button:hover { border-color: #f2b544; }
+#driveToast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 8; pointer-events: none; background: rgba(12,15,20,.92);
+  color: #e8e6e1; font: 13px system-ui, sans-serif; padding: 6px 12px; border-radius: 8px; opacity: 0; transition: opacity .25s; }
+#driveToast.on { opacity: 1; }
+#driveDrag { position: fixed; z-index: 9; pointer-events: none; background: rgba(12,15,20,.92); color: #e8e6e1; font: 12px system-ui, sans-serif;
+  padding: 4px 8px; border-radius: 6px; transform: translate(14px, 14px); white-space: nowrap; }
+#driveDrag.no { color: #f2b544; }
+#driveHud[hidden], #driveTouch[hidden], #driveDrag[hidden] { display: none !important; }
+#driveTouch { position: fixed; inset: auto 0 var(--dh-touch, 180px) 0; z-index: 7; pointer-events: none; display: flex; justify-content: space-between; padding: 0 14px; }
+#driveTouch div { display: flex; gap: 12px; pointer-events: auto; }
+#driveTouch button { width: 66px; height: 66px; border-radius: 50%; font-size: 20px; touch-action: none; user-select: none; -webkit-user-select: none; background: rgba(27,32,40,.85); }
+#driveTouch button.on { border-color: #f2b544; background: rgba(60,52,30,.9); }
+@media (max-width: 900px) {
+  #driveHud { min-width: 0; width: calc(100vw - 24px); padding: 6px 10px; }
+  #driveHud .dh-keys, #driveHud .dh-road span, #driveHud .long { display: none; }
+  #driveHud .dh-speed b { font-size: 22px; } #driveHud .dh-note { font-size: 10px; } #driveHud .dh-btns { margin-top: 4px; }
+  #driveTouch button { width: 60px; height: 60px; }
+}
+`;
+
+export async function createDrive(ctx) {
+  const { THREE, scene, camera, controls, $ } = ctx;
+  const [net, fp] = await Promise.all([fetchJson("data/fahrnetz.json"), fetchJson("data/grundrisse.json")]);
+  const W = buildWorld(net, fp, ctx);
+  const canvas = ctx.renderer.domElement;
+  // Fahrbahnhöhe: dargestellte Geländefläche, auf Brücken deren Oberkante (das DGM enthält keine Brücken)
+  const surface = (x, z) => {
+    let h = ctx.terrainSurfaceAt(x, z) ?? ctx.terrainHeightAt(x, z) ?? ctx.centerY;
+    for (const di of W.deckGrid.at(x, z)) { const D = W.decks[di]; if (D.top > h && pointInPoly(D.xs, D.zs, x, z)) h = D.top; }
+    return h;
+  };
+
+  // ---------- Anzeige ----------
+  const style = document.createElement("style"); style.textContent = CSS; document.head.appendChild(style);
+  const hud = document.createElement("div"); hud.id = "driveHud"; hud.hidden = true;
+  hud.innerHTML = `<div class="dh-top"><div class="dh-speed"><b id="dhSpeed">0</b> km/h</div><div class="dh-road" id="dhRoad">–</div></div>` +
+    `<div class="dh-note"><b>SPIELMODUS</b> <span class="long">kein echter Verkehr · </span>Straßen © OpenStreetMap-Mitwirkende<span class="long"> (ODbL) · Gebäude LGL</span></div>` +
+    `<div class="dh-btns"><button id="dhView">Sicht: Verfolger</button><button id="dhExit">Zurück zur Karte<span class="long"> (Esc)</span></button></div>` +
+    `<div class="dh-keys">W A S D oder Pfeiltasten · Leertaste Handbremse · R zurück auf die Straße · Mausrad Abstand</div>`;
+  const toast = document.createElement("div"); toast.id = "driveToast";
+  const dragLabel = document.createElement("div"); dragLabel.id = "driveDrag"; dragLabel.hidden = true;
+  const touch = document.createElement("div"); touch.id = "driveTouch"; touch.hidden = true;
+  touch.innerHTML = `<div><button data-k="left" aria-label="links">◀</button><button data-k="right" aria-label="rechts">▶</button></div>` +
+    `<div><button data-k="down" aria-label="Bremse">■</button><button data-k="up" aria-label="Gas">▲</button></div>`;
+  document.body.append(hud, toast, dragLabel, touch);
+  let toastTimer = 0;
+  const say = (msg, ms = 2600) => { toast.textContent = msg; toast.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("on"), ms); };
+  const coarse = "ontouchstart" in window && window.matchMedia && matchMedia("(pointer: coarse)").matches;
+  // Anzeige über der Quellenzeile platzieren (die Namensnennung bleibt sichtbar), Touch-Knöpfe darüber
+  const placeHud = () => {
+    let b = 16;
+    for (const el of [$("sources"), $("attrib")]) {
+      if (!el || !el.getClientRects().length) continue;
+      const r = el.getBoundingClientRect(); if (r.height) b = Math.max(b, innerHeight - r.top + 10);
+    }
+    document.documentElement.style.setProperty("--dh-bottom", `${Math.round(b)}px`);
+    placeTouch();
+  };
+  let touchB = 0;
+  const placeTouch = () => {
+    if (hud.hidden) return;
+    const b = Math.round(innerHeight - hud.getBoundingClientRect().top + 10);
+    if (b !== touchB) { touchB = b; document.documentElement.style.setProperty("--dh-touch", `${b}px`); }
+  };
+
+  // ---------- Auto ----------
+  const model = buildCarModel(THREE, 0xe3b53c);
+  const ghost = buildCarModel(THREE, 0xe3b53c, true);
+  ghost.visible = false; scene.add(ghost);
+  const car = { x: 0, z: 0, y: 0, yaw: 0, v: 0, steer: 0, spin: 0, n: new THREE.Vector3(0, 1, 0), slope: 0, seg: -1, park: false };
+  const input = { up: 0, down: 0, left: 0, right: 0, hand: 0 };
+  let state = "off";   // off, enter, drive, leave
+  let saved = null, trans = null, view = "chase", chaseDist = 9, hintedEdge = false, lastBump = 0;
+  const cam = { pos: new THREE.Vector3(), look: new THREE.Vector3(), yawS: 0 };
+  const tmp = { x: 0, z: 0, t: 0 }, field = { d: 0, nx: 0, nz: 0, seg: -1, park: false };
+  const v3 = new THREE.Vector3(), v3b = new THREE.Vector3(), lookTmp = new THREE.Vector3();
+  const basis = new THREE.Matrix4(), X = new THREE.Vector3(), Y = new THREE.Vector3(), Z = new THREE.Vector3(), F = new THREE.Vector3();
+
+  // Abstandsfeld der befahrbaren Fläche: d < 0 innen, Normale zeigt nach außen
+  function roadField(x, z, out) {
+    let best = Infinity, nx = 0, nz = 0, bs = -1, park = false;
+    const S = W.seg;
+    for (const id of W.roads.at(x, z)) {
+      const dist = closest(x, z, S.ax[id], S.az[id], S.bx[id], S.bz[id], tmp);
+      const d = dist - S.half[id];
+      if (d < best) { best = d; bs = id; park = false; if (dist > 1e-6) { nx = (x - tmp.x) / dist; nz = (z - tmp.z) / dist; } }
+    }
+    for (const pi of W.parkGrid.at(x, z)) {
+      const P = W.parks[pi], n = P.xs.length, inside = pointInPoly(P.xs, P.zs, x, z);
+      let md = Infinity, cx = 0, cz = 0;
+      for (let i = 0, j = n - 1; i < n; j = i++) {
+        const dd = closest(x, z, P.xs[j], P.zs[j], P.xs[i], P.zs[i], tmp);
+        if (dd < md) { md = dd; cx = tmp.x; cz = tmp.z; }
+      }
+      const d = inside ? -md : md;
+      if (d < best) { best = d; park = true; if (md > 1e-6) { nx = ((x - cx) / md) * (inside ? -1 : 1); nz = ((z - cz) / md) * (inside ? -1 : 1); } }
+    }
+    out.d = best; out.nx = nx; out.nz = nz; out.seg = bs; out.park = park;
+    return out;
+  }
+
+  // Nächster Punkt auf dem Fahrnetz (für das Absetzen), mit Fahrtrichtung entlang der Straße
+  function nearestRoad(x, z) {
+    const S = W.seg; let best = Infinity, r = null;
+    for (let id = 0; id < S.ax.length; id++) {
+      const d = closest(x, z, S.ax[id], S.az[id], S.bx[id], S.bz[id], tmp);
+      if (d < best) { best = d; const L = Math.hypot(S.bx[id] - S.ax[id], S.bz[id] - S.az[id]) || 1; r = { x: tmp.x, z: tmp.z, dx: (S.bx[id] - S.ax[id]) / L, dz: (S.bz[id] - S.az[id]) / L, seg: id, dist: d }; }
+    }
+    for (const P of W.parks) if (pointInPoly(P.xs, P.zs, x, z)) return { x, z, dx: 1, dz: 0, seg: -1, dist: 0, park: true };
+    return r;
+  }
+
+  // Liegt ein Punkt in einem Gebäudegrundriss?
+  function inBuilding(x, z) {
+    const count = new Map();
+    for (const ri of W.ringGrid.at(x, z)) { const r = W.rings[ri]; if (pointInPoly(r.xs, r.zs, x, z)) count.set(r.b, (count.get(r.b) || 0) + 1); }
+    for (const v of count.values()) if (v % 2) return true;
+    return false;
+  }
+  function anyInBuilding(x, z, yaw) {
+    const fx = Math.sin(yaw), fz = -Math.cos(yaw);
+    return KREISE.some((o) => inBuilding(x + fx * o, z + fz * o));
+  }
+
+  // Kollision der drei Fahrzeugkreise mit Hauswänden und parkenden Autos; liefert die Verschiebung
+  const push = { x: 0, z: 0, hit: 0 };
+  function bodyPush(x, z, yaw, out) {
+    const fx = Math.sin(yaw), fz = -Math.cos(yaw);
+    out.x = 0; out.z = 0; out.hit = 0;
+    const E = W.edge, carsOn = $("cars") ? $("cars").checked : true;
+    for (const o of KREISE) {
+      const cx = x + fx * o + out.x, cz = z + fz * o + out.z;
+      // je Kreis die tiefste Eindringung (an Ecken folgt die zweite Wand im nächsten Teilschritt)
+      let px = 0, pz = 0, pm = 0;
+      for (const id of W.edges.at(cx, cz)) {
+        const d = closest(cx, cz, E.ax[id], E.az[id], E.bx[id], E.bz[id], tmp);
+        if (d < R_AUTO && d > 1e-6 && R_AUTO - d > pm) { pm = R_AUTO - d; px = ((cx - tmp.x) / d) * pm; pz = ((cz - tmp.z) / d) * pm; }
+      }
+      if (carsOn) for (const id of W.pcGrid.at(cx, cz)) {
+        const dx = cx - W.pc[id * 2], dz = cz - W.pc[id * 2 + 1], d = Math.hypot(dx, dz), R = R_AUTO + R_PARK;
+        if (d < R && d > 1e-6 && R - d > pm) { pm = R - d; px = (dx / d) * pm; pz = (dz / d) * pm; }
+      }
+      if (px || pz) { out.x += px; out.z += pz; out.hit = Math.max(out.hit, Math.abs(fx * px + fz * pz) / (Math.hypot(px, pz) || 1)); }
+    }
+    return out;
+  }
+
+  // Kamera nicht hinter Hauswände: Sichtlinie Auto -> Kamera gegen Grundrisse höherer Gebäude
+  function occlusion(ex, ey, ez, cx, cy, cz) {
+    const E = W.edge; let tMin = 1;
+    const seen = new Set();
+    const x0 = Math.min(ex, cx), x1 = Math.max(ex, cx), z0 = Math.min(ez, cz), z1 = Math.max(ez, cz);
+    for (let i = Math.floor(x0 / CELL); i <= Math.floor(x1 / CELL); i++) for (let j = Math.floor(z0 / CELL); j <= Math.floor(z1 / CELL); j++) {
+      for (const id of W.edges.cells.get(Grid.key(i, j)) || EMPTY) {
+        if (seen.has(id)) continue; seen.add(id);
+        const rx = cx - ex, rz = cz - ez, sx = E.bx[id] - E.ax[id], sz = E.bz[id] - E.az[id];
+        const den = rx * sz - rz * sx; if (Math.abs(den) < 1e-9) continue;
+        const qx = E.ax[id] - ex, qz = E.az[id] - ez;
+        const t = (qx * sz - qz * sx) / den, u = (qx * rz - qz * rx) / den;
+        if (t > 0 && t < tMin && u >= 0 && u <= 1 && W.tops[E.b[id]] > ey + (cy - ey) * t - 0.5) tMin = t;
+      }
+    }
+    return tMin;
+  }
+
+  function roadLabel() {
+    if (car.park) return `Parkplatz <span>öffentlich laut OSM</span>`;
+    if (car.seg < 0) return "–";
+    const w = W.net.wege[W.seg.way[car.seg]], art = W.net.arten[w[0]];
+    const name = w[1] >= 0 ? W.net.namen[w[1]] : ART_NAME[art] || art;
+    const extra = [w[1] >= 0 ? ART_NAME[art] : null, w[3] ? `Tempo ${w[3]} laut OSM` : null].filter(Boolean).join(" · ");
+    return `${name}${extra ? ` <span>${extra}</span>` : ""}`;
+  }
+
+  // Abgleiten an Wand oder Spurrand: n zeigt von der Wand weg. Schräg: Auto dreht sich an der Wand entlang und verliert
+  // nur den Anteil des Tempos, der in die Wand ging. Frontal: Auto bleibt stehen.
+  function slide(nx, nz) {
+    const dir = car.v >= 0 ? 1 : -1;
+    const mx = Math.sin(car.yaw) * dir, mz = -Math.cos(car.yaw) * dir;
+    const into = mx * nx + mz * nz;
+    if (into >= -0.02 || Math.abs(car.v) < 0.05) return 0;
+    const cos = -into;
+    if (cos > 0.8) { car.v *= 0.5; return cos; }
+    let tx = mx - into * nx, tz = mz - into * nz; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
+    const want = Math.atan2(tx * dir, -tz * dir);
+    car.yaw += Math.atan2(Math.sin(want - car.yaw), Math.cos(want - car.yaw)) * 0.5;
+    car.v *= 1 - 0.22 * cos;
+    return cos;
+  }
+
+  // ---------- Fahrphysik (Arcade: kein Physikmodell, nur glaubwürdiges Verhalten) ----------
+  function step(h) {
+    const art = car.seg >= 0 ? W.net.arten[W.net.wege[W.seg.way[car.seg]][0]] : "service";
+    const vmax = LANGSAM.has(art) || car.park ? VMAX_WEG : VMAX;
+    let a = 0;
+    const gas = input.up, brake = input.down;
+    if (gas && car.v >= -0.5) a += 4.6 * (1 - Math.sign(car.v) * (car.v / vmax) ** 2);
+    else if (gas) a += 9;
+    if (brake && car.v > 0.5) a -= 9;
+    else if (brake && car.v > -VMAX_RUECK) a -= 3.2;
+    if (Math.abs(car.v) > 0.02) a -= Math.sign(car.v) * (0.35 + 0.0011 * car.v * car.v + (input.hand ? 6 : 0));
+    a -= 9.81 * car.slope * 0.7;
+    car.v += a * h;
+    if (!gas && !brake && Math.abs(car.v) < 0.3) car.v = 0;   // steht das Auto, hält es (auch am Hang)
+    // Lenkung: Einschlag begrenzt durch die Querbeschleunigung
+    const vv = Math.max(1, car.v * car.v);
+    const maxSteer = Math.min(0.6, Math.atan((QUER_MAX * RADSTAND) / vv));
+    const target = (input.right - input.left) * maxSteer;
+    const rate = target === 0 ? 4 : 2.4;
+    car.steer += Math.max(-rate * h, Math.min(rate * h, target - car.steer));
+    let yawRate = (car.v * Math.tan(car.steer)) / RADSTAND;
+    if (input.hand && Math.abs(car.v) > 3) yawRate *= 1.35;
+    const ox = car.x, oz = car.z, oyaw = car.yaw;
+    car.yaw += yawRate * h;
+    car.x += Math.sin(car.yaw) * car.v * h;
+    car.z += -Math.cos(car.yaw) * car.v * h;
+    // 1. auf der befahrbaren Fläche bleiben
+    roadField(car.x, car.z, field);
+    if (field.d === Infinity) { resetToRoad(false); return; }
+    if (field.d > 0) {
+      car.x -= field.nx * field.d; car.z -= field.nz * field.d;
+      slide(-field.nx, -field.nz);
+      if (!hintedEdge && Math.abs(car.v) > 1) { hintedEdge = true; say("Nur öffentliche Straßen und Wege laut OpenStreetMap sind befahrbar."); }
+    }
+    car.seg = field.seg; car.park = field.park;
+    // 2. Hauswände und parkende Autos haben Vorrang
+    bodyPush(car.x, car.z, car.yaw, push);
+    if (push.x || push.z) {
+      car.x += push.x; car.z += push.z;
+      const L = Math.hypot(push.x, push.z);
+      const v0 = Math.abs(car.v), cos = slide(push.x / L, push.z / L);
+      if (cos > 0.8 && v0 > 4 && performance.now() - lastBump > 600) { lastBump = performance.now(); say("Rums. Wand oder parkendes Auto.", 1400); }
+    }
+    // Sicherung: rutscht ein Kreismittelpunkt doch in einen Grundriss, gilt der Schritt nicht
+    if (anyInBuilding(car.x, car.z, car.yaw) && !anyInBuilding(ox, oz, oyaw)) { car.x = ox; car.z = oz; car.yaw = oyaw; car.v *= 0.3; }
+  }
+
+  function placeModel(dt) {
+    const fx = Math.sin(car.yaw), fz = -Math.cos(car.yaw), rx = -fz, rz = fx;
+    const L = RADSTAND / 2, S2 = SPUR / 2;
+    const hFL = surface(car.x + fx * L - rx * S2, car.z + fz * L - rz * S2), hFR = surface(car.x + fx * L + rx * S2, car.z + fz * L + rz * S2);
+    const hRL = surface(car.x - fx * L - rx * S2, car.z - fz * L - rz * S2), hRR = surface(car.x - fx * L + rx * S2, car.z - fz * L + rz * S2);
+    const y = (hFL + hFR + hRL + hRR) / 4;
+    car.y = dt > 0 && Math.abs(y - car.y) < 3 ? car.y + (y - car.y) * Math.min(1, dt * 20) : y;
+    car.slope = ((hFL + hFR) - (hRL + hRR)) / 2 / RADSTAND;
+    // Normale aus den Diagonalen der vier Radaufstandspunkte
+    const a = v3.set(fx * L - rx * S2 - (-fx * L + rx * S2), hFL - hRR, fz * L - rz * S2 - (-fz * L + rz * S2));
+    const b = v3b.set(fx * L + rx * S2 - (-fx * L - rx * S2), hFR - hRL, fz * L + rz * S2 - (-fz * L - rz * S2));
+    const n = Y.crossVectors(b, a).normalize();
+    car.n.lerp(n, dt > 0 ? Math.min(1, dt * 12) : 1).normalize();
+    F.set(fx, 0, fz);
+    X.crossVectors(F, car.n).normalize();
+    F.crossVectors(car.n, X).normalize();
+    Z.copy(F).negate();
+    basis.makeBasis(X, car.n, Z);
+    model.position.set(car.x, car.y, car.z);
+    model.quaternion.setFromRotationMatrix(basis);
+    car.spin -= (car.v * dt) / RAD_R;
+    for (const w of model.userData.wheels) w.rotation.x = car.spin;
+    for (const p of model.userData.pivots) p.rotation.y = -car.steer;
+    model.userData.tail.emissiveIntensity = (input.down && car.v > 0.3) || input.hand ? 2.2 : 0.35;
+  }
+
+  // ---------- Kamera ----------
+  function chaseTarget(dt, outPos, outLook) {
+    let d = car.yaw - cam.yawS; d = Math.atan2(Math.sin(d), Math.cos(d));
+    cam.yawS += dt > 0 ? d * (1 - Math.exp(-dt * 3.2)) : d;
+    const sp = Math.min(1, Math.abs(car.v) / VMAX);
+    const dist = chaseDist + sp * 3, hgt = 4 + sp * 1.5 + (chaseDist - 9) * 0.35;
+    const fx = Math.sin(cam.yawS), fz = -Math.cos(cam.yawS);
+    outPos.set(car.x - fx * dist, car.y + hgt, car.z - fz * dist);
+    // Hochformat (Handy): Blick näher ans Auto, damit es über Anzeige und Knöpfen im Bild steht
+    const ahead = camera.aspect < 0.9 ? 0.5 : 3, up = camera.aspect < 0.9 ? 0.2 : 1.3;
+    outLook.set(car.x + Math.sin(car.yaw) * ahead, car.y + up, car.z - Math.cos(car.yaw) * ahead);
+  }
+  function driverTarget(outPos, outLook) {
+    outPos.set(-0.36, 1.25, -0.2).applyMatrix4(model.matrixWorld);
+    outLook.set(-0.36, 1.05, -14).applyMatrix4(model.matrixWorld);
+  }
+  const want = new THREE.Vector3(), wantLook = new THREE.Vector3();
+  function updateCamera(dt) {
+    model.updateMatrixWorld();
+    if (view === "driver") {
+      driverTarget(want, wantLook);
+      cam.pos.copy(want); cam.look.lerp(wantLook, Math.min(1, dt * 10));
+    } else {
+      chaseTarget(dt, want, wantLook);
+      const k = 1 - Math.exp(-dt * 6);
+      cam.pos.x += (want.x - cam.pos.x) * k; cam.pos.z += (want.z - cam.pos.z) * k; cam.pos.y += (want.y - cam.pos.y) * (1 - Math.exp(-dt * 4));
+      cam.look.copy(wantLook);
+      const ey = car.y + 1.8;
+      const t = occlusion(car.x, ey, car.z, cam.pos.x, cam.pos.y, cam.pos.z);
+      if (t < 1) { const tt = Math.max(0.12, t - 0.06); cam.pos.set(car.x + (cam.pos.x - car.x) * tt, ey + (cam.pos.y - ey) * tt, car.z + (cam.pos.z - car.z) * tt); }
+      const gy = surface(cam.pos.x, cam.pos.z) + 1.2;
+      if (cam.pos.y < gy) cam.pos.y = gy;
+    }
+    camera.position.copy(cam.pos);
+    camera.up.set(0, 1, 0);
+    camera.lookAt(cam.look);
+    const fov = view === "driver" ? 62 : 55 + Math.min(1, Math.abs(car.v) / VMAX) * 7;
+    if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 3); camera.updateProjectionMatrix(); }
+  }
+
+  // ---------- Bildschleife (von app.js aufgerufen, solange der Fahrmodus die Kamera hat) ----------
+  const ease = (f) => (f < 0.5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2);
+  let hudT = 0;
+  const owner = {
+    frame(now, dt) {
+      if (state === "drive") {
+        const n = Math.max(1, Math.ceil(dt / (1 / 120)));
+        for (let i = 0; i < n; i++) step(dt / n);
+        placeModel(dt);
+        updateCamera(dt);
+      } else if (state === "enter") {
+        placeModel(0);
+        model.updateMatrixWorld();
+        chaseTarget(0, want, wantLook);
+        const f = Math.min(1, (now - trans.start) / FLUG_MS), k = ease(f);
+        const lift = Math.sin(Math.PI * f) * Math.min(120, trans.p0.distanceTo(want) * 0.15);
+        camera.position.lerpVectors(trans.p0, want, k); camera.position.y += lift;
+        lookTmp.lerpVectors(trans.l0, wantLook, k);
+        camera.up.set(0, 1, 0); camera.lookAt(lookTmp);
+        camera.fov = trans.fov0 + (55 - trans.fov0) * k; camera.updateProjectionMatrix();
+        if (f >= 1) { state = "drive"; cam.pos.copy(want); cam.look.copy(wantLook); }
+      } else if (state === "leave") {
+        const f = Math.min(1, (now - trans.start) / FLUG_MS), k = ease(f);
+        const lift = Math.sin(Math.PI * f) * Math.min(300, trans.p0.distanceTo(saved.pos) * 0.15);
+        camera.position.lerpVectors(trans.p0, saved.pos, k); camera.position.y += lift;
+        lookTmp.lerpVectors(trans.l0, saved.target, k);
+        camera.up.set(0, 1, 0); camera.lookAt(lookTmp);
+        camera.fov = trans.fov0 + (saved.fov - trans.fov0) * k; camera.updateProjectionMatrix();
+        if (f >= 1) { camera.position.copy(saved.pos); ctx.releaseCamera(); return; }
+      }
+      // Schatten und Sonne folgen dem Auto (app.js richtet die Sonne am Blickpunkt aus)
+      if (state === "drive" || state === "enter") controls.target.set(car.x, car.y, car.z);
+      else if (state === "leave") controls.target.copy(lookTmp);
+      if (now - hudT > 120) {
+        hudT = now;
+        $("dhSpeed").textContent = String(Math.round(Math.abs(car.v) * 3.6));
+        $("dhRoad").innerHTML = roadLabel();
+        if (!touch.hidden) placeTouch();
+      }
+    },
+    onRelease() { cleanup(); },
+  };
+
+  function cleanup() {
+    if (state === "off") return;
+    state = "off";
+    scene.remove(model); model.visible = true;
+    hud.hidden = true; touch.hidden = true;
+    for (const k in input) input[k] = 0;
+    camera.near = saved.near; camera.far = saved.far; camera.fov = saved.fov; camera.updateProjectionMatrix();
+    controls.target.copy(saved.target);
+    if (saved.autoRotate) { controls.autoRotate = true; const ar = $("autorotate"); if (ar) ar.checked = true; }
+    if (saved.foldedPanel && $("sunpanel").classList.contains("collapsed")) $("menuToggle").click();
+    window.__driveState = "off";
+  }
+
+  function enter(spot) {
+    if (state === "leave") return;
+    const wasOff = state === "off";
+    if (wasOff) {
+      saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov, near: camera.near, far: camera.far, autoRotate: controls.autoRotate };
+      ctx.takeCamera(owner);
+      // Auf dem Handy das Bedienfeld einklappen, beim Aussteigen wieder öffnen
+      const panel = $("sunpanel");
+      saved.foldedPanel = innerWidth < 900 && panel && !panel.classList.contains("collapsed");
+      if (saved.foldedPanel) $("menuToggle").click();
+    }
+    // Fahrtrichtung entlang der Straße, möglichst vom Betrachter weg
+    camera.getWorldDirection(v3);
+    let dx = spot.dx, dz = spot.dz;
+    if (dx * v3.x + dz * v3.z < 0) { dx = -dx; dz = -dz; }
+    car.x = spot.x; car.z = spot.z; car.yaw = Math.atan2(dx, -dz); car.v = 0; car.steer = 0;
+    // freien Platz suchen, falls eine Wand oder ein parkendes Auto im Weg ist
+    const ox = car.x, oz = car.z;
+    for (const s of [0, 3, -3, 6, -6, 9, -9, 12, -12, 16, -16, 20, -20, 25, -25, 30, -30, 40, -40]) {
+      const tx = ox + dx * s, tz = oz + dz * s;
+      if (roadField(tx, tz, field).d > 0 || anyInBuilding(tx, tz, car.yaw)) continue;
+      bodyPush(tx, tz, car.yaw, push);
+      if (!push.x && !push.z) { car.x = tx; car.z = tz; break; }
+    }
+    roadField(car.x, car.z, field); car.seg = field.seg; car.park = field.park;
+    car.y = surface(car.x, car.z); car.n.set(0, 1, 0);
+    placeModel(0);
+    if (!model.parent) scene.add(model);
+    cam.yawS = car.yaw;
+    setView("chase");
+    camera.far = 20000; camera.updateProjectionMatrix();
+    trans = { start: performance.now(), p0: camera.position.clone(), l0: wasOff ? controls.target.clone() : cam.look.clone(), fov0: camera.fov };
+    state = "enter";
+    hud.hidden = false; touch.hidden = !coarse; placeHud();
+    if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+    hintedEdge = false;
+    window.__driveState = "drive";
+  }
+
+  function exit() {
+    if (state !== "drive" && state !== "enter") return;
+    trans = { start: performance.now(), p0: camera.position.clone(), l0: state === "drive" ? cam.look.clone() : lookTmp.clone(), fov0: camera.fov };
+    state = "leave";
+    hud.hidden = true; touch.hidden = true;
+    for (const k in input) input[k] = 0;
+  }
+
+  function resetToRoad(msg = true) {
+    const r = nearestRoad(car.x, car.z);
+    if (!r) return;
+    car.x = r.x; car.z = r.z; car.v = 0; car.steer = 0;
+    if (r.seg >= 0) { let dx = r.dx, dz = r.dz; if (dx * Math.sin(car.yaw) - dz * Math.cos(car.yaw) < 0) { dx = -dx; dz = -dz; } car.yaw = Math.atan2(dx, -dz); }
+    if (msg) say("Zurück auf die Straße gesetzt.");
+  }
+
+  function setView(v) {
+    view = v;
+    model.visible = v !== "driver";
+    $("dhView").innerHTML = (v === "driver" ? "Sicht: Fahrer" : "Sicht: Verfolger") + '<span class="long"> (C)</span>';
+    camera.near = v === "driver" ? 0.12 : 0.3; camera.updateProjectionMatrix();
+    if (v === "chase") { chaseTarget(0, want, wantLook); cam.pos.copy(want); }
+  }
+
+  // ---------- Eingaben ----------
+  const KEYMAP = { w: "up", arrowup: "up", s: "down", arrowdown: "down", a: "left", arrowleft: "left", d: "right", arrowright: "right", " ": "hand" };
+  const typing = (el) => el && (el.tagName === "TEXTAREA" || el.tagName === "SELECT" || (el.tagName === "INPUT" && !["range", "checkbox", "button", "radio"].includes(el.type)));
+  window.addEventListener("keydown", (e) => {
+    if (state === "off" || typing(e.target)) return;
+    const k = e.key.toLowerCase();
+    if (k === "escape") exit();
+    else if (k === "c" && !e.repeat) setView(view === "chase" ? "driver" : "chase");
+    else if (k === "r" && !e.repeat && state === "drive") resetToRoad();
+    else if (KEYMAP[k]) input[KEYMAP[k]] = 1;
+    else return;
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  window.addEventListener("keyup", (e) => {
+    if (state === "off") return;
+    const k = e.key.toLowerCase();
+    if (KEYMAP[k]) { input[KEYMAP[k]] = 0; e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  window.addEventListener("blur", () => { for (const k in input) input[k] = 0; });
+  canvas.addEventListener("wheel", (e) => {
+    if (state !== "drive" || view !== "chase") return;
+    chaseDist = Math.min(20, Math.max(6, chaseDist * (e.deltaY > 0 ? 1.1 : 0.9)));
+  }, { passive: true });
+  $("dhExit").addEventListener("click", exit);
+  $("dhView").addEventListener("click", () => setView(view === "chase" ? "driver" : "chase"));
+  for (const b of touch.querySelectorAll("button")) {
+    const k = b.dataset.k;
+    const on = (e) => { e.preventDefault(); input[k] = 1; b.classList.add("on"); };
+    const off = () => { input[k] = 0; b.classList.remove("on"); };
+    b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); b.addEventListener("pointerleave", off);
+  }
+  window.addEventListener("resize", () => { if (state !== "off") placeHud(); });
+
+  // ---------- Absetzen per Ziehen ----------
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  function groundAt(cx, cy) {
+    ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const o = ray.ray.origin, d = ray.ray.direction;
+    let t = 0, prev = 0;
+    for (let i = 0; i < 3000 && t < 25000; i++) {
+      const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
+      const hgt = ctx.terrainHeightAt(x, z);
+      if (hgt != null && y < hgt) {
+        let lo = prev, hi = t;
+        for (let k = 0; k < 14; k++) { const m = (lo + hi) / 2; const hm = ctx.terrainHeightAt(o.x + d.x * m, o.z + d.z * m); if (hm != null && o.y + d.y * m < hm) hi = m; else lo = m; }
+        return { x: o.x + d.x * hi, z: o.z + d.z * hi };
+      }
+      prev = t;
+      t += Math.min(40, Math.max(0.5, hgt != null ? (y - hgt) * 0.5 : 20));
+    }
+    return null;
+  }
+  function snapAt(cx, cy) {
+    const g = groundAt(cx, cy);
+    if (!g) return null;
+    const r = nearestRoad(g.x, g.z);
+    const maxSnap = Math.max(25, camera.position.distanceTo(controls.target) * 0.06);
+    if (!r || r.dist > maxSnap) return { none: true };
+    return r;
+  }
+  function showGhost(r) {
+    if (!r || r.none) { ghost.visible = false; return; }
+    camera.getWorldDirection(v3);
+    let dx = r.dx, dz = r.dz; if (dx * v3.x + dz * v3.z < 0) { dx = -dx; dz = -dz; }
+    const yaw = Math.atan2(dx, -dz);
+    ghost.position.set(r.x, surface(r.x, r.z), r.z);
+    ghost.rotation.set(0, -yaw, 0);
+    const s = Math.max(1, camera.position.distanceTo(ghost.position) / 120);   // aus großer Höhe größer zeigen, damit man es sieht
+    ghost.scale.setScalar(s);
+    ghost.visible = true;
+  }
+  function labelFor(r) {
+    if (!r) return "";
+    if (r.none) return "Keine befahrbare Straße in der Nähe";
+    if (r.park) return "Parkplatz";
+    const w = W.net.wege[W.seg.way[r.seg]], art = W.net.arten[w[0]];
+    return w[1] >= 0 ? W.net.namen[w[1]] : ART_NAME[art] || art;
+  }
+  function startDrag(e) {
+    if (state === "leave" || state === "enter") return;
+    let last = null;
+    const update = (cx, cy) => {
+      const overCanvas = document.elementFromPoint(cx, cy) === canvas;
+      last = overCanvas ? snapAt(cx, cy) : null;
+      showGhost(last);
+      dragLabel.hidden = false;
+      dragLabel.style.left = `${cx}px`; dragLabel.style.top = `${cy}px`;
+      dragLabel.textContent = overCanvas ? labelFor(last) : "Auf eine Straße in der Karte ziehen";
+      dragLabel.classList.toggle("no", !overCanvas || !last || !!last.none);
+    };
+    const move = (ev) => { if (ev.pointerType === "mouse" && ev.buttons === 0) { done(ev, true); return; } update(ev.clientX, ev.clientY); };
+    const done = (ev, drop) => {
+      window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", cancel);
+      window.removeEventListener("keydown", esc, true);
+      ghost.visible = false; dragLabel.hidden = true; document.body.style.cursor = "";
+      if (drop && ev) { update(ev.clientX, ev.clientY); ghost.visible = false; dragLabel.hidden = true; if (last && !last.none) enter(last); }
+    };
+    const up = (ev) => done(ev, true);
+    const cancel = () => done(null, false);
+    const esc = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); cancel(); } };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", cancel);
+    window.addEventListener("keydown", esc, true);
+    document.body.style.cursor = "grabbing";
+    update(e.clientX, e.clientY);
+  }
+  function placeNear(x, z) {
+    const r = nearestRoad(x, z);
+    if (r) enter(r);
+  }
+
+  // Testhilfe: Physik ohne Zeichnen rechnen (Sekunden, Eingaben), liefert die Spur
+  function sim(sec, inp = {}, every = 0.25) {
+    Object.assign(input, { up: 0, down: 0, left: 0, right: 0, hand: 0 }, inp);
+    const trace = []; let t = 0, next = 0;
+    while (t < sec) { step(1 / 120); t += 1 / 120; if (t >= next) { placeModel(1 / 120); trace.push([car.x, car.z, car.v, car.y]); next += every; } }
+    for (const k in input) input[k] = 0;
+    return trace;
+  }
+  const api = { inBuilding, anyInBuilding, sim, startDrag, placeNear, exit, enter, nearestRoad, roadField, bodyPush, state: () => state, car, input, setView, world: W, saved: () => saved };
+  window.__drive = api;
+  return api;
+}

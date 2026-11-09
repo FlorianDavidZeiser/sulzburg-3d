@@ -974,9 +974,46 @@
       "anzahl": 308,
       "kandidaten_flecken": 1224,
       "osm_strassen_stand": "2026-11-09T07:02:18Z"
+    },
+    "fahrmodus": {
+      "ebene": "Fahrnetz für den Spielmodus „Fahren“",
+      "kennzahlen": {
+        "wege": 1101,
+        "namen": 155,
+        "parkplaetze": 13,
+        "laenge_km": {
+          "secondary": 9.3,
+          "residential": 17.0,
+          "tertiary": 3.7,
+          "unclassified": 13.1,
+          "track": 281.3,
+          "service": 9.1,
+          "tertiary_link": 0.0,
+          "living_street": 0.2
+        },
+        "parkplatz_flaeche_m2": 17826,
+        "ausgeschlossen_km": {
+          "nur_land_und_forstwirtschaft": 24.1,
+          "privat_oder_gesperrt": 7.24,
+          "gewerbe_oder_industrieflaeche": 1.01,
+          "grundstueckszufahrt": 2.33,
+          "durchfahrt_durch_gebaeude": 0.01
+        },
+        "ausgeschlossen_parkplatz_m2": {
+          "parkplatz_privat": 8309,
+          "parkplatz_gewerbeflaeche": 1137
+        },
+        "breite_aus_osm": 134
+      },
+      "osm_stand": "2026-11-09T07:02:18Z",
+      "gewerbeflaechen_stand": "2026-06-01T08:52:28Z",
+      "grundrisse": {
+        "ringe": 2386,
+        "gebaeude": 2366
+      }
     }
   },
-  "aktualisiert": "2026-11-09T07:17:59+00:00",
+  "aktualisiert": "2026-11-09T07:42:42+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
