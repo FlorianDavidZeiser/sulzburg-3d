@@ -214,6 +214,7 @@ const CSS = `
 #driveHud .dh-speed b { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
 #driveHud .dh-road { font-size: 14px; font-weight: 600; }
 #driveHud .dh-road span { font-weight: 400; color: #a9b0ba; font-size: 12px; }
+#driveHud .dh-fps { font-size: 11px; color: #a9b0ba; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #driveHud .dh-note, #driveHud .dh-keys { font-size: 11px; color: #a9b0ba; margin-top: 2px; }
 #driveHud .dh-note b { color: #1a1408; background: #f2b544; border-radius: 4px; padding: 0 5px; font-size: 10px; }
 #driveHud .dh-btns { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
@@ -263,7 +264,7 @@ export async function createDrive(ctx) {
   // ---------- Anzeige ----------
   const style = document.createElement("style"); style.textContent = CSS; document.head.appendChild(style);
   const hud = document.createElement("div"); hud.id = "driveHud"; hud.hidden = true;
-  hud.innerHTML = `<div class="dh-top"><div class="dh-speed"><b id="dhSpeed">0</b> km/h</div><div class="dh-road" id="dhRoad">–</div></div>` +
+  hud.innerHTML = `<div class="dh-top"><div class="dh-speed"><b id="dhSpeed">0</b> km/h</div><div class="dh-road" id="dhRoad">–</div><div class="dh-fps" id="dhFps"></div></div>` +
     `<div class="dh-note"><b>SPIELMODUS</b> <span class="long">kein echter Verkehr · </span>Straßen © OpenStreetMap-Mitwirkende<span class="long"> (ODbL) · Gebäude LGL</span></div>` +
     `<div class="dh-btns"><button id="dhView">Sicht: Verfolger</button><button id="dhAssist">Spurhilfe: an<span class="long"> (L)</span></button><button id="dhExit">Zurück zur Karte<span class="long"> (Esc)</span></button></div>` +
     `<div class="dh-keys">W A S D oder Pfeiltasten · Leertaste Handbremse · R zurück auf die Straße · Mausrad Abstand · <span id="dhQ"></span></div>`;
@@ -658,6 +659,7 @@ export async function createDrive(ctx) {
         hudT = now;
         $("dhSpeed").textContent = String(Math.round(Math.abs(car.v) * 3.6));
         $("dhRoad").innerHTML = roadLabel();
+        $("dhFps").textContent = window.__fps != null ? `${window.__fps} Bilder/s · ${QUALI[quality].name}` : "";   // Bildrate aus app.js, einmal je Sekunde gemessen
         if (!touch.hidden) placeTouch();
       }
       if (now - lightT > 1000) { lightT = now; updateHeadlight(); }
