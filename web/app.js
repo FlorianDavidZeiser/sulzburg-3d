@@ -10,6 +10,7 @@ import { setupScenario } from "./scenario.js";
 import { setupExtras } from "./extras.js";
 import { setupBusiness } from "./business.js";
 import { setupCars } from "./cars.js";
+import { setupWeather } from "./weather.js";
 
 const TZ = "Europe/Berlin";
 const params = new URLSearchParams(location.search);
@@ -263,6 +264,8 @@ function buildBoundary(geojson) {
 }
 
 // ---------- Sonne ----------
+// Live-Wetter (weather.js) hängt sich hier ein: liveCheck sagt, ob die Uhrzeit „jetzt“ ist, afterSun passt Licht und Nebel an
+let liveCheck = () => false, afterSun = null;
 function setSun(date) {
   const [lat, lon] = latLon;
   const p = sunPosition(date, lat, lon);
@@ -270,7 +273,7 @@ function setSun(date) {
   sunDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el));
   const up = p.elevation > 0;
   const day = THREE.MathUtils.clamp(p.elevation / 15, 0, 1);
-  const clouds = $("clouds").checked && cloudCover != null ? cloudCover / 100 : 0;
+  const clouds = liveCheck() && cloudCover != null ? cloudCover / 100 : 0;
   sun.visible = up;
   sun.intensity = 2.4 * Math.pow(day, 0.6) * (1 - 0.75 * clouds);
   sun.color.setHSL(0.1, 0.6 * (1 - clouds), THREE.MathUtils.lerp(0.72, 0.98, day));
@@ -284,13 +287,14 @@ function setSun(date) {
   scene.background = sky;
   requestRender();
   scene.fog = new THREE.Fog(sky, 7000, 22000);
+  if (afterSun) afterSun(sky);
   const day0 = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const times = sunTimes(day0, lat, lon);
   $("suninfo").innerHTML =
     `Azimut <b>${p.azimuth.toFixed(1)}°</b> · Höhe <b>${p.elevation.toFixed(1)}°</b>` +
     (up ? "" : ' <span class="warn">(Sonne unter dem Horizont)</span>') +
     `<br>Aufgang ${formatLocal(times.sunrise, TZ)} · Untergang ${formatLocal(times.sunset, TZ)} · Marktplatz ${lat.toFixed(4)}° N, ${lon.toFixed(4)}° O` +
-    (clouds ? `<br><span class="warn">Licht um Bewölkung ${cloudCover} % gedämpft (DWD)</span>` : "");
+    (clouds ? `<br><span class="warn">Licht um Bewölkung ${cloudCover} % gedämpft (DWD, live)</span>` : "");
 }
 
 function updateSunPosition() {
@@ -349,6 +353,7 @@ async function loadWeather() {
     const cur = await loadJson(`https://api.brightsky.dev/current_weather?${q}`);
     const w = cur.weather, s = cur.sources.find((x) => x.id === w.source_id) || cur.sources[0];
     cloudCover = w.cloud_cover;
+    meta.weatherNow = w; meta.weatherAt = Date.now();
     const t = new Date(w.timestamp);
     const dir = w.wind_direction_10 != null ? DIRS[Math.round(w.wind_direction_10 / 45) % 8] : "";
     let html = `<b>${w.temperature != null ? w.temperature.toFixed(1).replace(".", ",") + " °C" : "–"}</b> · ${ICONS[w.icon] || CONDITIONS[w.condition] || w.condition || "–"}` +
@@ -364,7 +369,8 @@ async function loadWeather() {
     html += `<div class="src">Station ${s.station_name} (DWD ${s.dwd_station_id}), ${(s.distance / 1000).toFixed(1).replace(".", ",")} km entfernt, ${s.height} m, Stand ${new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(t)} Uhr.` +
       ` Daten: Deutscher Wetterdienst, bereitgestellt über <a href="https://brightsky.dev" target="_blank" rel="noopener">Bright Sky</a>. Kein Wert aus Sulzburg selbst.</div>`;
     body.innerHTML = html;
-    if ($("clouds").checked) setSun(currentDate());
+    setSun(currentDate());
+    window.dispatchEvent(new Event("wetter"));
   } catch (e) {
     body.innerHTML = `<span class="warn">Wetterdaten nicht erreichbar.</span><div class="src">Quelle wäre: Deutscher Wetterdienst über Bright Sky (api.brightsky.dev).</div>`;
   }
@@ -797,6 +803,7 @@ async function main() {
   const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, infoHooks, buildingMeshes, roofMeshes, utmToLatLon, TZ, centerY,
     setSun: () => setSun(currentDate()), localToday, showBuilding, sunTimes, latLon,
     terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup, markShadows, requestRender, groundAt: null, driveClock: null, blobTexture,
+    reloadWeather: loadWeather, setLiveCheck: (f) => { liveCheck = f; }, setAfterSun: (f) => { afterSun = f; },
     getTreeMeshes: () => treeChunks.map((c) => c.near), treesVersion: () => treesVersion };
   window.__ctx = ctx;
   await setupPlaces(ctx);
@@ -804,6 +811,7 @@ async function main() {
   await setupBusiness(ctx);
   await setupCars(ctx);
   await setupExtras(ctx);
+  setupWeather(ctx);
   setupDriveEntry(ctx);
   showSources();
   loadAlerts();

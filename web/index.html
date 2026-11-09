@@ -87,7 +87,15 @@
   <section class="panel" id="weather">
     <h2>Wetter</h2>
     <div id="weatherbody">lädt …</div>
-    <label class="inline small"><input type="checkbox" id="clouds"> Bewölkung dämpft die Sonne</label>
+    <label class="inline small"><input type="checkbox" id="clouds" checked> Live-Wetter in der Ansicht (Licht, Nebel, Regen, Schnee)</label>
+    <div id="wxLive" class="small"></div>
+    <label class="inline small"><input type="checkbox" id="radar"> Regenradar über dem Gelände</label>
+    <div id="radarBox" class="small" hidden>
+      <div class="radar-row"><button id="radarPlay" title="Abspielen">▶</button><input type="range" id="radarTime" min="0" max="0" value="0"><button id="radarNow">jetzt</button></div>
+      <div id="radarLabel" class="muted">–</div>
+      <div class="legend-row">mm/h <span class="swatch" style="background:#9ecae1"></span>0,1 <span class="swatch" style="background:#6baed6"></span>0,5 <span class="swatch" style="background:#3182bd"></span>2 <span class="swatch" style="background:#08519c"></span>5 <span class="swatch" style="background:#54278f"></span>15</div>
+      <div class="muted">DWD-Regenradar (RADOLAN RV, 1 km, alle 5 min) über Bright Sky; letzte Stunde gemessen, danach Vorhersage bis 2 h.</div>
+    </div>
   </section>
   <section class="panel" id="info" hidden></section>
   <div id="loading" class="panel">Lade Gelände, Luftbild und Gebäude …<div id="progress"></div></div>

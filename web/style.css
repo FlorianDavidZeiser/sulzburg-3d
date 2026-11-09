@@ -115,3 +115,8 @@ details.sec[open] > summary::before { content: "▾ "; }
 .drive-car, .drive-btn { font: inherit; font-size: 12px; color: var(--fg); background: #1b2028; border: 1px solid #333a45; border-radius: 6px; padding: 3px 8px; cursor: pointer; }
 .drive-car { display: inline-flex; align-items: center; gap: 6px; cursor: grab; touch-action: none; user-select: none; border-color: #6b5a2c; }
 .drive-car:hover, .drive-btn:hover { border-color: var(--accent); }
+/* Live-Wetter */
+#wxLive { margin: 4px 0 2px; } #wxLive .badge { margin-left: 0; margin-right: 4px; }
+#radarBox { margin-top: 4px; } .radar-row { display: flex; align-items: center; gap: 6px; }
+.radar-row input[type=range] { flex: 1; } .radar-row button { font: inherit; font-size: 11px; color: var(--fg); background: #1b2028; border: 1px solid #333a45; border-radius: 5px; padding: 1px 7px; cursor: pointer; }
+.legend-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 3px 0; color: var(--muted); }

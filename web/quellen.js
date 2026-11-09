@@ -176,6 +176,13 @@ function block(rows) {
     ]));
   } catch (e) { /* ohne fahrnetz.json keine Angabe */ }
 
+  out.push(`<h2>Live-Wetter</h2>` + block([
+    ["Quellen", 'Deutscher Wetterdienst über <a href="https://brightsky.dev" target="_blank" rel="noopener">Bright Sky</a>: aktuelles Wetter der Station Müllheim (6 km entfernt, Rheinebene, alle 10 Minuten) und Regenradar RADOLAN RV (1-km-Raster, alle 5 Minuten, mit Vorhersage bis 2 Stunden).'],
+    ["Wann", "Nur wenn die eingestellte Uhrzeit „jetzt“ ist (höchstens 30 Minuten Abstand). Für andere Zeiten liegt keine Messung vor, dann bleibt der Himmel klar."],
+    ["Was", "Licht und Himmel nach der Bewölkung. Nebel nach der Sichtweite der Station: im Fahrmodus so dicht wie gemessen, von oben als Dunst hinter dem Blickpunkt. Regen oder Schnee (Schnee bei höchstens 1 °C) nach dem Radar am Blickpunkt. Straßen dunkler, wenn es in der letzten Stunde geregnet hat. Auf Wunsch das Radar als Karte über dem Gelände mit Zeitleiste."],
+    ["Grenzen", "Die Station steht in der Rheinebene; Nebel dort heißt nicht, dass Sulzburg im Nebel liegt. Das Radar sieht Niederschlag, keinen Nebel. Tropfen, Flocken und Dunst sind Darstellung auf Grundlage der Messwerte, kein Datum."],
+  ]));
+
   out.push(`<h2>Bodenrichtwerte</h2>` + block([
     ["Warum keine Ebene", "Die Bodenrichtwerte in Baden-Württemberg stellen die Gutachterausschüsse über das Portal BORIS-BW bereit. Laut dessen Nutzungsbedingungen sind die Werte urheberrechtlich geschützt und ihre Veröffentlichung untersagt; erlaubt sind Ansehen, Ausdrucken und das Einbinden des Kartenviewers für nicht-kommerzielle Zwecke. Der Viewer lässt sich technisch nicht in fremde Seiten einbetten."],
     ["Was die Seite stattdessen tut", 'Die Gebäude-Info verweist auf das amtliche Portal. Dort lässt sich die Adresse eingeben. <a href="https://www.gutachterausschuesse-bw.de/borisbw/termsofuse_bw.html" target="_blank" rel="noopener">Nutzungsbedingungen BORIS-BW</a>'],
