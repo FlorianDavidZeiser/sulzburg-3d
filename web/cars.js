@@ -31,6 +31,7 @@ export async function setupCars(ctx) {
   });
   meshes.forEach((m) => { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; m.computeBoundingSphere(); });
   scene.add(group);
+  ctx.carsLayer = { meshes, group };   // für den Fahrmodus (Höhe auf feinem Gelände)
   $("cars").addEventListener("change", (e) => { group.visible = e.target.checked; });
   $("carsInfo").textContent = `${n} Autos, automatisch erkannt aus Luftbild und Oberflächenmodell vom 25.08.2025. Momentaufnahme; etwa 8 von 10 Treffern stimmen, viele Autos fehlen.`;
   pickHooks.push((ray) => {

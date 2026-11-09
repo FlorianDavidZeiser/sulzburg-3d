@@ -1011,9 +1011,18 @@
         "ringe": 2386,
         "gebaeude": 2366
       }
+    },
+    "fahrkacheln": {
+      "ebene": "Fahrkacheln für den Fahrmodus (Stufe 2)",
+      "anzahl": 1594,
+      "bloecke": 61,
+      "uebersprungen": 3,
+      "ausgelassen_gewerbe": 45,
+      "mb": 27.1,
+      "auswahl": "Straßen ohne Feld- und Waldwege, Puffer halbe Fahrbahnbreite plus 15 m; Parkplätze plus 10 m; ohne Kacheln an Gewerbe- und Industrieflächen laut OSM (Puffer 5 m), dort bleibt das Luftbild der Karte"
     }
   },
-  "aktualisiert": "2026-11-09T08:44:05+00:00",
+  "aktualisiert": "2026-11-09T09:49:10+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,

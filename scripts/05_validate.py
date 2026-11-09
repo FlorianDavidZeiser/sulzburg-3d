@@ -228,9 +228,12 @@ def check_size() -> tuple[list[str], dict]:
               "Bäume": [web / "data" / "trees.bin", web / "data" / "trees.json"],
               "Sonne, Klima, PV, Orte, Fahrplan, Betriebe, Autos": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json", "business.json", "cars.json")],
               "Sonstige Daten": [web / "data" / "gemeinde.geojson", web / "data" / "sources.json"],
-              "three.js + Anwendung": [p for p in web.rglob("*.js") if p.name not in ("drive.js", "quellen.js")] + [web / "index.html", web / "style.css"]}
+              "three.js + Anwendung": [p for p in web.rglob("*.js") if p.name not in ("drive.js", "drive_tiles.js", "quellen.js")] + [web / "index.html", web / "style.css"]}
     # Nur bei Nutzung geladen, zählt nicht zum Start
-    lazy = {"Fahrmodus (erst beim ersten Absetzen)": [web / "drive.js", web / "data" / "fahrnetz.json", web / "data" / "grundrisse.json"]}
+    lazy = {"Fahrmodus (erst beim ersten Absetzen)": [web / "drive.js", web / "drive_tiles.js", web / "data" / "fahrnetz.json", web / "data" / "grundrisse.json",
+                                                   web / "data" / "fahrkacheln" / "index.json", web / "vendor" / "kenney-car-kit" / "hatchback-sports.glb",
+                                                   web / "vendor" / "kenney-car-kit" / "Textures" / "colormap.png"],
+            "Fahrkacheln (nur rund um das Auto)": sorted((web / "data" / "fahrkacheln").glob("h_*.bin")) + sorted((web / "data" / "fahrkacheln").glob("f_*.jpg"))}
     import gzip as _gz
     md = ["## 4. Ladevolumen", "", "GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 für GLB, JSON und BIN). JPEG-Bilder sind bereits komprimiert.", "",
           "| Bestandteil | Dateien | MB auf der Platte | MB übertragen (gzip) |", "|---|---|---|---|"]
@@ -244,7 +247,7 @@ def check_size() -> tuple[list[str], dict]:
     lazy_gz = 0
     for k, files in lazy.items():
         size = sum(f.stat().st_size for f in files if f.exists())
-        gz = sum(len(_gz.compress(f.read_bytes(), 6)) for f in files if f.exists())
+        gz = sum((f.stat().st_size if f.suffix in (".jpg", ".png") else len(_gz.compress(f.read_bytes(), 6))) for f in files if f.exists())
         lazy_gz += gz
         md.append(f"| {k} | {len(files)} | {size/1e6:.2f} | {gz/1e6:.2f} |")
     md += ["",
@@ -304,9 +307,16 @@ def check_layers() -> tuple[list[str], dict]:
                    f"beim Start {len(t['start']['fahrmodus_dateien_beim_start'])} Dateien des Fahrmodus geladen; Rückweg Kamera {rw['kamera_abweichung_m']:.3f} m, Blickpunkt {rw['blickpunkt_abweichung_m']:.3f} m, "
                    f"Bild vorher und nachher {'identisch' if rw['bild_identisch'] else 'verschieden'}. Autopilot auf {ap['wege']} Straßen ({ap['meter']/1000:.1f} km): "
                    f"{ap['ohne_haengen']} ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds {ap['max_abstandsfeld_spur_m']} m), "
-                   f"kleinster Abstand eines Kollisionskreises zur Wand {ap['min_kreisabstand_wand_m']} m (Radius 0,92 m). Hänger: "
+                   f"kleinster Abstand eines Kollisionskreises zur Wand {ap['min_kreisabstand_wand_m']} m (Radius {t.get('kreisradius_m', 0.92)} m). Hänger: "
                    + ("; ".join(f"{x['weg']} ({x['hindernis']})" for x in ap["probleme"]) or "keine") + ".", ""]
             st["fahrmodus"].update({"autopilot_ok": ap["ohne_haengen"], "autopilot_wege": ap["wege"], "rueckweg_bild_identisch": rw["bild_identisch"]})
+            s2 = t.get("stufe2")
+            if s2:
+                md += [f"Stufe 2: {s2['kacheln_geladen']} Fahrkacheln am Auto geladen ({s2['kb']} KB). Größter Höhensprung an einer Kachelgrenze {s2['naht_m'] * 100:.2f} cm, "
+                       f"am Rand zum groben Gelände {s2['rand_m'] * 100:.2f} cm. Spurhilfe nur mit Gas: {s2['spurhilfe']['wege_ok']} von {s2['spurhilfe']['wege']} Straßen bis zum Ende, "
+                       f"größter Abstand zur Achse {s2['spurhilfe']['max_abstand_achse_m']} m. Nach dem Aussteigen: Bäume und parkende Autos auf alter Höhe "
+                       f"({'ja' if s2['zurueck']['objekte'] else 'nein'}), Schatten und Geländematerial wie vorher ({'ja' if s2['zurueck']['schatten_material'] else 'nein'}).", ""]
+                st["fahrmodus"]["stufe2"] = s2
     if (W / "transit.json").exists():
         tr = json.loads((W / "transit.json").read_text(encoding="utf-8"))
         n_trips = len(tr.get("fahrten") or [])

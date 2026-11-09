@@ -165,7 +165,12 @@ function block(rows) {
       ["Breite", esc(fn.regeln.breite_hinweis)],
       ["Hauswände", "Kollision mit den Grundrissen aus den Bodenflächen des LoD2-Modells (LGL, dl-de/by-2-0). Brücken aus dem LoD2-Modell sind Fahrbahn, wenn man auf ihrer Höhe ankommt; führt ein Weg darunter durch, fährt das Auto unten durch. Parkende Autos aus der Luftbild-Erkennung sind Hindernisse, solange die Ebene eingeschaltet ist."],
       ["Höhe", "Das Auto fährt auf der dargestellten Geländefläche (DGM1, im Ort 5 m Raster). Kleine Dellen an Bachquerungen und Kanten kommen daher."],
-      ["Laden", "Die Daten des Fahrmodus werden erst beim ersten Absetzen geladen (rund 160 KB). Ohne Fahren ändert sich an Ladezeit und Ansicht nichts."],
+      ["Schärferes Bild am Auto", "Rund um das Auto lädt der Fahrmodus Fahrkacheln von 50 x 50 m: Gelände im 1-m-Raster aus dem DGM1 und Luftbild in der Originalauflösung 0,2 m aus dem DOP20 (LGL, dl-de/by-2-0). " +
+        "Nur entlang von Straßen und Parkplätzen, nicht an Feld- und Waldwegen. Kacheln an Gewerbe- und Industrieflächen laut OSM sind ausgelassen; Betriebsgelände bleiben beim normalen Luftbild der Karte, auch der Hekatron-Standort. " +
+        "Am Rand der geladenen Fläche geht das feine Gelände weich in das gröbere über. Bäume und parkende Autos werden dort auf die feine Höhe gesetzt."],
+      ["Automodell", 'Kenney Car Kit (hatchback-sports), <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>, von Kenney auf OpenGameArt veröffentlicht. Lizenztext in <code>vendor/kenney-car-kit/</code>.'],
+      ["Licht", "Schatten im Fahrmodus schärfer und nur im Umkreis von rund 150 m vor dem Auto. Nachts Scheinwerfer als Darstellung."],
+      ["Laden", "Alles für den Fahrmodus wird erst beim ersten Absetzen geladen (rund 0,4 MB), die Fahrkacheln dann nur rund um das Auto (etwa 1 MB für die Umgebung, weitere beim Fahren). Ohne Fahren ändert sich an Ladezeit und Ansicht nichts. Sinkt die Bildrate, schaltet der Fahrmodus die Qualität selbst herunter."],
     ]));
   } catch (e) { /* ohne fahrnetz.json keine Angabe */ }
 

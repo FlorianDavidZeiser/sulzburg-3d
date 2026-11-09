@@ -751,7 +751,7 @@ async function main() {
   setupTrees();
   const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, infoHooks, buildingMeshes, roofMeshes, utmToLatLon, TZ, centerY,
     setSun: () => setSun(currentDate()), localToday, showBuilding, sunTimes, latLon,
-    terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup };
+    terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup, getTreeMesh: () => treeMesh };
   window.__ctx = ctx;
   await setupPlaces(ctx);
   await setupScenario(ctx);

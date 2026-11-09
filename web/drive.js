@@ -1,12 +1,16 @@
-// Fahrmodus „Fahren“ (Spielmodus, kein echter Verkehr), Stufe 1.
+// Fahrmodus „Fahren“ (Spielmodus, kein echter Verkehr), Stufe 2.
 // Wird erst beim ersten Absetzen geladen (dynamischer Import in app.js). Die normale Ansicht bleibt unverändert:
-// beim Einsteigen wird die Ansicht gespeichert, beim Aussteigen fliegt die Kamera exakt dorthin zurück.
-// Daten (scripts/14_drive.py): data/fahrnetz.json aus OpenStreetMap (ODbL), data/grundrisse.json aus LoD2 des LGL (dl-de/by-2-0).
+// beim Einsteigen wird die Ansicht gespeichert, beim Aussteigen fliegt die Kamera exakt dorthin zurück und alle
+// Einstellungen (Schatten, Gelände, Bäume, parkende Autos) werden zurückgesetzt.
+// Daten (scripts/14_drive.py, 15_drive_tiles.py): Fahrnetz aus OpenStreetMap (ODbL), Grundrisse aus LoD2,
+// Fahrkacheln aus DGM1 und DOP20 des LGL (dl-de/by-2-0). Automodell: Kenney Car Kit (CC0).
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { createFineTerrain } from "./drive_tiles.js";
 
 const CELL = 16;                  // Rasterweite des Suchgitters (m)
 const SPUR_ZUGABE = 1.5;          // befahrbare Spur je Seite breiter als die Fahrbahn: OSM-Achsen liegen 1 bis 3 m neben dem Luftbild
-const R_AUTO = 0.92;              // Radius der Kollisionskreise des Autos (m)
-const KREISE = [1.45, 0, -1.45];  // Kreismittelpunkte entlang der Fahrzeugachse, vorn positiv
+const R_AUTO = 0.97;              // Radius der Kollisionskreise des Autos (m)
+const KREISE = [1.2, 0, -1.2];    // Kreismittelpunkte entlang der Fahrzeugachse, vorn positiv
 const R_PARK = 0.95;              // Kollisionskreise der parkenden Autos
 const RADSTAND = 2.7, SPUR = 1.64, RAD_R = 0.33;
 const VMAX = 19.4;                // 70 km/h auf Straßen
@@ -14,6 +18,8 @@ const VMAX_WEG = 11.1;            // 40 km/h auf Feldwegen, Erschließungswegen,
 const VMAX_RUECK = 5.5;
 const QUER_MAX = 9;               // höchste Querbeschleunigung beim Lenken (m/s²), begrenzt den Lenkeinschlag bei Tempo
 const FLUG_MS = 1500;
+// Qualitätsstufen im Fahrmodus: Radius der Fahrkacheln (m), halbe Kantenlänge der Schattenbox (m); Stufe 0 wie Erkunden
+const QUALI = [{ name: "niedrig", fein: 0, schatten: 0 }, { name: "mittel", fein: 80, schatten: 220 }, { name: "hoch", fein: 130, schatten: 150 }];
 const ART_NAME = { secondary: "Landstraße", tertiary: "Kreisstraße", tertiary_link: "Zufahrt", unclassified: "Verbindungsstraße", residential: "Wohnstraße",
   living_street: "Verkehrsberuhigter Bereich", service: "Erschließungsweg", track: "Feld- oder Waldweg" };
 const LANGSAM = new Set(["service", "track"]);
@@ -170,7 +176,33 @@ function buildCarModel(THREE, color, ghost = false) {
     wheels.push(spin); if (sz < 0) pivots.push(pivot);
   }
   g.traverse((o) => { if (o.isMesh) { o.castShadow = !ghost; o.receiveShadow = !ghost; } });
-  g.userData = { wheels, pivots, tail, head };
+  g.userData = { wheels, steer: pivots, spinSign: -1, radius: RAD_R, tail, head };
+  return g;
+}
+
+// Kenney Car Kit (CC0): hatchback-sports, gleichmäßig auf 1,5 skaliert (rund 4,3 m lang). Modell schaut nach +z, wird gedreht.
+function makeKenney(THREE, root, ghost = false) {
+  const g = new THREE.Group();
+  root.scale.setScalar(1.5); root.rotation.y = Math.PI; g.add(root);
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    if (o.material.map) o.material.map.colorSpace = THREE.SRGBColorSpace;
+    if (ghost) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.55; o.material.depthWrite = false; }
+    o.castShadow = !ghost; o.receiveShadow = !ghost;
+  });
+  const wheels = [], steer = [];
+  for (const name of ["wheel-front-left", "wheel-front-right", "wheel-back-left", "wheel-back-right"]) {
+    const w = root.getObjectByName(name); if (!w) continue;
+    w.rotation.order = "YXZ"; wheels.push(w); if (name.includes("front")) steer.push(w);
+  }
+  const mat = (o) => new THREE.MeshStandardMaterial(o);
+  const head = mat({ color: 0xfff6dd, emissive: 0xfff0c8, emissiveIntensity: 0.4 });
+  const tail = mat({ color: 0x7a0d10, emissive: 0xff1a1a, emissiveIntensity: 0.35 });
+  if (!ghost) for (const sx of [-1, 1]) {
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.04), head); hl.position.set(sx * 0.6, 0.72, -2.14); g.add(hl);
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.04), tail); tl.position.set(sx * 0.6, 0.86, 2.14); g.add(tl);
+  }
+  g.userData = { wheels, steer, spinSign: 1, radius: 0.45, head, tail, kenney: true };
   return g;
 }
 
@@ -198,6 +230,9 @@ const CSS = `
 #driveTouch div { display: flex; gap: 12px; pointer-events: auto; }
 #driveTouch button { width: 66px; height: 66px; border-radius: 50%; font-size: 20px; touch-action: none; user-select: none; -webkit-user-select: none; background: rgba(27,32,40,.85); }
 #driveTouch button.on { border-color: #f2b544; background: rgba(60,52,30,.9); }
+#driveTouch .joy { position: relative; width: 132px; height: 66px; border-radius: 33px; background: rgba(27,32,40,.85); border: 1px solid #333a45; touch-action: none; }
+#driveTouch .joy .knob { position: absolute; left: 41px; top: 8px; width: 50px; height: 50px; border-radius: 50%; background: #e8e6e1; opacity: .85; pointer-events: none; }
+#driveHud .dh-btns button.off { color: #a9b0ba; }
 @media (max-width: 900px) {
   #driveHud { min-width: 0; width: calc(100vw - 24px); padding: 6px 10px; }
   #driveHud .dh-keys, #driveHud .dh-road span, #driveHud .long { display: none; }
@@ -213,8 +248,10 @@ export async function createDrive(ctx) {
   const canvas = ctx.renderer.domElement;
   // Fahrbahnhöhe: dargestellte Geländefläche, auf Brücken deren Oberkante (das DGM enthält keine Brücken).
   // Auf die Brücke kommt das Auto nur, wenn es etwa auf ihrer Höhe ankommt (ref = bisherige Höhe); darunter fährt es durch.
+  let fine = null;
+  try { fine = await createFineTerrain(ctx); } catch (e) { console.warn("Fahrkacheln nicht verfügbar:", e.message); }
   const surface = (x, z, ref = null) => {
-    const g = ctx.terrainSurfaceAt(x, z) ?? ctx.terrainHeightAt(x, z) ?? ctx.centerY;
+    const g = (fine && fine.heightAt(x, z)) ?? ctx.terrainSurfaceAt(x, z) ?? ctx.terrainHeightAt(x, z) ?? ctx.centerY;
     let h = g;
     for (const di of W.deckGrid.at(x, z)) {
       const D = W.decks[di];
@@ -228,12 +265,12 @@ export async function createDrive(ctx) {
   const hud = document.createElement("div"); hud.id = "driveHud"; hud.hidden = true;
   hud.innerHTML = `<div class="dh-top"><div class="dh-speed"><b id="dhSpeed">0</b> km/h</div><div class="dh-road" id="dhRoad">–</div></div>` +
     `<div class="dh-note"><b>SPIELMODUS</b> <span class="long">kein echter Verkehr · </span>Straßen © OpenStreetMap-Mitwirkende<span class="long"> (ODbL) · Gebäude LGL</span></div>` +
-    `<div class="dh-btns"><button id="dhView">Sicht: Verfolger</button><button id="dhExit">Zurück zur Karte<span class="long"> (Esc)</span></button></div>` +
-    `<div class="dh-keys">W A S D oder Pfeiltasten · Leertaste Handbremse · R zurück auf die Straße · Mausrad Abstand</div>`;
+    `<div class="dh-btns"><button id="dhView">Sicht: Verfolger</button><button id="dhAssist">Spurhilfe: an<span class="long"> (L)</span></button><button id="dhExit">Zurück zur Karte<span class="long"> (Esc)</span></button></div>` +
+    `<div class="dh-keys">W A S D oder Pfeiltasten · Leertaste Handbremse · R zurück auf die Straße · Mausrad Abstand · <span id="dhQ"></span></div>`;
   const toast = document.createElement("div"); toast.id = "driveToast";
   const dragLabel = document.createElement("div"); dragLabel.id = "driveDrag"; dragLabel.hidden = true;
   const touch = document.createElement("div"); touch.id = "driveTouch"; touch.hidden = true;
-  touch.innerHTML = `<div><button data-k="left" aria-label="links">◀</button><button data-k="right" aria-label="rechts">▶</button></div>` +
+  touch.innerHTML = `<div><div class="joy" id="dJoy" aria-label="Lenken"><div class="knob"></div></div></div>` +
     `<div><button data-k="down" aria-label="Bremse">■</button><button data-k="up" aria-label="Gas">▲</button></div>`;
   document.body.append(hud, toast, dragLabel, touch);
   let toastTimer = 0;
@@ -257,13 +294,22 @@ export async function createDrive(ctx) {
   };
 
   // ---------- Auto ----------
-  const model = buildCarModel(THREE, 0xe3b53c);
-  const ghost = buildCarModel(THREE, 0xe3b53c, true);
+  let model, ghost;
+  try {
+    const gltf = await new GLTFLoader().loadAsync("vendor/kenney-car-kit/hatchback-sports.glb");
+    model = makeKenney(THREE, gltf.scene.clone(true)); ghost = makeKenney(THREE, gltf.scene.clone(true), true);
+  }
+  catch (e) { console.warn("Automodell nicht geladen, einfaches Modell:", e.message); model = buildCarModel(THREE, 0xe3b53c); ghost = buildCarModel(THREE, 0xe3b53c, true); }
   ghost.visible = false; scene.add(ghost);
   const car = { x: 0, z: 0, y: 0, yaw: 0, v: 0, steer: 0, spin: 0, n: new THREE.Vector3(0, 1, 0), slope: 0, seg: -1, park: false };
   const input = { up: 0, down: 0, left: 0, right: 0, hand: 0 };
   let state = "off";   // off, enter, drive, leave
-  let saved = null, trans = null, view = "chase", chaseDist = 9, hintedEdge = false, lastBump = 0;
+  let saved = null, trans = null, view = "chase", chaseDist = 9, hintedEdge = false, lastBump = 0, assist = true;
+  const params = new URLSearchParams(location.search);
+  const fixedQ = params.has("fq") ? Math.max(0, Math.min(2, parseInt(params.get("fq"), 10) || 0)) : null;
+  let quality = fixedQ ?? (innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 ? 1 : 2);
+  const fpsWin = { t0: 0, n: 0, low: 0 };
+  let headlight = null;
   const cam = { pos: new THREE.Vector3(), look: new THREE.Vector3(), yawS: 0 };
   const tmp = { x: 0, z: 0, t: 0 }, field = { d: 0, nx: 0, nz: 0, seg: -1, park: false };
   const v3 = new THREE.Vector3(), v3b = new THREE.Vector3(), lookTmp = new THREE.Vector3();
@@ -381,6 +427,39 @@ export async function createDrive(ctx) {
     return cos;
   }
 
+  // Spurhilfe: folgt der Straßenachse laut OSM mit Vorausblick (Pure Pursuit), auf breiten Straßen rechts der Mitte.
+  // Lenkt man selbst, ist sie aus; an Kreuzungen gewinnt der Ast, der zur Fahrtrichtung passt.
+  const at = { x: 0, z: 0 };
+  function assistSteer() {
+    const S = W.seg, hx = Math.sin(car.yaw), hz = -Math.cos(car.yaw);
+    let best = -1, score = -Infinity, dir = 1;
+    for (const id of W.roads.at(car.x, car.z)) {
+      const d = closest(car.x, car.z, S.ax[id], S.az[id], S.bx[id], S.bz[id], tmp);
+      if (d > S.half[id]) continue;
+      const L = Math.hypot(S.bx[id] - S.ax[id], S.bz[id] - S.az[id]) || 1;
+      const dot = ((S.bx[id] - S.ax[id]) * hx + (S.bz[id] - S.az[id]) * hz) / L;
+      const sc = Math.abs(dot) - d * 0.04;
+      if (sc > score) { score = sc; best = id; dir = dot >= 0 ? 1 : -1; }
+    }
+    if (best < 0 || score < 0.55) return null;            // quer zur Straße (Wenden, Einparken): keine Hilfe
+    closest(car.x, car.z, S.ax[best], S.az[best], S.bx[best], S.bz[best], tmp);
+    let px = tmp.x, pz = tmp.z, id = best, rest = Math.max(6, Math.abs(car.v) * 1.1), ux = 0, uz = 0;
+    for (let k = 0; k < 30; k++) {
+      const ex = dir > 0 ? S.bx[id] : S.ax[id], ez = dir > 0 ? S.bz[id] : S.az[id];
+      const L = Math.hypot(S.bx[id] - S.ax[id], S.bz[id] - S.az[id]) || 1;
+      ux = ((S.bx[id] - S.ax[id]) / L) * dir; uz = ((S.bz[id] - S.az[id]) / L) * dir;
+      const dd = Math.hypot(ex - px, ez - pz);
+      const nxt = id + dir;
+      if (rest <= dd || nxt < 0 || nxt >= S.way.length || S.way[nxt] !== S.way[id]) { at.x = px + ux * rest; at.z = pz + uz * rest; break; }   // Wegende: geradeaus weiter
+      rest -= dd; px = ex; pz = ez; id = nxt;
+    }
+    const width = (S.half[best] - SPUR_ZUGABE) * 2, off = width >= 5 ? Math.min(1.5, width / 4) : 0;
+    at.x += -uz * off; at.z += ux * off;                  // rechts der Mitte (Rechtsverkehr)
+    const dx = at.x - car.x, dz = at.z - car.z, L2 = dx * dx + dz * dz;
+    const lat = dx * -hz + dz * hx;                        // positiv: Ziel liegt rechts
+    return Math.atan((2 * lat / Math.max(L2, 1)) * RADSTAND);
+  }
+
   // ---------- Fahrphysik (Arcade: kein Physikmodell, nur glaubwürdiges Verhalten) ----------
   function step(h) {
     const art = car.seg >= 0 ? W.net.arten[W.net.wege[W.seg.way[car.seg]][0]] : "service";
@@ -398,7 +477,12 @@ export async function createDrive(ctx) {
     // Lenkung: Einschlag begrenzt durch die Querbeschleunigung
     const vv = Math.max(1, car.v * car.v);
     const maxSteer = Math.min(0.6, Math.atan((QUER_MAX * RADSTAND) / vv));
-    const target = (input.right - input.left) * maxSteer;
+    const steerIn = input.right - input.left;
+    let target = steerIn * maxSteer;
+    if (assist && Math.abs(steerIn) < 0.25 && car.v > 1.5 && !car.park) {
+      const a = assistSteer();
+      if (a != null) target = Math.max(-maxSteer, Math.min(maxSteer, a));
+    }
     const rate = target === 0 ? 4 : 2.4;
     car.steer += Math.max(-rate * h, Math.min(rate * h, target - car.steer));
     let yawRate = (car.v * Math.tan(car.steer)) / RADSTAND;
@@ -449,10 +533,12 @@ export async function createDrive(ctx) {
     basis.makeBasis(X, car.n, Z);
     model.position.set(car.x, car.y, car.z);
     model.quaternion.setFromRotationMatrix(basis);
-    car.spin -= (car.v * dt) / RAD_R;
-    for (const w of model.userData.wheels) w.rotation.x = car.spin;
-    for (const p of model.userData.pivots) p.rotation.y = -car.steer;
-    model.userData.tail.emissiveIntensity = (input.down && car.v > 0.3) || input.hand ? 2.2 : 0.35;
+    const ud = model.userData;
+    car.spin += (ud.spinSign * car.v * dt) / ud.radius;
+    for (const w of ud.wheels) w.rotation.x = car.spin;
+    for (const p of ud.steer) p.rotation.y = -car.steer;
+    ud.tail.emissiveIntensity = (input.down && car.v > 0.3) || input.hand ? 2.2 : headlight ? 1.0 : 0.35;
+    ud.head.emissiveIntensity = headlight ? 2.5 : 0.4;
   }
 
   // ---------- Kamera ----------
@@ -497,7 +583,42 @@ export async function createDrive(ctx) {
 
   // ---------- Bildschleife (von app.js aufgerufen, solange der Fahrmodus die Kamera hat) ----------
   const ease = (f) => (f < 0.5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2);
-  let hudT = 0;
+  let hudT = 0, lightT = 0, debugCam = null;
+
+  // Qualität: Fahrkacheln und Schatten je Stufe; sinkt die Bildrate länger unter 28 Bilder/s, eine Stufe tiefer
+  const sh = ctx.sun.shadow;
+  function applyQuality() {
+    const q = QUALI[quality];
+    if (fine) { fine.setRadius(q.fein); fine.setActive(q.fein > 0 && state !== "off"); }
+    for (const m of ctx.terrainGroup.children) m.castShadow = !(fine && q.fein > 0) && saved.terrainCast;
+    const R = q.schatten || saved.shadow.r;
+    sh.camera.left = -R; sh.camera.right = R; sh.camera.top = R; sh.camera.bottom = -R;
+    sh.normalBias = q.schatten ? 0.12 : saved.shadow.normalBias; sh.bias = q.schatten ? -0.0002 : saved.shadow.bias;
+    sh.camera.updateProjectionMatrix();
+    $("dhQ").textContent = `Qualität ${q.name}${fixedQ == null ? " (automatisch)" : ""}`;
+  }
+  function autoQuality(now) {
+    if (fixedQ != null || quality === 0) return;
+    if (!fpsWin.t0) { fpsWin.t0 = now; fpsWin.n = 0; return; }
+    fpsWin.n++;
+    if (now - fpsWin.t0 < 2000) return;
+    const fps = (fpsWin.n * 1000) / (now - fpsWin.t0);
+    fpsWin.t0 = now; fpsWin.n = 0;
+    fpsWin.low = fps < 28 ? fpsWin.low + 1 : 0;
+    if (fpsWin.low >= 2) { quality--; fpsWin.low = 0; applyQuality(); say(`Bildrate niedrig: Qualität ${QUALI[quality].name}`); }
+  }
+  // Scheinwerfer nur bei Dunkelheit (ein zusätzliches Licht kostet, daher nicht tagsüber)
+  function updateHeadlight() {
+    const s = ctx.sun, d = v3.copy(s.position).sub(s.target.position).normalize();
+    const dark = state !== "off" && (!s.visible || d.y < 0.05);
+    if (dark && !headlight) {
+      headlight = new THREE.SpotLight(0xfff1d6, 150, 80, 0.45, 0.6, 1.8);
+      headlight.position.set(0, 0.85, -2.0); headlight.target.position.set(0, -0.8, -30);
+      model.add(headlight, headlight.target);
+    } else if (!dark && headlight) {
+      model.remove(headlight, headlight.target); headlight.dispose(); headlight = null;
+    }
+  }
   const owner = {
     frame(now, dt) {
       if (state === "drive") {
@@ -525,15 +646,21 @@ export async function createDrive(ctx) {
         camera.fov = trans.fov0 + (saved.fov - trans.fov0) * k; camera.updateProjectionMatrix();
         if (f >= 1) { camera.position.copy(saved.pos); ctx.releaseCamera(); return; }
       }
-      // Schatten und Sonne folgen dem Auto (app.js richtet die Sonne am Blickpunkt aus)
-      if (state === "drive" || state === "enter") controls.target.set(car.x, car.y, car.z);
-      else if (state === "leave") controls.target.copy(lookTmp);
+      // Schatten und Sonne folgen dem Auto (app.js richtet die Sonne am Blickpunkt aus); die Schattenbox liegt vor dem Auto
+      if (state === "drive" || state === "enter") {
+        const q = QUALI[quality], ahead = q.schatten ? q.schatten * 0.45 : 0;
+        controls.target.set(car.x + Math.sin(car.yaw) * ahead, car.y, car.z - Math.cos(car.yaw) * ahead);
+        if (fine) fine.update(car.x, car.z, Math.sin(car.yaw) * car.v, -Math.cos(car.yaw) * car.v);
+      } else if (state === "leave") controls.target.copy(lookTmp);
+      if (state === "drive") autoQuality(now);
+      if (debugCam) { camera.position.copy(debugCam.p); camera.up.set(0, 1, 0); camera.lookAt(debugCam.l); }   // nur für Tests und Bilder
       if (now - hudT > 120) {
         hudT = now;
         $("dhSpeed").textContent = String(Math.round(Math.abs(car.v) * 3.6));
         $("dhRoad").innerHTML = roadLabel();
         if (!touch.hidden) placeTouch();
       }
+      if (now - lightT > 1000) { lightT = now; updateHeadlight(); }
     },
     onRelease() { cleanup(); },
   };
@@ -541,7 +668,12 @@ export async function createDrive(ctx) {
   function cleanup() {
     if (state === "off") return;
     state = "off";
-    scene.remove(model); model.visible = true;
+    scene.remove(model); model.traverse((o) => { if (o.isMesh) o.visible = true; });
+    if (headlight) { model.remove(headlight, headlight.target); headlight.dispose(); headlight = null; }
+    if (fine) { fine.setActive(false); fine.resetGroups(); }
+    for (const m of ctx.terrainGroup.children) m.castShadow = saved.terrainCast;
+    sh.camera.left = -saved.shadow.r; sh.camera.right = saved.shadow.r; sh.camera.top = saved.shadow.r; sh.camera.bottom = -saved.shadow.r;
+    sh.bias = saved.shadow.bias; sh.normalBias = saved.shadow.normalBias; sh.camera.updateProjectionMatrix();
     hud.hidden = true; touch.hidden = true;
     for (const k in input) input[k] = 0;
     camera.near = saved.near; camera.far = saved.far; camera.fov = saved.fov; camera.updateProjectionMatrix();
@@ -555,8 +687,10 @@ export async function createDrive(ctx) {
     if (state === "leave") return;
     const wasOff = state === "off";
     if (wasOff) {
-      saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov, near: camera.near, far: camera.far, autoRotate: controls.autoRotate };
+      saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov, near: camera.near, far: camera.far, autoRotate: controls.autoRotate,
+        shadow: { r: sh.camera.right, bias: sh.bias, normalBias: sh.normalBias }, terrainCast: ctx.terrainGroup.children[0]?.castShadow ?? true };
       ctx.takeCamera(owner);
+      if (fine) { fine.resetGroups(); fine.attach(ctx.carsLayer?.meshes); fine.attach([ctx.getTreeMesh?.()]); }
       // Auf dem Handy das Bedienfeld einklappen, beim Aussteigen wieder öffnen
       const panel = $("sunpanel");
       saved.foldedPanel = innerWidth < 900 && panel && !panel.classList.contains("collapsed");
@@ -584,6 +718,7 @@ export async function createDrive(ctx) {
     camera.far = 20000; camera.updateProjectionMatrix();
     trans = { start: performance.now(), p0: camera.position.clone(), l0: wasOff ? controls.target.clone() : cam.look.clone(), fov0: camera.fov };
     state = "enter";
+    if (wasOff) { fpsWin.t0 = 0; fpsWin.low = 0; applyQuality(); }
     hud.hidden = false; touch.hidden = !coarse; placeHud();
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
     hintedEdge = false;
@@ -608,7 +743,7 @@ export async function createDrive(ctx) {
 
   function setView(v) {
     view = v;
-    model.visible = v !== "driver";
+    model.traverse((o) => { if (o.isMesh) o.visible = v !== "driver"; });   // Modell nur verstecken, Scheinwerfer bleibt an
     $("dhView").innerHTML = (v === "driver" ? "Sicht: Fahrer" : "Sicht: Verfolger") + '<span class="long"> (C)</span>';
     camera.near = v === "driver" ? 0.12 : 0.3; camera.updateProjectionMatrix();
     if (v === "chase") { chaseTarget(0, want, wantLook); cam.pos.copy(want); }
@@ -623,6 +758,7 @@ export async function createDrive(ctx) {
     if (k === "escape") exit();
     else if (k === "c" && !e.repeat) setView(view === "chase" ? "driver" : "chase");
     else if (k === "r" && !e.repeat && state === "drive") resetToRoad();
+    else if (k === "l" && !e.repeat) setAssist(!assist);
     else if (KEYMAP[k]) input[KEYMAP[k]] = 1;
     else return;
     e.preventDefault(); e.stopPropagation();
@@ -638,6 +774,26 @@ export async function createDrive(ctx) {
     chaseDist = Math.min(20, Math.max(6, chaseDist * (e.deltaY > 0 ? 1.1 : 0.9)));
   }, { passive: true });
   $("dhExit").addEventListener("click", exit);
+  function setAssist(on) {
+    assist = on;
+    $("dhAssist").innerHTML = `Spurhilfe: ${on ? "an" : "aus"}<span class="long"> (L)</span>`;
+    $("dhAssist").classList.toggle("off", !on);
+  }
+  $("dhAssist").addEventListener("click", () => setAssist(!assist));
+  // Joystick (Handy): waagerecht ziehen lenkt stufenlos
+  const joy = $("dJoy"), knob = joy.querySelector(".knob");
+  let joyId = null, joyX = 0;
+  const joyMove = (e) => {
+    const r = joy.getBoundingClientRect(), dx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / 45));
+    input.left = Math.max(0, -dx); input.right = Math.max(0, dx); knob.style.transform = `translateX(${dx * 38}px)`;
+  };
+  joy.addEventListener("pointerdown", (e) => { e.preventDefault(); joyId = e.pointerId; joy.setPointerCapture(e.pointerId); joyMove(e); });
+  joy.addEventListener("pointermove", (e) => { if (e.pointerId === joyId) joyMove(e); });
+  const joyEnd = (e) => { if (e.pointerId !== joyId) return; joyId = null; input.left = input.right = 0; knob.style.transform = ""; };
+  joy.addEventListener("pointerup", joyEnd); joy.addEventListener("pointercancel", joyEnd);
+  // Einstellungen, die während der Fahrt geändert werden
+  $("lod").addEventListener("change", () => { if (fine && state !== "off") { fine.resetGroups(); fine.attach(ctx.carsLayer?.meshes); fine.attach([ctx.getTreeMesh?.()]); fine.rebuildAll(); } });
+  $("ortho").addEventListener("change", (e) => { if (fine) fine.setOrtho(e.target.checked); });
   $("dhView").addEventListener("click", () => setView(view === "chase" ? "driver" : "chase"));
   for (const b of touch.querySelectorAll("button")) {
     const k = b.dataset.k;
@@ -733,7 +889,8 @@ export async function createDrive(ctx) {
     for (const k in input) input[k] = 0;
     return trace;
   }
-  const api = { inBuilding, anyInBuilding, sim, startDrag, placeNear, exit, enter, nearestRoad, roadField, bodyPush, state: () => state, car, input, setView, world: W, saved: () => saved };
+  const setQuality = (q) => { quality = q; if (state !== "off") applyQuality(); };
+  const api = { debugCam: (p, l) => { debugCam = p ? { p: new THREE.Vector3(...p), l: new THREE.Vector3(...l) } : null; }, fine: () => fine, setQuality, quality: () => quality, assistSteer, setAssist, inBuilding, anyInBuilding, sim, startDrag, placeNear, exit, enter, nearestRoad, roadField, bodyPush, state: () => state, car, input, setView, world: W, saved: () => saved };
   window.__drive = api;
   return api;
 }
