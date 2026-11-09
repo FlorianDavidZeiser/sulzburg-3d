@@ -24,6 +24,10 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false;   // Schatten nur neu rechnen, wenn sich Sonne, Schattenbox oder Szene ändern (siehe Bildschleife)
+let shadowDirty = true, shadowKey = "", shadowAt = 0;
+const markShadows = () => { shadowDirty = true; };
+document.addEventListener("change", markShadows);   // jede Einstellung im Bedienfeld (Ebenen, Gelände, Schatten)
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
@@ -531,7 +535,11 @@ function setupSunlightLayer() {
 }
 
 // ---------- Bäume (nDOM1: Lage und Höhe echt, Form generisch) ----------
-let treeMesh = null;
+// Für die Bildrate in Kacheln von 400 m: Gezeichnet wird nur, was im Bild ist, Schatten werfen nur Kacheln in der
+// Schattenbox. Ab TREE_FAR Metern eine einfachere Form (Krone als Achtflächner, 8 statt 28 Dreiecke, ohne Schatten).
+const TREE_CHUNK = 400, TREE_FAR = 900;
+const treeGroup = new THREE.Group(); treeGroup.name = "baeume";
+let treeChunks = [], treesVersion = 0;
 function setupTrees() {
   const info = meta.trees, buf = meta.treesBuf;
   if (!info || !buf) { $("treesWrap").hidden = true; return; }
@@ -541,42 +549,68 @@ function setupTrees() {
   const trunk = new THREE.CylinderGeometry(0.035, 0.045, 0.45, 4, 1, true).toNonIndexed(); trunk.translate(0, 0.22, 0);
   const crown = new THREE.IcosahedronGeometry(0.33, 0); crown.scale(1, 1.15, 1); crown.translate(0, 0.66, 0);
   const geo = mergeGeometries([trunk, crown]);
+  const farGeo = new THREE.OctahedronGeometry(0.36, 0); farGeo.scale(1, 1.15, 1); farGeo.translate(0, 0.62, 0);
   const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  scene.add(treeGroup);
   const build = (step) => {
-    const count = Math.ceil(n / step);
-    const mesh = new THREE.InstancedMesh(geo, mat, count);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), scl = new THREE.Vector3(), col = new THREE.Color();
-    let k = 0;
+    const buckets = new Map();
     for (let i = 0; i < n; i += step) {
-      const x = data[i * 3], z = data[i * 3 + 1], h = data[i * 3 + 2];
-      const y = terrainHeightAt(x, z);
-      if (y == null) continue;
-      const w = h * 0.45; // Kronenbreite: Darstellung, kein Datum
-      pos.set(x, y, z); scl.set(w, h, w);
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), ((i * 7919) % 360) * Math.PI / 180);
-      mesh.setMatrixAt(k, m4.compose(pos, q, scl));
-      // Farbe nach Höhe: niedrig hellgrün (Gärten, Hecken), hoch dunkelgrün (Wald)
-      col.setHSL(0.27 + ((i * 31) % 7) * 0.004, 0.45, THREE.MathUtils.lerp(0.42, 0.22, Math.min(1, h / 30)));
-      mesh.setColorAt(k, col);
-      k++;
+      const key = `${Math.floor(data[i * 3] / TREE_CHUNK)}_${Math.floor(data[i * 3 + 1] / TREE_CHUNK)}`;
+      let b = buckets.get(key); if (!b) buckets.set(key, (b = [])); b.push(i);
     }
-    mesh.count = k;
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.instanceColor.needsUpdate = true;
-    mesh.castShadow = true; mesh.receiveShadow = true;
-    mesh.frustumCulled = false;
-    return mesh;
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), scl = new THREE.Vector3(), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0);
+    const chunks = [];
+    let total = 0;
+    for (const list of buckets.values()) {
+      const near = new THREE.InstancedMesh(geo, mat, list.length);
+      let k = 0;
+      for (const i of list) {
+        const x = data[i * 3], z = data[i * 3 + 1], h = data[i * 3 + 2];
+        const y = terrainHeightAt(x, z);
+        if (y == null) continue;
+        const w = h * 0.45; // Kronenbreite: Darstellung, kein Datum
+        pos.set(x, y, z); scl.set(w, h, w);
+        q.setFromAxisAngle(up, ((i * 7919) % 360) * Math.PI / 180);
+        near.setMatrixAt(k, m4.compose(pos, q, scl));
+        // Farbe nach Höhe: niedrig hellgrün (Gärten, Hecken), hoch dunkelgrün (Wald)
+        col.setHSL(0.27 + ((i * 31) % 7) * 0.004, 0.45, THREE.MathUtils.lerp(0.42, 0.22, Math.min(1, h / 30)));
+        near.setColorAt(k, col);
+        k++;
+      }
+      if (!k) { near.dispose(); continue; }
+      near.count = k; total += k;
+      near.instanceMatrix.needsUpdate = true; near.instanceColor.needsUpdate = true;
+      near.computeBoundingSphere();
+      near.castShadow = true; near.receiveShadow = true;
+      // ferne Form teilt sich Lage und Farbe mit der nahen
+      const far = new THREE.InstancedMesh(farGeo, mat, k);
+      far.instanceMatrix = near.instanceMatrix; far.instanceColor = near.instanceColor; far.count = k;
+      far.boundingSphere = near.boundingSphere.clone();
+      far.receiveShadow = true; far.visible = false;
+      treeGroup.add(near, far);
+      chunks.push({ near, far, c: near.boundingSphere.center, r: near.boundingSphere.radius });
+    }
+    return { chunks, total };
   };
   const rebuild = () => {
-    if (treeMesh) { scene.remove(treeMesh); treeMesh.dispose(); }
-    treeMesh = build(LOD > 1 ? 3 : 1);
-    treeMesh.visible = $("trees").checked;
-    scene.add(treeMesh);
-    $("treesInfo").textContent = `${treeMesh.count.toLocaleString("de-DE")} von ${n.toLocaleString("de-DE")} Bäumen (nDOM1, Stand ${(info.quelle.oberflaeche_aktualitaet || []).join(", ")}), Höhe echt, Form generisch`;
+    for (const c of treeChunks) { treeGroup.remove(c.near, c.far); c.near.dispose(); c.far.dispose(); }
+    const { chunks, total } = build(LOD > 1 ? 3 : 1);
+    treeChunks = chunks; treesVersion++;
+    treeGroup.visible = $("trees").checked;
+    markShadows();
+    $("treesInfo").textContent = `${total.toLocaleString("de-DE")} von ${n.toLocaleString("de-DE")} Bäumen (nDOM1, Stand ${(info.quelle.oberflaeche_aktualitaet || []).join(", ")}), Höhe echt, Form generisch`;
   };
   rebuild();
-  $("trees").addEventListener("change", (e) => { if (treeMesh) treeMesh.visible = e.target.checked; });
+  $("trees").addEventListener("change", (e) => { treeGroup.visible = e.target.checked; });
   $("lod").addEventListener("change", rebuild);
+  // Nah oder fern je Kachel nach Abstand zur Kamera
+  frameHooks.push(() => {
+    if (!treeGroup.visible) return;
+    for (const c of treeChunks) {
+      const near = camera.position.distanceTo(c.c) - c.r < TREE_FAR;
+      if (c.near.visible !== near) { c.near.visible = near; c.far.visible = !near; markShadows(); }
+    }
+  });
 }
 
 // ---------- Bus und Bahn (Soll-Fahrplan, MobiData BW / NVBW) ----------
@@ -744,6 +778,7 @@ async function main() {
   });
   buildingsMesh = buildingMeshes[0];
   scene.add(gltf.scene);
+  markShadows();
   $("rooftex").addEventListener("change", (e) => { for (const r of roofMeshes) { r.material.map = e.target.checked && !$("sunlayer").checked ? r.userData.roofMap : null; r.material.needsUpdate = true; } });
   setupNavigation();
   setupSunlightLayer();
@@ -751,7 +786,8 @@ async function main() {
   setupTrees();
   const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, infoHooks, buildingMeshes, roofMeshes, utmToLatLon, TZ, centerY,
     setSun: () => setSun(currentDate()), localToday, showBuilding, sunTimes, latLon,
-    terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup, getTreeMesh: () => treeMesh };
+    terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup, markShadows,
+    getTreeMeshes: () => treeChunks.map((c) => c.near), treesVersion: () => treesVersion };
   window.__ctx = ctx;
   await setupPlaces(ctx);
   await setupScenario(ctx);
@@ -816,6 +852,10 @@ async function main() {
     if (ch != null && camera.position.y < ch + 4) camera.position.y = ch + 4;
     }
     updateSunPosition();
+    // Schattenkarte nur bei Bedarf: Fahrmodus (bewegtes Auto), geänderte Sonne oder Schattenbox, geänderte Szene; alle 2 s zur Sicherheit
+    const st = sun.target.position;
+    const key = `${Math.round(st.x * 5)},${Math.round(st.y * 5)},${Math.round(st.z * 5)},${Math.round(sunDir.x * 1e4)},${Math.round(sunDir.y * 1e4)},${Math.round(sunDir.z * 1e4)},${sun.visible}`;
+    if (cameraOwner || shadowDirty || key !== shadowKey || now - shadowAt > 2000) { renderer.shadowMap.needsUpdate = true; shadowKey = key; shadowDirty = false; shadowAt = now; }
     renderer.render(scene, camera);
     frames++;
     if (now - last >= 1000) {

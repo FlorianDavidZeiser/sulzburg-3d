@@ -28,7 +28,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
   const out = { erzeugt: new Date().toISOString(), kreisradius_m: 0.97 };
   const objState = () => page.evaluate(() => { const c = window.__ctx, sum = (m) => { let s = 0; const a = m.instanceMatrix.array; for (let i = 13; i < a.length; i += 16) s += a[i]; return s; };
     const mat = c.terrainGroup.children[0].material;
-    return { tree: sum(c.getTreeMesh()), car: sum(c.carsLayer.meshes[0]), cast: c.terrainGroup.children.every((m) => m.castShadow), sh: [c.sun.shadow.camera.right, c.sun.shadow.bias, c.sun.shadow.normalBias],
+    return { tree: c.getTreeMeshes().reduce((a, m) => a + sum(m), 0), car: sum(c.carsLayer.meshes[0]), cast: c.terrainGroup.children.every((m) => m.castShadow), sh: [c.sun.shadow.camera.right, c.sun.shadow.bias, c.sun.shadow.normalBias],
       maske: !!(mat.onBeforeCompile && String(mat.onBeforeCompile).includes('discard')), kacheln: c.scene.children.filter((o) => o.name === 'fahrkachel').length,
       spots: (() => { let n = 0; c.scene.traverse((o) => { if (o.isSpotLight) n++; }); return n; })() }; });
   const objBefore = await objState();
@@ -114,7 +114,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
     }
     d.setAssist(true);
     d.setOnlyRoads(false);
-    // Freie Fahrt: quer über die Mittelinsel des Kreisverkehrs (Mitte -422/-446) und gegen die Sperrfläche am Hekatron-Standort
+    // Freie Fahrt: quer über die Mittelinsel des Kreisverkehrs (Mitte -422/-446)
     const kx = -422, kz = -446; let best = 99;
     for (let k = 0; k < 8; k++) {
       const ang = k * Math.PI / 4, sx = kx + Math.cos(ang) * 14, sz = kz + Math.sin(ang) * 14, f = { d: 0 };
@@ -122,17 +122,10 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
       c.x = sx; c.z = sz; c.yaw = Math.atan2(kx - sx, -(kz - sz)); c.v = 0;
       for (const [x, z] of d.sim(4, { up: 1 }, 0.1)) best = Math.min(best, Math.hypot(x - kx, z - kz));
     }
-    const net2 = d.world.net;
-    const sp = net2.sperrflaechen.map((p, k) => { const xs = p[0].filter((_, i) => i % 2 === 0), zs = p[0].filter((_, i) => i % 2 === 1); return { k, xs, zs, mx: xs.reduce((a, b) => a + b) / xs.length, mz: zs.reduce((a, b) => a + b) / zs.length }; })
-      .sort((a, b) => Math.hypot(a.mx + 620, a.mz + 595) - Math.hypot(b.mx + 620, b.mz + 595))[0];
-    const pip = (x, z) => { let ins = false; for (let i = 0, j = sp.xs.length - 1; i < sp.xs.length; j = i++) if ((sp.zs[i] > z) !== (sp.zs[j] > z) && x < ((sp.xs[j] - sp.xs[i]) * (z - sp.zs[i])) / (sp.zs[j] - sp.zs[i]) + sp.xs[i]) ins = !ins; return ins; };
-    let drin = 0, versuche = 0;
-    for (let k = 0; k < 6; k++) {
-      const rd = d.nearestRoad(sp.mx + Math.cos(k) * 40, sp.mz + Math.sin(k) * 40); if (!rd) continue;
-      c.x = rd.x; c.z = rd.z; c.yaw = Math.atan2(sp.mx - c.x, -(sp.mz - c.z)); c.v = 0; versuche++;
-      for (const [x, z] of d.sim(8, { up: 1, right: k % 2 ? 0.2 : 0 }, 0.1)) if (pip(x, z)) drin++;
-    }
-    res.freie_fahrt = { kreisverkehr_naechster_abstand_zur_mitte_m: +best.toFixed(2), sperrflaeche_versuche: versuche, sperrflaeche_punkte_innen: drin, baeume_als_hindernis: d.trees() ? d.trees().x.length : 0 };
+    // Abseits und ohne Drosselung: vom Ortsrand quer zur Straße ins Gelände
+    const r3 = d.nearestRoad(250, 250); c.x = r3.x; c.z = r3.z; c.yaw = Math.atan2(-r3.dz, -r3.dx); c.v = 0;
+    let vmax = 0; for (const p of d.sim(12, { up: 1 }, 0.25)) vmax = Math.max(vmax, Math.abs(p[2]) * 3.6);
+    res.freie_fahrt = { kreisverkehr_naechster_abstand_zur_mitte_m: +best.toFixed(2), abseits_hoechsttempo_kmh: Math.round(vmax), baeume_als_hindernis: d.trees() ? d.trees().x.length : 0 };
     d.exit();
     res.autopilot = { wege: pick.length, meter: Math.round(meter), ohne_haengen: pick.length - probleme.length, probleme, max_abstandsfeld_spur_m: +maxRoad.toFixed(3), min_kreisabstand_wand_m: +minW.toFixed(3) };
     return res;
