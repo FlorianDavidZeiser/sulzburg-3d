@@ -8,6 +8,7 @@ import { sunPosition, sunTimes, zonedToUtc, formatLocal, tzOffsetMs } from "./su
 import { setupPlaces } from "./places.js";
 import { setupScenario } from "./scenario.js";
 import { setupExtras } from "./extras.js";
+import { setupBusiness } from "./business.js";
 
 const TZ = "Europe/Berlin";
 const params = new URLSearchParams(location.search);
@@ -707,6 +708,7 @@ async function main() {
   window.__ctx = ctx;
   await setupPlaces(ctx);
   await setupScenario(ctx);
+  await setupBusiness(ctx);
   await setupExtras(ctx);
   showSources();
   loadAlerts();

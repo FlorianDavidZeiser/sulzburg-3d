@@ -925,9 +925,52 @@
         "1991-2020": 10.5
       },
       "gebietsmittel_erstellt": "Zeitreihen fuer Gebietsmittel fuer Bundeslaender und Kombinationen von Bundeslaender, erstellt am: 20261102"
+    },
+    "wirtschaft": {
+      "ebene": "Arbeiten und Wirtschaft",
+      "betriebe": 29,
+      "gruppen": {
+        "gast": 16,
+        "gewerbe": 9,
+        "wein": 4
+      },
+      "osm_stand": "2026-11-09T05:06:52Z",
+      "mit_lod2": 20,
+      "mit_solar": 3,
+      "pruefung": [
+        "Alte Sägemühle: gast/Campingplatz, Lage aus OSM",
+        "Camping Sulzbachtal: gast/Campingplatz, LoD2 Sonnmatt 4, Sulzburg (71 m)",
+        "Dormitorium - Hotel am Klostergarten: gast/Gästehaus, LoD2 Klosterplatz 2, Sulzburg (4 m)",
+        "Ferienwohnung in den Bachteln: gast/Ferienwohnung, Lage aus OSM",
+        "Gaststätte Altes Stadttor: gast/Restaurant, LoD2 Hauptstraße 35, Sulzburg (1 m)",
+        "Gutshof Güntert: gast/Ferienhaus, LoD2 Schlossgasse 4, Sulzburg (22 m)",
+        "Haus Sayer: gast/Ferienwohnung, LoD2 Bad-Krozinger-Straße 2, Sulzburg (6 m)",
+        "Hirschen: gast/Restaurant und Hotel, LoD2 Hauptstraße 69, Sulzburg (4 m)",
+        "La Maison Eric: gast/Restaurant, Lage aus OSM",
+        "Landgasthof Rebstock: gast/Hotel und Restaurant, LoD2 Hauptstraße 77, Sulzburg (6 m)",
+        "Lilien-Café: gast/Café, LoD2 Weinstraße 2, Sulzburg (49 m)",
+        "Rebea: gast/Restaurant, LoD2 Weinstraße 38, Sulzburg (4 m)",
+        "Torstüble: gast/Restaurant, LoD2 Hauptstraße 41, Sulzburg (7 m)",
+        "Waldhotel Bad Sulzburg: gast/Hotel und Restaurant, LoD2 Badstraße 67, Sulzburg (27 m)",
+        "Weinbrunnen Sulzburg: gast/Café, Lage aus OSM",
+        "Zum wilden Mann: gast/Restaurant, Lage aus OSM",
+        "BENZ Metallbau Schlosserei Landtechnik: gewerbe/Metallbau und Landtechnik, Lage aus OSM, Solar 26.1 kW",
+        "Bäckerei Ruf: gewerbe/Bäckerei, Lage aus OSM",
+        "Da Massimiliano: gewerbe/Feinkost, Lage aus OSM",
+        "Die Brillenfabrik: gewerbe/Optiker, LoD2 Hauptstraße 57, Sulzburg (3 m)",
+        "Fahrrad Glaser: gewerbe/Fahrradgeschäft, LoD2 Im Brühl 10, Sulzburg (9 m)",
+        "Hausärztliche Gemeinschaftspraxis: gewerbe/Arztpraxis, LoD2 Hauptstraße 64, Sulzburg (6 m)",
+        "Hekatron: gewerbe/Anlagentechnischer Brandschutz, Hersteller, LoD2 Brühlmatten 9, Sulzburg (78 m)",
+        "Jonny B. GmbH: gewerbe/Möbel, LoD2 Doretmatt 3, Sulzburg (2 m), Solar 91.5 kW",
+        "Katharina-Barbara: gewerbe/Apotheke, LoD2 Hauptstraße 48, Sulzburg (3 m)",
+        "Brennerei Eichin: wein/Brennerei, Lage aus OSM",
+        "Staudengärtnerei Gräfin von Zeppelin OHG: wein/Staudengärtnerei, LoD2 Weinstraße 2, Sulzburg (57 m)",
+        "Weingut Rainer Schlumberger: wein/Weingut, LoD2 Obere Holzgasse 4, Sulzburg (14 m), Solar 24.2 kW",
+        "Winzergenossenschaft Laufen: wein/Winzergenossenschaft, LoD2 Weinstraße 48, Sulzburg (27 m)"
+      ]
     }
   },
-  "aktualisiert": "2026-11-08T22:26:26+00:00",
+  "aktualisiert": "2026-11-09T05:22:32+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
@@ -956,8 +999,8 @@
       "max_zeitdifferenz_min": 0.7787698
     },
     "ladevolumen": {
-      "gesamt_mb": 24.674422,
-      "uebertragen_gzip_mb": 15.811607
+      "gesamt_mb": 24.702993,
+      "uebertragen_gzip_mb": 15.821466
     },
     "ebenen": {
       "orte": 6,
@@ -973,6 +1016,11 @@
           14.0,
           22.1
         ]
+      },
+      "wirtschaft": {
+        "betriebe": 29,
+        "mit_lod2": 20,
+        "mit_solar": 3
       },
       "busse": {
         "fahrten": 154

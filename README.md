@@ -28,6 +28,14 @@ Live: https://floriandavidzeiser.github.io/sulzburg-3d/
 - Klima: Heiße Tage, Sommertage, Frosttage aus dem 1-km-Raster des DWD für 1961–1990 und 1991–2020, Jahresreihe Baden-Württemberg seit 1951, Fortschreibung 2040 ausdrücklich als Szenario
 - Szenario „PV auf allen geeigneten Dächern“: 17,1 MWp und rund 17,2 GWh pro Jahr, gegenüber 3,1 MW heute laut Marktstammdatenregister
 
+**Arbeiten und Wirtschaft (Variante A laut Konzept)**
+- 29 Betriebe aus OpenStreetMap in drei Gruppen: Gewerbe, Handel, Dienste; Gastronomie und Übernachten; Wein und Gartenbau
+- Je Betrieb Name, Branche, Adresse, Öffnungszeiten, Website, Barrierefreiheit; einzelne Fakten mit Quelle (Wikipedia)
+- Solaranlagen laut Marktstammdatenregister nur bei ausdrücklich zugeordneten Betrieben (derzeit drei)
+- Alle Betriebe gleich behandelt. Keine Umsätze, keine Mitarbeiterzahlen, keine Eigentümer oder Gesellschafter, keine Telefonnummern
+- Hekatron nur mit Firmensitz, Branche, Adresse und Website. Keine Kennzahlen, keine Angaben zu Anlagen, Zugängen oder Barrierefreiheit am Standort. Regeln in `data/betriebe_kuratiert.json`
+- Suche findet auch Betriebe; die Gebäude-Info nennt die Betriebe im Gebäude
+
 **Feinschliff (Phase 4)**
 - Seite „Datenquellen und Grenzen“ (`web/quellen.html`), erzeugt aus den Metadaten der Pipeline
 - Impressum und Datenschutz als Vorlage (`web/impressum.html`), **Platzhalter vor öffentlicher Verbreitung ausfüllen**
@@ -68,13 +76,15 @@ scripts/   Datenpipeline (Python), Reihenfolge siehe unten
   09_places.py       Orte mit Geschichte (data/orte.json) prüfen und aufbereiten
   10_solar.py        PV-Szenario (PVGIS-Wetterjahr, Geländehorizont), Bestand aus dem MaStR
   11_climate.py      DWD-Klimaraster, Gebietsmittel BW, Fortschreibung 2040
+  12_business.py     Betriebe aus OSM, Ergänzungen, Solar laut MaStR (Variante A)
 data/
   sources.json       Protokoll aller Downloads und Ebenen (URL, SHA-256, Stand, Kennzahlen, Validierung)
   orte.json          kuratierte Orte mit Fakten und Quellen (hier ergänzen oder kürzen)
+  betriebe_kuratiert.json  Regeln und Ergänzungen der Wirtschaftsebene (Zusammenfassungen, Fakten, MaStR-Zuordnung, Hekatron-Regel)
   gemeinde.geojson, kacheln.json, codelisten/
   raw/, processed/   Rohdaten und Zwischenstände (nicht im Git, rund 5 GB, per Skript neu ladbar)
 web/
-  index.html, app.js, places.js, scenario.js, extras.js, sun.js, style.css
+  index.html, app.js, places.js, scenario.js, extras.js, business.js, sun.js, style.css
   quellen.html, quellen.js, impressum.html
   data/              aufbereitete Daten (22 MB, übertragen dank gzip rund 16 MB)
   vendor/three/      three.js 0.187.0 (MIT)
@@ -102,9 +112,11 @@ docs/                Screenshots, Validierungsbericht
 | Orte mit Geschichte | Wikipedia-Artikel (Sulzburg, St. Cyriak, Synagoge, Burg Sulzburg, Laufen), bpb, Gemeinderatsvorlage 2023 | CC BY-SA 4.0 bzw. Verweis | abgerufen 08.11.2026 |
 | Einwohnerzahl | Wikipedia (Infobox) | CC BY-SA 4.0 | 31.12.2025 |
 | Marktplatz-Koordinate, Adress-Stichprobe | OpenStreetMap über Nominatim | ODbL | 08.11.2026 |
+| Betriebe | OpenStreetMap über Overpass | ODbL | 09.11.2026 |
+| Solaranlagen von Betrieben | Marktstammdatenregister, Bundesnetzagentur | dl-de/by-2-0 | abgerufen 09.11.2026 |
 | 3D-Darstellung | three.js 0.187.0 | MIT | |
 
-Namensnennung LGL: **„Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0“**. Namensnennung MaStR: „Marktstammdatenregister – © Bundesnetzagentur | dl-de/by-2-0“. Weil `web/data/transit.json` Linienverläufe aus einem ODbL-Datensatz enthält, steht diese Datei unter ODbL.
+Namensnennung LGL: **„Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0“**. Namensnennung MaStR: „Marktstammdatenregister – © Bundesnetzagentur | dl-de/by-2-0“. Weil `web/data/transit.json` Linienverläufe und `web/data/business.json` Betriebe aus ODbL-Datensätzen enthalten, stehen diese Dateien unter ODbL.
 
 ## Pipeline
 
@@ -126,6 +138,7 @@ python3 -I scripts/09_places.py
 python3 -I scripts/10_solar.py                       # ruft PVGIS und das MaStR ab
 # DWD-Dateien siehe Kopf von scripts/11_climate.py, Ablage in data/raw/dwd/
 python3 -I scripts/11_climate.py
+python3 -I scripts/12_business.py --neu-laden          # ruft Overpass und das MaStR ab
 python3 -I scripts/05_validate.py
 ```
 
@@ -139,6 +152,7 @@ Der Fahrplan läuft im Modell nur bis zum Ende des exportierten Zeitraums (sechs
 - **Sonnenstand.** Auf- und Untergang weichen höchstens 0,8 Minuten von astral ab.
 - **PV-Modell.** Kalibriert auf PVGIS für 35° Süd; 15° Süd liegt 3,6 % darüber, Ost und West 5 bis 6 %. Das Szenario ist eher eine obere Grenze.
 - **Klima.** Heiße Tage am Marktplatz 7 → 14 (DWD-Raster), Landesmittel 4,7 → 10,5. Sulzburg liegt am Oberrhein erwartungsgemäß darüber.
+- **Betriebe.** 20 von 29 Betrieben über die Adresse einem LoD2-Gebäude zugeordnet, die übrigen am OSM-Punkt. Im Marktstammdatenregister stehen zwei weitere Firmen ohne Lage (Plasticant Mobilo, Krone GmbH); sie fehlen in der Karte, bis Lage und Branche belegt sind.
 - **Busse.** Alle 154 Fahrten im Umgriff einem Linienverlauf zugeordnet. Ein Abgleich mit der Fahrplanauskunft des Verbunds steht aus.
 - **Ladevolumen.** Rund 25 MB auf der Platte, rund 16 MB übertragen (gzip). Bei 20 Mbit/s etwa 6 bis 7 Sekunden bis alles geladen ist, bedienbar früher.
 
@@ -163,4 +177,5 @@ Was hakt oder offen ist:
 2. Rundgang mit Ortskenntnis und Fehlerliste (Abnahme Phase 4).
 3. Energieatlas-Abgleich an drei Dächern, Abfahrten gegen die Fahrplanauskunft prüfen.
 4. Fahrplan automatisch aktualisieren (Workflow), Luftqualität erneut versuchen.
-5. Optional: Zensus-2022-Gitter (Baualter, Heizungsart), kaskadierte Schatten, Hochwassergefahrenkarten der LUBW.
+5. Betriebsliste mit Ortskenntnis prüfen und fehlende Betriebe in OpenStreetMap eintragen; danach `12_business.py --neu-laden`.
+6. Optional: Zensus-2022-Gitter (Baualter, Heizungsart), kaskadierte Schatten, Hochwassergefahrenkarten der LUBW.

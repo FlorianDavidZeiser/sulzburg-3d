@@ -93,6 +93,18 @@ function block(rows) {
   } catch (e) { /* ohne places.json keine Angabe */ }
 
   try {
+    const bz = await j("data/business.json");
+    const g = Object.values(bz.gruppen).map((x) => `${esc(x.name)} ${x.anzahl}`).join(", ");
+    out.push(`<h2>Arbeiten und Wirtschaft</h2>` + block([
+      ["Herkunft", `${bz.betriebe.length} Betriebe aus <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (© OpenStreetMap-Mitwirkende, ODbL), Stand ${de((bz.quelle.osm.stand || "").slice(0, 10))}, gefiltert auf die amtliche Gemeindegrenze. Gruppen: ${g}.`],
+      ["Regeln", esc(bz.regeln)],
+      ["Ergänzungen", `Einzelne Fakten aus Wikipedia (CC BY-SA 4.0), je Betrieb mit Quelle. Solaranlagen nur für Betriebe, deren Betreibername im Marktstammdatenregister ausdrücklich zugeordnet ist (${esc(bz.quelle.mastr.namensnennung)}). Am Hekatron-Standort werden keine Anlagen gezeigt.`],
+      ["Lage", "Marker auf dem LoD2-Gebäude mit derselben Adresse, sonst am OSM-Punkt. Mehrere Betriebe in einem Gebäude werden leicht versetzt."],
+      ["Bekannte Lücken", `OpenStreetMap ist unvollständig und kann veraltet sein; Öffnungszeiten stehen im OSM-Format. ${esc(bz.nur_im_mastr.hinweis)} (${bz.nur_im_mastr.namen.map(esc).join(", ")}). Die Datei <code>business.json</code> steht wegen der OSM-Herkunft unter ODbL.`],
+    ]));
+  } catch (e) { /* ohne business.json keine Angabe */ }
+
+  try {
     const cl = await j("data/climate.json");
     out.push(`<h2>Klima und Fortschreibung 2040</h2>` + block([
       ["Herkunft", `${esc(cl.quelle.titel)}. ${cl.quelle.urls.map((u) => `<a href="${u}" target="_blank" rel="noopener">${esc(u.replace("https://", ""))}</a>`).join(", ")}. ${esc(cl.quelle.nutzung)}.`],
@@ -136,7 +148,7 @@ function block(rows) {
   out.push(`<h2>Weitere Bausteine</h2>` + block([
     ["Bäume", "Normalisiertes Oberflächenmodell nDOM1 des LGL (dl-de/by-2-0); Lage und Höhe echt, Form generisch."],
     ["Dächer aus Luftbild", "DOP20 des LGL senkrecht auf die LoD2-Dachflächen projiziert; im Luftbild eingebrannte Schatten bleiben sichtbar."],
-    ["Adresssuche", "Durchsucht die Adressen im LoD2-Datensatz, keine externe Abfrage."],
+    ["Adresssuche", "Durchsucht die Adressen im LoD2-Datensatz und die Namen der Betriebe und Orte, keine externe Abfrage."],
     ["Einstiegsfahrt", "Reine Kameraführung; bei der Systemeinstellung „Bewegung reduzieren“ entfällt sie."],
   ]));
   out.push(`<p class="muted">Technik: three.js (MIT), statische Dateien ohne Server-Logik, keine Cookies, keine Zähler. Quellcode und Datenpipeline: <a href="https://github.com/FlorianDavidZeiser/sulzburg-3d" target="_blank" rel="noopener">github.com/FlorianDavidZeiser/sulzburg-3d</a>. Stand der Aufbereitung: ${de(idx.quelle.verarbeitet_am)}.</p>`);

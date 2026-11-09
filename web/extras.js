@@ -24,6 +24,7 @@ function setupSearch(ctx) {
   const list = $("searchList");
   [...index.values()].sort((a, b) => a.label.localeCompare(b.label, "de", { numeric: true })).forEach((v) => { const o = document.createElement("option"); o.value = v.label; list.appendChild(o); });
   for (const p of meta.places?.orte || []) { const o = document.createElement("option"); o.value = p.name; list.appendChild(o); }
+  for (const b of meta.business?.betriebe || []) { const o = document.createElement("option"); o.value = b.name; o.label = b.branche; list.appendChild(o); }
 
   // Markierung: senkrechter Lichtstrahl über dem gefundenen Gebäude, verblasst nach einigen Sekunden
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xf2b544, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
@@ -41,6 +42,8 @@ function setupSearch(ctx) {
     if (!q) return;
     const place = (meta.places?.orte || []).find((p) => norm(p.name) === q);
     if (place) { flyTo(new THREE.Vector3(place.x, terrainHeightAt(place.x, place.zz) ?? ctx.centerY, place.zz), 260); ctx.showPlace?.(place); return; }
+    const biz = (meta.business?.betriebe || []).find((b) => norm(b.name) === q) || (meta.business?.betriebe || []).find((b) => q.length >= 4 && norm(b.name).includes(q));
+    if (biz && !index.has(q)) { ctx.flyToBusiness?.(biz); return; }
     let hit = index.get(q);
     if (!hit) { const k = [...index.keys()].find((k) => k.startsWith(q)); hit = k && index.get(k); }
     if (!hit) { $("search").setCustomValidity("Adresse nicht im LoD2-Datensatz gefunden"); $("search").reportValidity(); return; }

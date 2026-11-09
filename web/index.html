@@ -23,7 +23,7 @@
     <input type="range" id="time" min="0" max="1439" step="5" value="720">
     <div id="startHint" class="warn small" hidden>Draußen ist es dunkel. Die Ansicht startet mittags, „Jetzt“ zeigt die echte Uhrzeit.</div>
     <div id="suninfo">–</div>
-    <div class="search"><input type="search" id="search" placeholder="Adresse suchen, z. B. Hauptstraße 60" autocomplete="off" list="searchList"><datalist id="searchList"></datalist></div>
+    <div class="search"><input type="search" id="search" placeholder="Adresse oder Betrieb suchen, z. B. Hauptstraße 60" autocomplete="off" list="searchList"><datalist id="searchList"></datalist></div>
 
     <details class="sec" open><summary>Ansicht</summary>
       <div class="toggles">
@@ -50,6 +50,14 @@
     <details class="sec" open><summary>Orte mit Geschichte</summary>
       <div id="placesWrap"><label class="inline"><input type="checkbox" id="places" checked> Marker zeigen</label>
         <div class="jumps" id="placesList"></div></div>
+    </details>
+
+    <details class="sec" id="businessSec"><summary>Arbeiten und Wirtschaft</summary>
+      <label class="inline"><input type="checkbox" id="business"> Betriebe zeigen</label>
+      <div id="businessFilter" class="chips"></div>
+      <div id="businessCount" class="small muted"></div>
+      <div class="small muted">Alle Betriebe gleich behandelt: Name, Branche, Adresse, Öffnungszeiten, Website. Keine Umsätze, keine Eigentümer.</div>
+      <details class="small"><summary>Alle Betriebe als Liste</summary><div id="businessList"></div></details>
     </details>
 
     <details class="sec" id="scenarioSec"><summary>Klima und Szenario 2040</summary>

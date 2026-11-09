@@ -1,6 +1,6 @@
 # Validierung (automatisch erzeugt)
 
-Erzeugt am 2026-11-08T22:26:26+00:00 durch `scripts/05_validate.py`.
+Erzeugt am 2026-11-09T05:22:32+00:00 durch `scripts/05_validate.py`.
 
 ## 1. Gebäude gegen Gelände
 
@@ -65,7 +65,7 @@ Einordnung: In OSM ist die Adresse oft am Gebäudeumriss oder als Punkt erfasst;
 | 2026-06-21 | 03:30:21 | 03:30:36 | -0.3 min | 19:31:37 | 19:31:21 | +0.3 min |
 | 2026-09-22 | 05:16:02 | 05:15:56 | +0.1 min | 17:27:47 | 17:27:00 | +0.8 min |
 | 2026-12-21 | 07:15:32 | 07:15:45 | -0.2 min | 15:38:55 | 15:38:41 | +0.2 min |
-| 2026-11-08 | 06:24:31 | 06:24:29 | +0.0 min | 16:01:11 | 16:00:39 | +0.5 min |
+| 2026-11-09 | 06:26:02 | 06:26:00 | +0.0 min | 15:59:49 | 15:59:17 | +0.5 min |
 
 Größte Abweichung: **0.8 min**.
 
@@ -79,9 +79,9 @@ GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 f�
 | Luftbild (JPEG-Kacheln) | 147 | 9.0 | 9.0 |
 | Gebäude (GLB + JSON + Dachtextur) | 3 | 10.6 | 5.0 |
 | Bäume | 2 | 0.8 | 0.5 |
-| Sonne, Klima, PV, Orte, Fahrplan | 5 | 0.5 | 0.1 |
+| Sonne, Klima, PV, Orte, Fahrplan, Betriebe | 6 | 0.5 | 0.1 |
 | Sonstige Daten | 2 | 0.1 | 0.0 |
-| three.js + Anwendung | 14 | 2.5 | 0.5 |
+| three.js + Anwendung | 15 | 2.5 | 0.5 |
 | **Gesamt** | | **24.7** | **15.8** |
 
 Übertragen bei 20 Mbit/s rund 6 s, bei 50 Mbit/s rund 3 s. Gelände und Gebäude kommen zuerst, die Luftbildkacheln laden danach (Siedlung zuerst); bedienbar ist die Ansicht vorher.
@@ -109,5 +109,37 @@ GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 f�
 Ergebnis: 17,115 kWp, 17,189 MWh pro Jahr, spezifischer Ertrag Median 1033 kWh/kWp (5. bis 95. Perzentil 914 bis 1070). Bestand laut MaStR: 315 Einheiten, 3067.0 kW, das sind 18 % des Szenarios. Plausibilität: Ein spezifischer Ertrag um 1.000 kWh/kWp entspricht der PVGIS-Größenordnung für den Oberrhein.
 
 **Klima.** 42 1-km-Zellen im Umgriff. Heiße Tage am Marktplatz 7 (1961–1990), 14 (1991–2020), Fortschreibung 2040 rund 22. Gegenprobe Landesmittel BW aus der Jahresreihe: 4.7 und 10.5; Sulzburg liegt am Oberrhein erwartungsgemäß darüber.
+
+**Arbeiten und Wirtschaft.** 29 Betriebe aus OpenStreetMap (Stand 2026-11-09T05:06:52Z), davon 20 über die Adresse einem LoD2-Gebäude zugeordnet, 3 mit Solaranlagen laut Marktstammdatenregister. Zuordnung je Betrieb:
+
+- Alte Sägemühle: gast/Campingplatz, Lage aus OSM
+- Camping Sulzbachtal: gast/Campingplatz, LoD2 Sonnmatt 4, Sulzburg (71 m)
+- Dormitorium - Hotel am Klostergarten: gast/Gästehaus, LoD2 Klosterplatz 2, Sulzburg (4 m)
+- Ferienwohnung in den Bachteln: gast/Ferienwohnung, Lage aus OSM
+- Gaststätte Altes Stadttor: gast/Restaurant, LoD2 Hauptstraße 35, Sulzburg (1 m)
+- Gutshof Güntert: gast/Ferienhaus, LoD2 Schlossgasse 4, Sulzburg (22 m)
+- Haus Sayer: gast/Ferienwohnung, LoD2 Bad-Krozinger-Straße 2, Sulzburg (6 m)
+- Hirschen: gast/Restaurant und Hotel, LoD2 Hauptstraße 69, Sulzburg (4 m)
+- La Maison Eric: gast/Restaurant, Lage aus OSM
+- Landgasthof Rebstock: gast/Hotel und Restaurant, LoD2 Hauptstraße 77, Sulzburg (6 m)
+- Lilien-Café: gast/Café, LoD2 Weinstraße 2, Sulzburg (49 m)
+- Rebea: gast/Restaurant, LoD2 Weinstraße 38, Sulzburg (4 m)
+- Torstüble: gast/Restaurant, LoD2 Hauptstraße 41, Sulzburg (7 m)
+- Waldhotel Bad Sulzburg: gast/Hotel und Restaurant, LoD2 Badstraße 67, Sulzburg (27 m)
+- Weinbrunnen Sulzburg: gast/Café, Lage aus OSM
+- Zum wilden Mann: gast/Restaurant, Lage aus OSM
+- BENZ Metallbau Schlosserei Landtechnik: gewerbe/Metallbau und Landtechnik, Lage aus OSM, Solar 26.1 kW
+- Bäckerei Ruf: gewerbe/Bäckerei, Lage aus OSM
+- Da Massimiliano: gewerbe/Feinkost, Lage aus OSM
+- Die Brillenfabrik: gewerbe/Optiker, LoD2 Hauptstraße 57, Sulzburg (3 m)
+- Fahrrad Glaser: gewerbe/Fahrradgeschäft, LoD2 Im Brühl 10, Sulzburg (9 m)
+- Hausärztliche Gemeinschaftspraxis: gewerbe/Arztpraxis, LoD2 Hauptstraße 64, Sulzburg (6 m)
+- Hekatron: gewerbe/Anlagentechnischer Brandschutz, Hersteller, LoD2 Brühlmatten 9, Sulzburg (78 m)
+- Jonny B. GmbH: gewerbe/Möbel, LoD2 Doretmatt 3, Sulzburg (2 m), Solar 91.5 kW
+- Katharina-Barbara: gewerbe/Apotheke, LoD2 Hauptstraße 48, Sulzburg (3 m)
+- Brennerei Eichin: wein/Brennerei, Lage aus OSM
+- Staudengärtnerei Gräfin von Zeppelin OHG: wein/Staudengärtnerei, LoD2 Weinstraße 2, Sulzburg (57 m)
+- Weingut Rainer Schlumberger: wein/Weingut, LoD2 Obere Holzgasse 4, Sulzburg (14 m), Solar 24.2 kW
+- Winzergenossenschaft Laufen: wein/Winzergenossenschaft, LoD2 Weinstraße 48, Sulzburg (27 m)
 
 **Busse.** 11 Haltesteige, 154 Fahrten mit Linienverlauf zugeordnet (12 Verlaufsabschnitte). Die Zuordnung prüft Linie und Folge der Haltestellen; eine Prüfung gegen die Fahrplanauskunft des Verbunds steht aus.

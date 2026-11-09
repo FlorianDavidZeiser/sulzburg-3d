@@ -105,3 +105,8 @@ details.sec[open] > summary::before { content: "▾ "; }
 #info .close { float: right; font: inherit; font-size: 18px; line-height: 1; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 0 0 4px 8px; }
 #info .close:hover { color: var(--fg); }
 .ph { background: rgba(242,181,68,0.9); color: #1a1408; font-weight: 700; font-size: 11px; padding: 0 5px; border-radius: 4px; margin-right: 4px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: 0; margin-right: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 2px 10px; margin: 4px 0; }
+.chips .chip { font-size: 12px; margin: 0; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+#businessList div { margin-top: 6px; line-height: 1.6; }

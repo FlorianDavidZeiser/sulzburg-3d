@@ -226,7 +226,7 @@ def check_size() -> tuple[list[str], dict]:
               "Luftbild (JPEG-Kacheln)": sorted((web / "data" / "terrain").glob("o_*.jpg")),
               "Gebäude (GLB + JSON + Dachtextur)": [web / "data" / "buildings.glb", web / "data" / "buildings.json"] + sorted((web / "data").glob("roofs_*.jpg")),
               "Bäume": [web / "data" / "trees.bin", web / "data" / "trees.json"],
-              "Sonne, Klima, PV, Orte, Fahrplan": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json")],
+              "Sonne, Klima, PV, Orte, Fahrplan, Betriebe": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json", "business.json")],
               "Sonstige Daten": [web / "data" / "gemeinde.geojson", web / "data" / "sources.json"],
               "three.js + Anwendung": [p for p in web.rglob("*.js")] + [web / "index.html", web / "style.css"]}
     import gzip as _gz
@@ -270,6 +270,11 @@ def check_layers() -> tuple[list[str], dict]:
         md += [f"**Klima.** {len(cl['zellen'])} 1-km-Zellen im Umgriff. Heiße Tage am Marktplatz {m[0]:.0f} (1961–1990), {m[1]:.0f} (1991–2020), Fortschreibung 2040 rund {m[2]:.0f}. "
                f"Gegenprobe Landesmittel BW aus der Jahresreihe: {bw['1961-1990']} und {bw['1991-2020']}; Sulzburg liegt am Oberrhein erwartungsgemäß darüber.", ""]
         st["klima"] = {"zellen": len(cl["zellen"]), "marktplatz_heisse_tage": m}
+    wi = src["ebenen"].get("wirtschaft")
+    if wi:
+        md += [f"**Arbeiten und Wirtschaft.** {wi['betriebe']} Betriebe aus OpenStreetMap (Stand {wi['osm_stand']}), davon {wi['mit_lod2']} über die Adresse einem LoD2-Gebäude zugeordnet, "
+               f"{wi['mit_solar']} mit Solaranlagen laut Marktstammdatenregister. Zuordnung je Betrieb:", ""] + [f"- {x}" for x in wi["pruefung"]] + [""]
+        st["wirtschaft"] = {k: wi[k] for k in ("betriebe", "mit_lod2", "mit_solar")}
     if (W / "transit.json").exists():
         tr = json.loads((W / "transit.json").read_text(encoding="utf-8"))
         n_trips = len(tr.get("fahrten") or [])

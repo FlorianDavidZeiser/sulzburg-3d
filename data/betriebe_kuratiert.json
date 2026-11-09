@@ -1,0 +1,102 @@
+{
+  "hinweis": "Ergänzungen und Regeln für die Ebene Arbeiten und Wirtschaft (Variante A laut Konzept). Alle Betriebe werden gleich behandelt: Name, Branche, Adresse, Öffnungszeiten und Website aus OpenStreetMap. Zusätzliche Fakten nur mit Quelle. Keine Umsätze, keine Mitarbeiterzahlen, keine Eigentümer oder Gesellschafter, keine Telefonnummern. Hekatron nur mit Basisdaten, ohne Angaben zu Anlagen am Standort.",
+  "abgerufen_am": "2026-11-09",
+  "zusammenfassen": [
+    {
+      "namen": [
+        "Hekatron",
+        "Hekatron Vertriebs GmbH"
+      ],
+      "name": "Hekatron"
+    },
+    {
+      "namen": [
+        "Hirschen"
+      ],
+      "name": "Hirschen"
+    }
+  ],
+  "ergaenzungen": {
+    "Hekatron": {
+      "branche": "Anlagentechnischer Brandschutz, Hersteller",
+      "gruppe": "gewerbe",
+      "fakten": [
+        "Firmensitz in Sulzburg seit 1971.",
+        "Teil der Schweizer Securitas-Gruppe."
+      ],
+      "quellen": [
+        {
+          "titel": "Wikipedia: Hekatron",
+          "url": "https://de.wikipedia.org/wiki/Hekatron",
+          "lizenz": "CC BY-SA 4.0"
+        }
+      ],
+      "mastr_ausblenden": true,
+      "regel": "Nur Firmensitz, Branche, Adresse und Website mit Quelle. Keine Kennzahlen, keine Produkte, keine Angaben zu Anlagen, Zugängen oder Barrierefreiheit am Standort. Mehr nur mit Freigabe der Unternehmenskommunikation.",
+      "felder_ausblenden": [
+        "rollstuhl",
+        "oeffnungszeiten"
+      ]
+    },
+    "Hirschen": {
+      "branche": "Restaurant und Hotel",
+      "fakten": [
+        "Restaurant von Douce Steiner. Laut Wikipedia erster Michelin-Stern 2009, zweiter Ende 2012; aktueller Stand nicht geprüft.",
+        "Douce Steiner wurde 2023 als erste Frau von Gault&Millau als „Köchin des Jahres“ ausgezeichnet."
+      ],
+      "quellen": [
+        {
+          "titel": "Wikipedia: Sulzburg",
+          "url": "https://de.wikipedia.org/wiki/Sulzburg",
+          "lizenz": "CC BY-SA 4.0"
+        }
+      ]
+    },
+    "Staudengärtnerei Gräfin von Zeppelin OHG": {
+      "branche": "Staudengärtnerei",
+      "fakten": [
+        "Spezialisiert auf Iris (rund 300 Sorten), Pfingstrosen, Taglilien und Türkenmohn.",
+        "Die Iriszucht in Laufen geht auf Helene von Stein-Zeppelin zurück."
+      ],
+      "quellen": [
+        {
+          "titel": "Wikipedia: Sulzburg",
+          "url": "https://de.wikipedia.org/wiki/Sulzburg",
+          "lizenz": "CC BY-SA 4.0"
+        },
+        {
+          "titel": "Wikipedia: Laufen (Sulzburg)",
+          "url": "https://de.wikipedia.org/wiki/Laufen_(Sulzburg)",
+          "lizenz": "CC BY-SA 4.0"
+        }
+      ]
+    },
+    "Winzergenossenschaft Laufen": {
+      "branche": "Winzergenossenschaft",
+      "gruppe": "wein",
+      "fakten": [
+        "1931 gegründet, seit 2011 Teil des Winzerkellers Auggener Schäf.",
+        "Laufen hat die Einzellage „Altenberg“."
+      ],
+      "quellen": [
+        {
+          "titel": "Wikipedia: Sulzburg",
+          "url": "https://de.wikipedia.org/wiki/Sulzburg",
+          "lizenz": "CC BY-SA 4.0"
+        }
+      ]
+    }
+  },
+  "mastr_zuordnung": {
+    "Jonny B. GmbH": "Jonny B. GmbH",
+    "BENZ Metallbau Schlosserei Landtechnik": "Metallbau Benz",
+    "Weingut Rainer Schlumberger": "Weingut Schlumberger"
+  },
+  "nur_im_mastr": {
+    "hinweis": "Im Marktstammdatenregister als Betreiber in Sulzburg geführt, aber ohne Lage und nicht in OpenStreetMap. Nicht in die Karte aufgenommen, bis Lage und Branche belegt sind.",
+    "namen": [
+      "Plasticant Mobilo",
+      "Krone GmbH"
+    ]
+  }
+}
