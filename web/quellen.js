@@ -171,6 +171,7 @@ function block(rows) {
         "Am Rand der geladenen Fläche geht das feine Gelände weich in das gröbere über. Bäume und parkende Autos werden dort auf die feine Höhe gesetzt."],
       ["Automodell", 'Kenney Car Kit (hatchback-sports), <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>, von Kenney auf OpenGameArt veröffentlicht. Lizenztext in <code>vendor/kenney-car-kit/</code>.'],
       ["Licht", "Schatten im Fahrmodus schärfer und nur im Umkreis von rund 150 m vor dem Auto. Nachts Scheinwerfer als Darstellung."],
+      ["Busse", "Die Busse fahren nach Soll-Fahrplan (keine Echtzeit). Im Fahrmodus läuft die Uhr mit, die Busse sind Hindernisse, und die Anzeige nennt Linie und Ziel des nächsten Busses. Beim Aussteigen gilt wieder die vorher eingestellte Uhrzeit."],
       ["Laden", "Alles für den Fahrmodus wird erst beim ersten Absetzen geladen (rund 0,2 MB übertragen), die Fahrkacheln dann nur rund um das Auto (etwa 1 MB für die Umgebung, weitere beim Fahren). Ohne Fahren ändert sich an Ladezeit und Ansicht nichts. Sinkt die Bildrate, schaltet der Fahrmodus die Qualität selbst herunter."],
     ]));
   } catch (e) { /* ohne fahrnetz.json keine Angabe */ }
@@ -186,6 +187,8 @@ function block(rows) {
     ["Dächer aus Luftbild", "DOP20 des LGL senkrecht auf die LoD2-Dachflächen projiziert; im Luftbild eingebrannte Schatten bleiben sichtbar."],
     ["Adresssuche", "Durchsucht die Adressen im LoD2-Datensatz und die Namen der Betriebe und Orte, keine externe Abfrage."],
     ["Einstiegsfahrt", "Reine Kameraführung; bei der Systemeinstellung „Bewegung reduzieren“ entfällt sie."],
+    ["Kontaktschatten", "Hauswände werden zum Gebäudeboden hin dunkler, unter Autos und Bussen liegt ein weicher dunkler Fleck. Darstellung, kein Datum."],
+    ["Ruhe", "Bewegt sich nichts, zeichnet die Seite höchstens ein Bild pro Sekunde. Das schont Akku und Lüfter; beim Bewegen ändert sich nichts."],
   ]));
   out.push(`<p class="muted">Technik: three.js (MIT), statische Dateien ohne Server-Logik, keine Cookies, keine Zähler. Quellcode und Datenpipeline: <a href="https://github.com/FlorianDavidZeiser/sulzburg-3d" target="_blank" rel="noopener">github.com/FlorianDavidZeiser/sulzburg-3d</a>. Stand der Aufbereitung: ${de(idx.quelle.verarbeitet_am)}.</p>`);
   document.getElementById("content").innerHTML = out.join("\n");

@@ -26,8 +26,14 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.shadowMap.autoUpdate = false;   // Schatten nur neu rechnen, wenn sich Sonne, Schattenbox oder Szene ändern (siehe Bildschleife)
 let shadowDirty = true, shadowKey = "", shadowAt = 0;
-const markShadows = () => { shadowDirty = true; };
+const markShadows = () => { shadowDirty = true; requestRender(); };
 document.addEventListener("change", markShadows);   // jede Einstellung im Bedienfeld (Ebenen, Gelände, Schatten)
+// Ruhe-Modus: gezeichnet wird nur, solange sich etwas bewegt oder ändert (plus kurzer Nachlauf), im Stillstand höchstens
+// ein Bild pro Sekunde. Schont Akku und Lüfter; beim Bewegen ändert sich nichts.
+let renderUntil = 0, lastRender = 0;
+function requestRender(ms = 600) { renderUntil = Math.max(renderUntil, performance.now() + ms); }
+for (const ev of ["input", "click", "pointerdown", "pointerup", "wheel", "keydown", "keyup"]) document.addEventListener(ev, () => requestRender(), { passive: true, capture: true });
+window.addEventListener("resize", () => requestRender());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
@@ -192,6 +198,7 @@ function loadOrthos() {
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = aniso;
       mesh.userData.ortho = tex;
+      requestRender();
       if ($("ortho").checked) { mesh.material.map = tex; mesh.material.color.set(0xffffff); mesh.material.needsUpdate = true; }
       texturesLoaded++;
       updateProgress();
@@ -275,6 +282,7 @@ function setSun(date) {
   else if (p.elevation > -6) sky.lerpColors(new THREE.Color(0x1b2436), new THREE.Color(0xe7a86a), (p.elevation + 6) / 14);
   else sky.set(0x141b2c);
   scene.background = sky;
+  requestRender();
   scene.fog = new THREE.Fog(sky, 7000, 22000);
   const day0 = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const times = sunTimes(day0, lat, lon);
@@ -766,6 +774,7 @@ async function main() {
     const map = o.material.map || null;
     if (map) { map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = renderer.capabilities.getMaxAnisotropy(); }
     o.material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9, metalness: 0, map });
+    addContactShade(o.material);
     o.userData.roofMap = map;
     o.castShadow = true; o.receiveShadow = true;
     buildingMeshes.push(o);
@@ -778,6 +787,7 @@ async function main() {
   });
   buildingsMesh = buildingMeshes[0];
   scene.add(gltf.scene);
+  requestRender();
   markShadows();
   $("rooftex").addEventListener("change", (e) => { for (const r of roofMeshes) { r.material.map = e.target.checked && !$("sunlayer").checked ? r.userData.roofMap : null; r.material.needsUpdate = true; } });
   setupNavigation();
@@ -786,7 +796,7 @@ async function main() {
   setupTrees();
   const ctx = { THREE, scene, camera, controls, renderer, meta, $, terrainHeightAt, flyTo, frameHooks, pickHooks, infoHooks, buildingMeshes, roofMeshes, utmToLatLon, TZ, centerY,
     setSun: () => setSun(currentDate()), localToday, showBuilding, sunTimes, latLon,
-    terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup, markShadows,
+    terrainSurfaceAt, takeCamera, releaseCamera, cameraOwner: () => cameraOwner, sun, terrainGroup, markShadows, requestRender, groundAt: null, driveClock: null, blobTexture,
     getTreeMeshes: () => treeChunks.map((c) => c.near), treesVersion: () => treesVersion };
   window.__ctx = ctx;
   await setupPlaces(ctx);
@@ -844,13 +854,16 @@ async function main() {
       delta.copy(targetGoal).sub(controls.target);
       if (delta.length() < 0.5) { targetGoal = null; } else { delta.multiplyScalar(0.12); camera.position.add(delta); controls.target.add(delta); }
     }
-    controls.update();
+    if (controls.update() || flight || targetGoal || keys.size || controls.autoRotate) requestRender();
     // Blickpunkt auf dem Boden halten, Kamera nicht unter das Gelände lassen
     const th = terrainHeightAt(controls.target.x, controls.target.z);
     if (th != null && !targetGoal && !flight) { const dy = th - controls.target.y; if (Math.abs(dy) > 0.05) { controls.target.y += dy; camera.position.y += dy; } }
     const ch = terrainHeightAt(camera.position.x, camera.position.z);
     if (ch != null && camera.position.y < ch + 4) camera.position.y = ch + 4;
     }
+    if (cameraOwner) requestRender();
+    if (now > renderUntil && now - lastRender < 1000) return;   // Ruhe: nichts bewegt sich
+    lastRender = now;
     updateSunPosition();
     // Schattenkarte nur bei Bedarf: Fahrmodus (bewegtes Auto), geänderte Sonne oder Schattenbox, geänderte Szene; alle 2 s zur Sicherheit
     const st = sun.target.position;
@@ -860,8 +873,9 @@ async function main() {
     frames++;
     if (now - last >= 1000) {
       const fps = Math.round((frames * 1000) / (now - last));
-      $("fps").textContent = `${fps} Bilder/s · Gelände ${(index.dreiecke / (LOD * LOD) / 1000).toFixed(0)}k Dreiecke (${LOD > 1 ? "grob" : "fein"}) · Gebäude ${(buildings.dreiecke / 1000).toFixed(0)}k · Schatten ${SHADOW_MAP}px im Umkreis ${SHADOW_RADIUS} m`;
-      frames = 0; last = now; window.__fps = fps;
+      const ruhe = now > renderUntil + 500;
+      $("fps").textContent = `${ruhe ? "Ruhe, keine Bewegung (Laptop wird geschont)" : fps + " Bilder/s"} · Gelände ${(index.dreiecke / (LOD * LOD) / 1000).toFixed(0)}k Dreiecke (${LOD > 1 ? "grob" : "fein"}) · Gebäude ${(buildings.dreiecke / 1000).toFixed(0)}k · Schatten ${SHADOW_MAP}px im Umkreis ${SHADOW_RADIUS} m`;
+      frames = 0; last = now; if (!ruhe) window.__fps = fps;
     }
   });
   window.__ready = true;
@@ -881,6 +895,45 @@ function setupDriveEntry(ctx) {
   $("driveCar").addEventListener("pointerdown", (e) => { e.preventDefault(); load().then((d) => d.startDrag(e)).catch(() => {}); });
   $("driveCenter").addEventListener("click", () => load().then((d) => d.placeNear(controls.target.x, controls.target.z)).catch(() => {}));
   ctx.loadDrive = load;
+}
+
+// Weicher dunkler Fleck als Kontaktschatten unter Fahrzeugen (eine gemeinsame Textur)
+let blobTex = null;
+function blobTexture() {
+  if (blobTex) return blobTex;
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const g = c.getContext("2d"), grd = g.createRadialGradient(32, 32, 4, 32, 32, 32);
+  grd.addColorStop(0, "rgba(255,255,255,1)"); grd.addColorStop(0.55, "rgba(255,255,255,0.75)"); grd.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
+  blobTex = new THREE.CanvasTexture(c);
+  return blobTex;
+}
+
+// ---------- Kontaktschatten an Gebäuden ----------
+// Darstellung, kein Datum: Wände werden zum Gebäudeboden hin dunkler (LoD2-Bodenhöhe je Gebäude als kleine Textur).
+// Kostet eine Texturabfrage je Eckpunkt, keine zusätzliche Bildberechnung.
+let baseTex = null;
+function addContactShade(mat) {
+  if (!baseTex) {
+    const g = meta.buildings.gebaeude, W = 64, H = Math.ceil(g.length / W);
+    const d = new Float32Array(W * H);
+    g.forEach((b, i) => { d[i] = b.z_boden_min; });
+    baseTex = new THREE.DataTexture(d, W, H, THREE.RedFormat, THREE.FloatType);
+    baseTex.magFilter = baseTex.minFilter = THREE.NearestFilter; baseTex.needsUpdate = true;
+  }
+  const W = baseTex.image.width, H = baseTex.image.height;
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uBase = { value: baseTex };
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", `#include <common>\nattribute float _building;\nuniform sampler2D uBase;\nvarying float vAboveBase;`)
+      .replace("#include <project_vertex>", `#include <project_vertex>
+  vec2 buv = vec2((mod(_building, ${W}.0) + 0.5) / ${W}.0, (floor(_building / ${W}.0) + 0.5) / ${H}.0);
+  vAboveBase = (modelMatrix * vec4(transformed, 1.0)).y - texture2D(uBase, buv).r;`);
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying float vAboveBase;")
+      .replace("#include <color_fragment>", "#include <color_fragment>\n  diffuseColor.rgb *= mix(0.62, 1.0, smoothstep(-0.4, 2.5, vAboveBase));");
+  };
+  mat.customProgramCacheKey = () => "kontaktschatten";
 }
 
 // UTM 32N (ETRS89/GRS80) -> Breite/Länge, für den Sonnenstand

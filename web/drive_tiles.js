@@ -4,7 +4,7 @@
 // geladenen Fläche gehen die feinen Höhen weich in die grobe Geländefläche über, so entstehen keine Spalten.
 // Bäume und parkende Autos in geladenen Kacheln werden auf die feine Höhe gesetzt und beim Entladen zurückgestellt.
 
-const T = 50, N = 51, BLEND = 6;   // Kachelkante (m), Punkte je Kante, Übergangsbreite zum groben Gelände (m)
+const T = 50, N = 51, BLEND = 6, TEX_BLEND = 12;   // Kachelkante (m), Punkte je Kante, Übergang Höhe und Luftbild zum groben Gelände (m)
 
 export async function createFineTerrain(ctx) {
   const { THREE, scene, meta } = ctx;
@@ -119,12 +119,14 @@ export async function createFineTerrain(ctx) {
     const L = (dx, dz) => isReady(t.x + dx * T, t.z + dz * T);
     const W = !L(-1, 0), E = !L(1, 0), Nn = !L(0, -1), S = !L(0, 1), NW = !L(-1, -1), NE = !L(1, -1), SW = !L(-1, 1), SE = !L(1, 1);
     const f = t.final || (t.final = new Float32Array(N * N));
+    const tw = t.texW || (t.texW = new Float32Array(N * N));
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       let d = Infinity;
       if (W) d = Math.min(d, i); if (E) d = Math.min(d, T - i); if (Nn) d = Math.min(d, j); if (S) d = Math.min(d, T - j);
       if (NW) d = Math.min(d, Math.hypot(i, j)); if (NE) d = Math.min(d, Math.hypot(T - i, j));
       if (SW) d = Math.min(d, Math.hypot(i, T - j)); if (SE) d = Math.min(d, Math.hypot(T - i, T - j));
       const k = j * N + i, hf = t.fine[k];
+      const st = Math.min(1, d / TEX_BLEND); tw[k] = st * st * (3 - 2 * st);
       if (d >= BLEND) { f[k] = hf; continue; }
       const s = d / BLEND, w = s * s * (3 - 2 * s);
       const hc = ctx.terrainSurfaceAt(t.x + i, t.z + j) ?? hf;
@@ -133,11 +135,13 @@ export async function createFineTerrain(ctx) {
   }
   function build(t) {
     computeFinal(t);
-    const pos = new Float32Array(N * N * 3), nrm = new Float32Array(N * N * 3), uv = new Float32Array(N * N * 2);
+    const pos = new Float32Array(N * N * 3), nrm = new Float32Array(N * N * 3), uv = new Float32Array(N * N * 2), uvc = new Float32Array(N * N * 2);
+    const coarse = coarseFor(t);
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       const k = j * N + i;
       pos[k * 3] = t.x + i; pos[k * 3 + 2] = t.z + j;
       uv[k * 2] = i / T; uv[k * 2 + 1] = 1 - j / T;
+      if (coarse) { uvc[k * 2] = (t.x + i + e0 - coarse.e) / coarse.size; uvc[k * 2 + 1] = (n0 - (t.z + j) - coarse.n) / coarse.size; }
     }
     const idx = new Uint16Array(T * T * 6);
     let q = 0;
@@ -149,9 +153,12 @@ export async function createFineTerrain(ctx) {
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     geo.setAttribute("normal", new THREE.BufferAttribute(nrm, 3));
     geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+    geo.setAttribute("uvc", new THREE.BufferAttribute(uvc, 2));
+    geo.setAttribute("edgew", new THREE.BufferAttribute(new Float32Array(N * N), 1));
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
     const ortho = !document.getElementById("ortho") || document.getElementById("ortho").checked;
     const mat = new THREE.MeshLambertMaterial({ map: ortho ? t.tex : null, color: ortho ? 0xffffff : 0x7f8c6e });
+    blendWithCoarse(mat, coarse);
     t.mesh = new THREE.Mesh(geo, mat);
     t.mesh.receiveShadow = true; t.mesh.castShadow = true;
     t.mesh.name = "fahrkachel";
@@ -169,9 +176,38 @@ export async function createFineTerrain(ctx) {
       const len = Math.hypot(dx, 1, dz);
       nrm[k * 3] = -dx / len; nrm[k * 3 + 1] = 1 / len; nrm[k * 3 + 2] = -dz / len;
     }
+    geo.attributes.edgew.array.set(t.texW); geo.attributes.edgew.needsUpdate = true;
     geo.attributes.position.needsUpdate = true; geo.attributes.normal.needsUpdate = true;
     geo.computeBoundingSphere();
   }
+  // Grobe Geländekachel (500 m) mit ihrem Luftbild, in der die Fahrkachel liegt
+  function coarseFor(t) {
+    const e = t.x + e0, n = n0 - t.z - T;
+    for (const m of ctx.terrainGroup.children) {
+      const c = m.userData.tile;
+      if (c && e >= c.e_min && e < c.e_min + c.size && n >= c.n_min && n < c.n_min + c.size) return { e: c.e_min, n: c.n_min, size: c.size, mesh: m };
+    }
+    return null;
+  }
+  // Weiche Kante: am Rand der geladenen Fläche geht das 0,2-m-Luftbild auf 12 m in das gröbere der Karte über
+  function blendWithCoarse(mat, coarse) {
+    const tex = coarse?.mesh.userData.ortho || null;
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uCoarse = { value: tex }; shader.uniforms.uHasCoarse = { value: tex ? 1 : 0 };
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nattribute vec2 uvc;\nattribute float edgew;\nvarying vec2 vUvc;\nvarying float vEdgeW;")
+        .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvc = uvc; vEdgeW = edgew;");
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>", "#include <common>\nuniform sampler2D uCoarse;\nuniform float uHasCoarse;\nvarying vec2 vUvc;\nvarying float vEdgeW;")
+        .replace("#include <map_fragment>", `#ifdef USE_MAP
+  vec4 fineC = texture2D( map, vMapUv );
+  vec4 sampledDiffuseColor = uHasCoarse > 0.5 ? mix( texture2D( uCoarse, vUvc ), fineC, vEdgeW ) : fineC;
+  diffuseColor *= sampledDiffuseColor;
+#endif`);
+    };
+    mat.customProgramCacheKey = () => "fahrkachel-rand";
+  }
+
   const dirty = new Set();
   function markNeighbours(t) {
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {

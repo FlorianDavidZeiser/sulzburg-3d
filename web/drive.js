@@ -214,6 +214,8 @@ const CSS = `
 #driveHud .dh-road { font-size: 14px; font-weight: 600; }
 #driveHud .dh-road span { font-weight: 400; color: #a9b0ba; font-size: 12px; }
 #driveHud .dh-fps { font-size: 11px; color: #a9b0ba; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#driveHud .dh-bus { font-size: 12px; color: #f2b544; }
+#driveHud .dh-bus:empty { display: none; }
 #driveHud .dh-note, #driveHud .dh-keys { font-size: 11px; color: #a9b0ba; margin-top: 2px; }
 #driveHud .dh-note b { color: #1a1408; background: #f2b544; border-radius: 4px; padding: 0 5px; font-size: 10px; }
 #driveHud .dh-btns { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
@@ -263,7 +265,7 @@ export async function createDrive(ctx) {
   // ---------- Anzeige ----------
   const style = document.createElement("style"); style.textContent = CSS; document.head.appendChild(style);
   const hud = document.createElement("div"); hud.id = "driveHud"; hud.hidden = true;
-  hud.innerHTML = `<div class="dh-top"><div class="dh-speed"><b id="dhSpeed">0</b> km/h</div><div class="dh-road" id="dhRoad">–</div><div class="dh-fps" id="dhFps"></div></div>` +
+  hud.innerHTML = `<div class="dh-top"><div class="dh-speed"><b id="dhSpeed">0</b> km/h</div><div class="dh-road" id="dhRoad">–</div><div class="dh-fps" id="dhFps"></div></div><div class="dh-bus" id="dhBus"></div>` +
     `<div class="dh-note"><b>SPIELMODUS</b> <span class="long">kein echter Verkehr · </span>Straßen © OpenStreetMap-Mitwirkende<span class="long"> (ODbL) · Gebäude LGL</span></div>` +
     `<div class="dh-btns"><button id="dhView">Sicht: Verfolger</button><button id="dhAssist">Spurhilfe: an<span class="long"> (L)</span></button><button id="dhRoads" class="off">Nur Straßen: aus<span class="long"> (F)</span></button><button id="dhExit">Zurück zur Karte<span class="long"> (Esc)</span></button></div>` +
     `<div class="dh-keys">W A S D oder Pfeiltasten · Leertaste Handbremse · R zurück auf die Straße · F nur Straßen · Mausrad Abstand · <span id="dhQ"></span></div>`;
@@ -301,11 +303,17 @@ export async function createDrive(ctx) {
   }
   catch (e) { console.warn("Automodell nicht geladen, einfaches Modell:", e.message); model = buildCarModel(THREE, 0xe3b53c); ghost = buildCarModel(THREE, 0xe3b53c, true); }
   ghost.visible = false; scene.add(ghost);
+  {
+    const blob = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 4.9).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ map: ctx.blobTexture?.(), color: 0x000000, transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
+    blob.position.y = 0.03; blob.renderOrder = 1; model.add(blob);
+  }
   const car = { x: 0, z: 0, y: 0, yaw: 0, v: 0, steer: 0, spin: 0, n: new THREE.Vector3(0, 1, 0), slope: 0, seg: -1, park: false, off: false, offDist: 0 };
   const input = { up: 0, down: 0, left: 0, right: 0, hand: 0 };
   let state = "off";   // off, enter, drive, leave
   let saved = null, trans = null, view = "chase", chaseDist = 9, hintedEdge = false, hintedOff = false, lastBump = 0, assist = true, onlyRoads = false;
   let trees = null;   // Bäume ab BAUM_MIN_H abseits der Straßen als Hindernisse, beim Einsteigen aus der aktuellen Baumebene
+  let busesNear = [];   // sichtbare Busse im Umkreis von 40 m, je Bild aktualisiert
   const params = new URLSearchParams(location.search);
   const fixedQ = params.has("fq") ? Math.max(0, Math.min(2, parseInt(params.get("fq"), 10) || 0)) : null;
   let quality = fixedQ ?? (innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 ? 1 : 2);
@@ -368,6 +376,7 @@ export async function createDrive(ctx) {
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
     out.x = 0; out.z = 0; out.hit = 0; out.kind = "";
     const E = W.edge, carsOn = $("cars") ? $("cars").checked : true, treesOn = !onlyRoads && trees && (!$("trees") || $("trees").checked);
+    const busesOn = busesNear.length > 0;
     for (const o of KREISE) {
       const cx = x + fx * o + out.x, cz = z + fz * o + out.z;
       // je Kreis die tiefste Eindringung (an Ecken folgt die zweite Wand im nächsten Teilschritt)
@@ -379,6 +388,13 @@ export async function createDrive(ctx) {
       if (carsOn) for (const id of W.pcGrid.at(cx, cz)) {
         const dx = cx - W.pc[id * 2], dz = cz - W.pc[id * 2 + 1], d = Math.hypot(dx, dz), R = R_AUTO + R_PARK;
         if (d < R && d > 1e-6 && R - d > pm) { pm = R - d; px = (dx / d) * pm; pz = (dz / d) * pm; kind = "auto"; }
+      }
+      if (busesOn) for (const b of busesNear) {
+        for (let o = -5; o <= 5.01; o += 2.5) {
+          const bx = b.position.x + Math.sin(b.rotation.y) * o, bz = b.position.z + Math.cos(b.rotation.y) * o;
+          const dx = cx - bx, dz = cz - bz, d = Math.hypot(dx, dz), R = R_AUTO + 1.3;
+          if (d < R && d > 1e-6 && R - d > pm) { pm = R - d; px = (dx / d) * pm; pz = (dz / d) * pm; kind = "bus"; }
+        }
       }
       if (treesOn) for (const id of trees.grid.at(cx, cz)) {
         const dx = cx - trees.x[id], dz = cz - trees.z[id], d = Math.hypot(dx, dz), R = R_AUTO + trees.r[id];
@@ -523,7 +539,7 @@ export async function createDrive(ctx) {
       const L = Math.hypot(push.x, push.z);
       car.lastHit = push.kind;
       const v0 = Math.abs(car.v), cos = slide(push.x / L, push.z / L);
-      if (cos > 0.8 && v0 > 4 && performance.now() - lastBump > 600) { lastBump = performance.now(); say({ wand: "Rums. Hauswand.", auto: "Rums. Parkendes Auto.", baum: "Rums. Baum." }[push.kind] || "Rums.", 1400); }
+      if (cos > 0.8 && v0 > 4 && performance.now() - lastBump > 600) { lastBump = performance.now(); say({ wand: "Rums. Hauswand.", auto: "Rums. Parkendes Auto.", baum: "Rums. Baum.", bus: "Rums. Bus." }[push.kind] || "Rums.", 1400); }
     }
     // Sicherung: rutscht ein Kreismittelpunkt doch in einen Grundriss, gilt der Schritt nicht
     if (anyInBuilding(car.x, car.z, car.yaw) && !anyInBuilding(ox, oz, oyaw)) { car.x = ox; car.z = oz; car.yaw = oyaw; car.v *= 0.3; }
@@ -614,6 +630,21 @@ export async function createDrive(ctx) {
     sh.camera.updateProjectionMatrix();
     $("dhQ").textContent = `Qualität ${q.name}${fixedQ == null ? " (automatisch)" : ""}`;
   }
+  // Busse nach Soll-Fahrplan (extras.js): in der Nähe als Hindernisse, der nächste in der Anzeige
+  function updateBuses() {
+    const L = ctx.busesLayer, on = L && (!$("buses") || $("buses").checked);
+    busesNear = [];
+    let best = null, bd = 90;
+    if (on) for (const b of L.pool) {
+      if (!b.visible) continue;
+      const d = Math.hypot(b.position.x - car.x, b.position.z - car.z);
+      if (d < 40) busesNear.push(b);
+      if (d < bd) { bd = d; best = b; }
+    }
+    const el = $("dhBus"), f = best?.userData.fahrt;
+    const txt = f ? `Bus ${L.linien[f.route]?.name || ""} nach ${f.ziel} · ${Math.round(bd)} m (Soll-Fahrplan)` : "";
+    if (el.textContent !== txt) { el.textContent = txt; placeTouch(); }
+  }
   function autoQuality(now) {
     if (fixedQ != null || quality === 0) return;
     if (!fpsWin.t0) { fpsWin.t0 = now; fpsWin.n = 0; return; }
@@ -624,6 +655,16 @@ export async function createDrive(ctx) {
     fpsWin.low = fps < 28 ? fpsWin.low + 1 : 0;
     if (fpsWin.low >= 2) { quality--; fpsWin.low = 0; applyQuality(); say(`Bildrate niedrig: Qualität ${QUALI[quality].name}`); }
   }
+  // Uhr: Regler in 5-Minuten-Schritten nachführen (Sonne), Busse laufen sekundengenau über ctx.driveClock
+  function tickClock() {
+    const c = ctx.driveClock; if (!c) return;
+    const min = Math.floor((c.sec0 + (performance.now() - c.t0) / 1000) / 60) % 1440;
+    const v = String(Math.floor(min / 5) * 5);
+    if ($("time").value !== v) { $("time").value = v; ctx.setSun(); }
+  }
+  // Dreht jemand während der Fahrt am Zeitregler oder spielt den Tag ab, läuft die Uhr von dort weiter
+  $("time").addEventListener("input", () => { if (ctx.driveClock && state !== "off") { ctx.driveClock.sec0 = parseInt($("time").value, 10) * 60; ctx.driveClock.t0 = performance.now(); } });
+
   // Scheinwerfer nur bei Dunkelheit (ein zusätzliches Licht kostet, daher nicht tagsüber)
   function updateHeadlight() {
     const s = ctx.sun, d = v3.copy(s.position).sub(s.target.position).normalize();
@@ -670,6 +711,7 @@ export async function createDrive(ctx) {
         if (fine) fine.update(car.x, car.z, Math.sin(car.yaw) * car.v, -Math.cos(car.yaw) * car.v);
       } else if (state === "leave") controls.target.copy(lookTmp);
       if (state === "drive") autoQuality(now);
+      updateBuses();
       if (debugCam) { camera.position.copy(debugCam.p); camera.up.set(0, 1, 0); camera.lookAt(debugCam.l); }   // nur für Tests und Bilder
       if (now - hudT > 120) {
         hudT = now;
@@ -678,7 +720,7 @@ export async function createDrive(ctx) {
         $("dhFps").textContent = window.__fps != null ? `${window.__fps} Bilder/s · ${QUALI[quality].name}` : "";   // Bildrate aus app.js, einmal je Sekunde gemessen
         if (!touch.hidden) placeTouch();
       }
-      if (now - lightT > 1000) { lightT = now; updateHeadlight(); }
+      if (now - lightT > 1000) { lightT = now; updateHeadlight(); tickClock(); }
     },
     onRelease() { cleanup(); },
   };
@@ -698,6 +740,8 @@ export async function createDrive(ctx) {
     controls.target.copy(saved.target);
     if (saved.autoRotate) { controls.autoRotate = true; const ar = $("autorotate"); if (ar) ar.checked = true; }
     if (saved.foldedPanel && $("sunpanel").classList.contains("collapsed")) $("menuToggle").click();
+    ctx.driveClock = null; ctx.groundAt = null;
+    if ($("time").value !== saved.time) { $("time").value = saved.time; ctx.setSun(); }
     window.__driveState = "off";
   }
 
@@ -708,6 +752,9 @@ export async function createDrive(ctx) {
       saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov, near: camera.near, far: camera.far, autoRotate: controls.autoRotate,
         shadow: { r: sh.camera.right, bias: sh.bias, normalBias: sh.normalBias }, terrainCast: ctx.terrainGroup.children[0]?.castShadow ?? true };
       ctx.takeCamera(owner);
+      saved.time = $("time").value;
+      ctx.driveClock = { sec0: parseInt(saved.time, 10) * 60, t0: performance.now() };
+      ctx.groundAt = (x, z) => (fine ? fine.heightAt(x, z) : null);
       if (fine) attachObjects();
       buildTrees();
       // Auf dem Handy das Bedienfeld einklappen, beim Aussteigen wieder öffnen
@@ -791,7 +838,7 @@ export async function createDrive(ctx) {
   // Bäume und parkende Autos an die Fahrkacheln hängen (Höhe auf feinem Gelände)
   function attachObjects() {
     fine.resetGroups();
-    fine.attach(ctx.carsLayer?.meshes);
+    fine.attach(ctx.carsLayer?.all || ctx.carsLayer?.meshes);
     for (const m of ctx.getTreeMeshes?.() || []) fine.attach([m]);
   }
 

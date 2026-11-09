@@ -32,6 +32,7 @@ function setupSearch(ctx) {
   let beamUntil = 0;
   frameHooks.push((now) => {
     if (!beam.visible) return;
+    ctx.requestRender?.();
     const left = beamUntil - now;
     beam.material.opacity = Math.max(0, Math.min(0.55, left / 1500 * 0.55));
     if (left <= 0) beam.visible = false;
@@ -97,7 +98,11 @@ async function setupBuses(ctx) {
   const mat = new THREE.MeshStandardMaterial({ color: 0xf2b544, roughness: 0.6 });
   const pool = [];
   const group = new THREE.Group(); scene.add(group);
-  const getBus = (k) => { while (pool.length <= k) { const m = new THREE.Mesh(body, mat); m.castShadow = true; group.add(m); pool.push(m); } return pool[k]; };
+  // Kontaktschatten unter dem Bus (weicher dunkler Fleck, Darstellung)
+  const blobMat = new THREE.MeshBasicMaterial({ map: ctx.blobTexture?.(), color: 0x000000, transparent: true, opacity: 0.55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+  const blobGeo = new THREE.PlaneGeometry(3.6, 13.5).rotateX(-Math.PI / 2);
+  const getBus = (k) => { while (pool.length <= k) { const m = new THREE.Mesh(body, mat); m.castShadow = true; const b = new THREE.Mesh(blobGeo, blobMat); b.position.y = 0.04; b.renderOrder = 1; m.add(b); group.add(m); pool.push(m); } return pool[k]; };
+  ctx.busesLayer = { pool, linien: tr.linien };
   const shapes = tr.verlaeufe || {};
   // Polylinie mit kumulierter Länge
   const lines = {};
@@ -116,7 +121,8 @@ async function setupBuses(ctx) {
     return [[pts[lo][0] + (pts[hi][0] - pts[lo][0]) * f, pts[lo][1] + (pts[hi][1] - pts[lo][1]) * f], pts[hi]];
   };
   const dayIndex = () => tr.zeitraum.tage.indexOf($("date").value);
-  const secNow = () => parseInt($("time").value, 10) * 60;
+  // Im Fahrmodus läuft die Uhr sekundengenau mit (ctx.driveClock), sonst gilt der Zeitregler
+  const secNow = () => (ctx.driveClock ? ctx.driveClock.sec0 + (performance.now() - ctx.driveClock.t0) / 1000 : parseInt($("time").value, 10) * 60);
   let shown = 0, last = 0;
   frameHooks.push((now) => {
     if (now - last < 100) return; last = now;
@@ -134,7 +140,7 @@ async function setupBuses(ctx) {
         const line = lines[f.verlauf];
         if (!line) continue;
         const [p, q, rev] = at(line, s);
-        const y = terrainHeightAt(p[0], p[1]);
+        const y = ctx.groundAt?.(p[0], p[1]) ?? terrainHeightAt(p[0], p[1]);
         if (y == null) continue;
         const bus = getBus(k++);
         bus.visible = true;

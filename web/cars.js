@@ -30,8 +30,22 @@ export async function setupCars(ctx) {
     meshes.forEach((mesh, k) => { mesh.setMatrixAt(i, m4); mesh.setColorAt(i, parts[k].tint(col.clone())); });
   });
   meshes.forEach((m) => { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; m.computeBoundingSphere(); });
+  // Kontaktschatten: weicher dunkler Fleck unter jedem Auto, geneigt wie das Gelände (Darstellung)
+  const blob = new THREE.InstancedMesh(new THREE.PlaneGeometry(2.5, 5.2).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ map: ctx.blobTexture?.(), color: 0x000000, transparent: true, opacity: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }), n);
+  const nrm = new THREE.Vector3(), qa = new THREE.Quaternion();
+  data.autos.forEach(([x, z, yaw, h], i) => {
+    const y = terrainHeightAt(x, z) ?? ctx.centerY;
+    const hx = (terrainHeightAt(x + 1, z) ?? y) - (terrainHeightAt(x - 1, z) ?? y), hz = (terrainHeightAt(x, z + 1) ?? y) - (terrainHeightAt(x, z - 1) ?? y);
+    nrm.set(-hx / 2, 1, -hz / 2).normalize();
+    qa.setFromUnitVectors(up, nrm).multiply(q.setFromAxisAngle(up, Math.PI - yaw));
+    pos.set(x, y, z); scl.set(1, 1, h > 2.1 ? 1.25 : 1);
+    blob.setMatrixAt(i, m4.compose(pos, qa, scl));
+  });
+  blob.instanceMatrix.needsUpdate = true; blob.computeBoundingSphere(); blob.renderOrder = 1;
+  group.add(blob);
   scene.add(group);
-  ctx.carsLayer = { meshes, group };   // für den Fahrmodus (Höhe auf feinem Gelände)
+  ctx.carsLayer = { meshes, group, all: [...meshes, blob] };   // für den Fahrmodus (Höhe auf feinem Gelände)
   $("cars").addEventListener("change", (e) => { group.visible = e.target.checked; });
   $("carsInfo").textContent = `${n} Autos, automatisch erkannt aus Luftbild und Oberflächenmodell vom 25.08.2025. Momentaufnahme; etwa 8 von 10 Treffern stimmen, viele Autos fehlen.`;
   pickHooks.push((ray) => {
