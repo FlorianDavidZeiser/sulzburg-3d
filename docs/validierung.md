@@ -1,6 +1,6 @@
 # Validierung (automatisch erzeugt)
 
-Erzeugt am 2026-11-09T10:21:11+00:00 durch `scripts/05_validate.py`.
+Erzeugt am 2026-11-09T10:46:12+00:00 durch `scripts/05_validate.py`.
 
 ## 1. Gebäude gegen Gelände
 
@@ -83,7 +83,7 @@ GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 f�
 | Sonstige Daten | 2 | 0.1 | 0.0 |
 | three.js + Anwendung | 15 | 2.5 | 0.5 |
 | **Gesamt beim Start** | | **24.7** | **15.8** |
-| Fahrmodus (erst beim ersten Absetzen) | 7 | 0.72 | 0.22 |
+| Fahrmodus (erst beim ersten Absetzen) | 7 | 0.73 | 0.23 |
 | Fahrkacheln (nur rund um das Auto) | 1655 | 27.08 | 21.88 |
 
 Übertragen bei 20 Mbit/s rund 6 s, bei 50 Mbit/s rund 3 s. Gelände und Gebäude kommen zuerst, die Luftbildkacheln laden danach (Siedlung zuerst); bedienbar ist die Ansicht vorher.
@@ -150,6 +150,6 @@ Ergebnis: 17,115 kWp, 17,189 MWh pro Jahr, spezifischer Ertrag Median 1033 kWh/k
 
 Browsertest vom 2026-11-09 (`scripts/test_drive.cjs`, Ergebnis in `docs/fahrmodus_test.json`): beim Start 0 Dateien des Fahrmodus geladen; Rückweg Kamera 0.000 m, Blickpunkt 0.000 m, Bild vorher und nachher identisch. Autopilot auf 80 Straßen (19.0 km): 77 ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds -0.651 m), kleinster Abstand eines Kollisionskreises zur Wand 0.97 m (Radius 0.97 m). Hänger: track (Gebäude); Salzmatten (unklar); residential (unklar).
 
-Stufe 2: 22 Fahrkacheln am Auto geladen (1343 KB). Größter Höhensprung an einer Kachelgrenze 0.03 cm, am Rand zum groben Gelände 0.00 cm. Spurhilfe nur mit Gas: 13 von 15 Straßen bis zum Ende, größter Abstand zur Achse 19.76 m. Nach dem Aussteigen: Bäume und parkende Autos auf alter Höhe (ja), Schatten und Geländematerial wie vorher (ja).
+Stufe 2: 22 Fahrkacheln am Auto geladen (1854 KB). Größter Höhensprung an einer Kachelgrenze 0.03 cm, am Rand zum groben Gelände 0.00 cm. Spurhilfe nur mit Gas: 13 von 15 Straßen bis zum Ende, größter Abstand zur Achse 19.76 m. Nach dem Aussteigen: Bäume und parkende Autos auf alter Höhe (ja), Schatten und Geländematerial wie vorher (ja).
 
 **Busse.** 11 Haltesteige, 154 Fahrten mit Linienverlauf zugeordnet (12 Verlaufsabschnitte). Die Zuordnung prüft Linie und Folge der Haltestellen; eine Prüfung gegen die Fahrplanauskunft des Verbunds steht aus.

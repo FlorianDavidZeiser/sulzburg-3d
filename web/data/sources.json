@@ -1022,7 +1022,7 @@
       "auswahl": "Straßen ohne Feld- und Waldwege, Puffer halbe Fahrbahnbreite plus 15 m; Parkplätze plus 10 m; ohne Kacheln an Gewerbe- und Industrieflächen laut OSM (Puffer 5 m), dort bleibt das Luftbild der Karte"
     }
   },
-  "aktualisiert": "2026-11-09T10:21:11+00:00",
+  "aktualisiert": "2026-11-09T10:46:12+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
@@ -1051,9 +1051,9 @@
       "max_zeitdifferenz_min": 0.7787698
     },
     "ladevolumen": {
-      "gesamt_mb": 24.713503,
-      "uebertragen_gzip_mb": 15.82544,
-      "fahrmodus_nachgeladen_gzip_mb": 22.103809
+      "gesamt_mb": 24.718629,
+      "uebertragen_gzip_mb": 15.827332,
+      "fahrmodus_nachgeladen_gzip_mb": 22.105409
     },
     "ebenen": {
       "orte": 6,
@@ -1088,7 +1088,7 @@
         "rueckweg_bild_identisch": true,
         "stufe2": {
           "kacheln_geladen": 22,
-          "kb": 1343,
+          "kb": 1854,
           "naht_m": 0.0003,
           "rand_m": 0,
           "auto_auf_feiner_flaeche_m": 0.003,
