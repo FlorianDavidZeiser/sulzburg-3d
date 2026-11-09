@@ -1,9 +1,9 @@
 {
- "erzeugt": "2026-11-09T09:50:09.335Z",
+ "erzeugt": "2026-11-09T10:18:47.140Z",
  "kreisradius_m": 0.97,
  "start": {
   "dateien": 180,
-  "bytes": 21090298,
+  "bytes": 21093173,
   "fahrmodus_dateien_beim_start": []
  },
  "ziehen": {
@@ -28,64 +28,63 @@
  "physik": {
   "beschleunigung_kmh_je_s": [
    0.1,
-   15.6,
-   28.8,
-   39.3,
-   47
+   15.8,
+   29.8,
+   42.1,
+   52.3
   ],
   "bremsen_kmh_je_s": [
-   46.7,
-   11.9,
-   -6.6
+   52.1,
+   17.2,
+   -4.6
   ],
-  "rechenzeit_ms_je_fahrsekunde": 2.77,
+  "rechenzeit_ms_je_fahrsekunde": 1.12,
+  "freie_fahrt": {
+   "kreisverkehr_naechster_abstand_zur_mitte_m": 0.39,
+   "abseits_hoechsttempo_kmh": 40,
+   "baeume_als_hindernis": 54169
+  },
   "autopilot": {
    "wege": 80,
    "meter": 18972,
-   "ohne_haengen": 76,
+   "ohne_haengen": 77,
    "probleme": [
-    {
-     "weg": "Gustav-Weil-Straße",
-     "erreicht": true,
-     "stand_s": 6.5,
-     "hindernis": "unklar"
-    },
     {
      "weg": "track",
      "erreicht": false,
-     "stand_s": 100,
+     "stand_s": 100.4,
      "hindernis": "Gebäude"
     },
     {
      "weg": "Salzmatten",
-     "erreicht": false,
-     "stand_s": 84.4,
+     "erreicht": true,
+     "stand_s": 65.5,
      "hindernis": "unklar"
     },
     {
      "weg": "residential",
      "erreicht": true,
-     "stand_s": 35.6,
+     "stand_s": 33.3,
      "hindernis": "unklar"
     }
    ],
-   "max_abstandsfeld_spur_m": -0.674,
+   "max_abstandsfeld_spur_m": -0.651,
    "min_kreisabstand_wand_m": 0.97
   }
  },
  "stufe2": {
-  "kacheln_geladen": 16,
-  "kb": 809,
+  "kacheln_geladen": 22,
+  "kb": 1343,
   "naht_m": 0.0003,
   "rand_m": 0,
   "auto_auf_feiner_flaeche_m": 0.003,
   "spurhilfe": {
    "wege": 15,
    "wege_ok": 13,
-   "max_abstand_achse_m": 4.25
+   "max_abstand_achse_m": 19.76
   },
   "waehrend": {
-   "kacheln": 16,
+   "kacheln": 22,
    "maske_aktiv": true,
    "baeume_angepasst": true
   },

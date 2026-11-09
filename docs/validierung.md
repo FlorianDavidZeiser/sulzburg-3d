@@ -1,6 +1,6 @@
 # Validierung (automatisch erzeugt)
 
-Erzeugt am 2026-11-09T09:54:12+00:00 durch `scripts/05_validate.py`.
+Erzeugt am 2026-11-09T10:21:11+00:00 durch `scripts/05_validate.py`.
 
 ## 1. Gebäude gegen Gelände
 
@@ -148,8 +148,8 @@ Ergebnis: 17,115 kWp, 17,189 MWh pro Jahr, spezifischer Ertrag Median 1033 kWh/k
 
 **Fahrmodus (Spielmodus).** Fahrnetz aus OpenStreetMap (Stand 2026-11-09T07:02:18Z): 1101 Wegstücke, 155 Straßennamen, 13 Parkplätze. Länge in km: secondary 9.3, residential 17.0, tertiary 3.7, unclassified 13.1, track 281.3, service 9.1, tertiary_link 0.0, living_street 0.2. Ausgeschlossen in km: nur_land_und_forstwirtschaft 24.1, privat_oder_gesperrt 7.24, gewerbe_oder_industrieflaeche 1.01, grundstueckszufahrt 2.33, durchfahrt_durch_gebaeude 0.01. Kollision mit 2366 LoD2-Grundrissen (2386 Ringe); Brücken (LoD2-Funktion 53001_1800) sind Fahrbahn, keine Wand.
 
-Browsertest vom 2026-11-09 (`scripts/test_drive.cjs`, Ergebnis in `docs/fahrmodus_test.json`): beim Start 0 Dateien des Fahrmodus geladen; Rückweg Kamera 0.000 m, Blickpunkt 0.000 m, Bild vorher und nachher identisch. Autopilot auf 80 Straßen (19.0 km): 76 ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds -0.674 m), kleinster Abstand eines Kollisionskreises zur Wand 0.97 m (Radius 0.97 m). Hänger: Gustav-Weil-Straße (unklar); track (Gebäude); Salzmatten (unklar); residential (unklar).
+Browsertest vom 2026-11-09 (`scripts/test_drive.cjs`, Ergebnis in `docs/fahrmodus_test.json`): beim Start 0 Dateien des Fahrmodus geladen; Rückweg Kamera 0.000 m, Blickpunkt 0.000 m, Bild vorher und nachher identisch. Autopilot auf 80 Straßen (19.0 km): 77 ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds -0.651 m), kleinster Abstand eines Kollisionskreises zur Wand 0.97 m (Radius 0.97 m). Hänger: track (Gebäude); Salzmatten (unklar); residential (unklar).
 
-Stufe 2: 16 Fahrkacheln am Auto geladen (809 KB). Größter Höhensprung an einer Kachelgrenze 0.03 cm, am Rand zum groben Gelände 0.00 cm. Spurhilfe nur mit Gas: 13 von 15 Straßen bis zum Ende, größter Abstand zur Achse 4.25 m. Nach dem Aussteigen: Bäume und parkende Autos auf alter Höhe (ja), Schatten und Geländematerial wie vorher (ja).
+Stufe 2: 22 Fahrkacheln am Auto geladen (1343 KB). Größter Höhensprung an einer Kachelgrenze 0.03 cm, am Rand zum groben Gelände 0.00 cm. Spurhilfe nur mit Gas: 13 von 15 Straßen bis zum Ende, größter Abstand zur Achse 19.76 m. Nach dem Aussteigen: Bäume und parkende Autos auf alter Höhe (ja), Schatten und Geländematerial wie vorher (ja).
 
 **Busse.** 11 Haltesteige, 154 Fahrten mit Linienverlauf zugeordnet (12 Verlaufsabschnitte). Die Zuordnung prüft Linie und Folge der Haltestellen; eine Prüfung gegen die Fahrplanauskunft des Verbunds steht aus.
