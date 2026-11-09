@@ -23,6 +23,8 @@ const QUALI = [{ name: "niedrig", fein: 0, schatten: 0 }, { name: "mittel", fein
 const ART_NAME = { secondary: "Landstraße", tertiary: "Kreisstraße", tertiary_link: "Zufahrt", unclassified: "Verbindungsstraße", residential: "Wohnstraße",
   living_street: "Verkehrsberuhigter Bereich", service: "Erschließungsweg", track: "Feld- oder Waldweg" };
 const LANGSAM = new Set(["service", "track"]);
+const SPERR = 1000000;            // Kennung der Sperrflächen (Gewerbe- und Industrieflächen) in Kanten und Ringen
+const BAUM_MIN_H = 6;             // Bäume ab dieser Höhe sind abseits der Straße Hindernisse
 
 const EMPTY = [];
 class Grid {
@@ -85,9 +87,23 @@ function buildWorld(net, fp, ctx) {
       edges.add(Math.min(x0, x1) - 3, Math.min(z0, z1) - 3, Math.max(x0, x1) + 3, Math.max(z0, z1) + 3, id);
     }
   }
+  // Sperrflächen (Gewerbe- und Industrieflächen ohne die öffentlichen Straßen) als Wände für die freie Fahrt
+  const sperrRinge = [];
+  (net.sperrflaechen || []).forEach((poly, k) => {
+    for (const r of poly) {
+      const n = r.length / 2, b = SPERR + k;
+      sperrRinge.push([b, ...r]);
+      for (let i = 0; i < n; i++) {
+        const x0 = r[i * 2], z0 = r[i * 2 + 1], x1 = r[((i + 1) % n) * 2], z1 = r[((i + 1) % n) * 2 + 1];
+        const id = ex.length;
+        ex.push(x0); ez.push(z0); fx.push(x1); fz.push(z1); eb.push(b);
+        edges.add(Math.min(x0, x1) - 3, Math.min(z0, z1) - 3, Math.max(x0, x1) + 3, Math.max(z0, z1) + 3, id);
+      }
+    }
+  });
   const edge = { ax: Float32Array.from(ex), az: Float32Array.from(ez), bx: Float32Array.from(fx), bz: Float32Array.from(fz), b: Int32Array.from(eb) };
   // Ringe je Gebäude für den Innen-Test (gerade-ungerade über alle Ringe eines Gebäudes, Innenhöfe zählen als außen)
-  const rings = fp.ringe.filter((r) => !isBridge(r[0])).map((r) => { const xs = [], zs = []; for (let k = 1; k + 1 < r.length; k += 2) { xs.push(r[k]); zs.push(r[k + 1]); } return { b: r[0], xs, zs }; });
+  const rings = [...fp.ringe.filter((r) => !isBridge(r[0])), ...sperrRinge].map((r) => { const xs = [], zs = []; for (let k = 1; k + 1 < r.length; k += 2) { xs.push(r[k]); zs.push(r[k + 1]); } return { b: r[0], xs, zs }; });
   const ringGrid = new Grid();
   rings.forEach((r, i) => ringGrid.add(Math.min(...r.xs), Math.min(...r.zs), Math.max(...r.xs), Math.max(...r.zs), i));
   const tops = Float32Array.from(ctx.meta.buildings.gebaeude.map((g) => g.z_first ?? (g.z_boden_max + (g.hoehe_m || 8))));
@@ -266,8 +282,8 @@ export async function createDrive(ctx) {
   const hud = document.createElement("div"); hud.id = "driveHud"; hud.hidden = true;
   hud.innerHTML = `<div class="dh-top"><div class="dh-speed"><b id="dhSpeed">0</b> km/h</div><div class="dh-road" id="dhRoad">–</div><div class="dh-fps" id="dhFps"></div></div>` +
     `<div class="dh-note"><b>SPIELMODUS</b> <span class="long">kein echter Verkehr · </span>Straßen © OpenStreetMap-Mitwirkende<span class="long"> (ODbL) · Gebäude LGL</span></div>` +
-    `<div class="dh-btns"><button id="dhView">Sicht: Verfolger</button><button id="dhAssist">Spurhilfe: an<span class="long"> (L)</span></button><button id="dhExit">Zurück zur Karte<span class="long"> (Esc)</span></button></div>` +
-    `<div class="dh-keys">W A S D oder Pfeiltasten · Leertaste Handbremse · R zurück auf die Straße · Mausrad Abstand · <span id="dhQ"></span></div>`;
+    `<div class="dh-btns"><button id="dhView">Sicht: Verfolger</button><button id="dhAssist">Spurhilfe: an<span class="long"> (L)</span></button><button id="dhRoads" class="off">Nur Straßen: aus<span class="long"> (F)</span></button><button id="dhExit">Zurück zur Karte<span class="long"> (Esc)</span></button></div>` +
+    `<div class="dh-keys">W A S D oder Pfeiltasten · Leertaste Handbremse · R zurück auf die Straße · F nur Straßen · Mausrad Abstand · <span id="dhQ"></span></div>`;
   const toast = document.createElement("div"); toast.id = "driveToast";
   const dragLabel = document.createElement("div"); dragLabel.id = "driveDrag"; dragLabel.hidden = true;
   const touch = document.createElement("div"); touch.id = "driveTouch"; touch.hidden = true;
@@ -302,10 +318,11 @@ export async function createDrive(ctx) {
   }
   catch (e) { console.warn("Automodell nicht geladen, einfaches Modell:", e.message); model = buildCarModel(THREE, 0xe3b53c); ghost = buildCarModel(THREE, 0xe3b53c, true); }
   ghost.visible = false; scene.add(ghost);
-  const car = { x: 0, z: 0, y: 0, yaw: 0, v: 0, steer: 0, spin: 0, n: new THREE.Vector3(0, 1, 0), slope: 0, seg: -1, park: false };
+  const car = { x: 0, z: 0, y: 0, yaw: 0, v: 0, steer: 0, spin: 0, n: new THREE.Vector3(0, 1, 0), slope: 0, seg: -1, park: false, off: false, offDist: 0 };
   const input = { up: 0, down: 0, left: 0, right: 0, hand: 0 };
   let state = "off";   // off, enter, drive, leave
-  let saved = null, trans = null, view = "chase", chaseDist = 9, hintedEdge = false, lastBump = 0, assist = true;
+  let saved = null, trans = null, view = "chase", chaseDist = 9, hintedEdge = false, hintedOff = false, lastBump = 0, assist = true, onlyRoads = false;
+  let trees = null;   // Bäume ab BAUM_MIN_H abseits der Straßen als Hindernisse, beim Einsteigen aus der aktuellen Baumebene
   const params = new URLSearchParams(location.search);
   const fixedQ = params.has("fq") ? Math.max(0, Math.min(2, parseInt(params.get("fq"), 10) || 0)) : null;
   let quality = fixedQ ?? (innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 ? 1 : 2);
@@ -366,21 +383,25 @@ export async function createDrive(ctx) {
   const push = { x: 0, z: 0, hit: 0 };
   function bodyPush(x, z, yaw, out) {
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
-    out.x = 0; out.z = 0; out.hit = 0;
-    const E = W.edge, carsOn = $("cars") ? $("cars").checked : true;
+    out.x = 0; out.z = 0; out.hit = 0; out.kind = "";
+    const E = W.edge, carsOn = $("cars") ? $("cars").checked : true, treesOn = !onlyRoads && trees && (!$("trees") || $("trees").checked);
     for (const o of KREISE) {
       const cx = x + fx * o + out.x, cz = z + fz * o + out.z;
       // je Kreis die tiefste Eindringung (an Ecken folgt die zweite Wand im nächsten Teilschritt)
-      let px = 0, pz = 0, pm = 0;
+      let px = 0, pz = 0, pm = 0, kind = "";
       for (const id of W.edges.at(cx, cz)) {
         const d = closest(cx, cz, E.ax[id], E.az[id], E.bx[id], E.bz[id], tmp);
-        if (d < R_AUTO && d > 1e-6 && R_AUTO - d > pm) { pm = R_AUTO - d; px = ((cx - tmp.x) / d) * pm; pz = ((cz - tmp.z) / d) * pm; }
+        if (d < R_AUTO && d > 1e-6 && R_AUTO - d > pm) { pm = R_AUTO - d; px = ((cx - tmp.x) / d) * pm; pz = ((cz - tmp.z) / d) * pm; kind = E.b[id] >= SPERR ? "sperr" : "wand"; }
       }
       if (carsOn) for (const id of W.pcGrid.at(cx, cz)) {
         const dx = cx - W.pc[id * 2], dz = cz - W.pc[id * 2 + 1], d = Math.hypot(dx, dz), R = R_AUTO + R_PARK;
-        if (d < R && d > 1e-6 && R - d > pm) { pm = R - d; px = (dx / d) * pm; pz = (dz / d) * pm; }
+        if (d < R && d > 1e-6 && R - d > pm) { pm = R - d; px = (dx / d) * pm; pz = (dz / d) * pm; kind = "auto"; }
       }
-      if (px || pz) { out.x += px; out.z += pz; out.hit = Math.max(out.hit, Math.abs(fx * px + fz * pz) / (Math.hypot(px, pz) || 1)); }
+      if (treesOn) for (const id of trees.grid.at(cx, cz)) {
+        const dx = cx - trees.x[id], dz = cz - trees.z[id], d = Math.hypot(dx, dz), R = R_AUTO + trees.r[id];
+        if (d < R && d > 1e-6 && R - d > pm) { pm = R - d; px = (dx / d) * pm; pz = (dz / d) * pm; kind = "baum"; }
+      }
+      if (px || pz) { out.kind = out.kind || kind; out.x += px; out.z += pz; out.hit = Math.max(out.hit, Math.abs(fx * px + fz * pz) / (Math.hypot(px, pz) || 1)); }
     }
     return out;
   }
@@ -404,6 +425,11 @@ export async function createDrive(ctx) {
   }
 
   function roadLabel() {
+    if (car.off) {
+      if (car.seg < 0 || car.offDist > 25) return "Abseits der Straße";
+      const w = W.net.wege[W.seg.way[car.seg]];
+      return `Abseits der Straße <span>nahe ${w[1] >= 0 ? W.net.namen[w[1]] : ART_NAME[W.net.arten[w[0]]]}</span>`;
+    }
     if (car.park) return `Parkplatz <span>öffentlich laut OSM</span>`;
     if (car.seg < 0) return "–";
     const w = W.net.wege[W.seg.way[car.seg]], art = W.net.arten[w[0]];
@@ -464,14 +490,14 @@ export async function createDrive(ctx) {
   // ---------- Fahrphysik (Arcade: kein Physikmodell, nur glaubwürdiges Verhalten) ----------
   function step(h) {
     const art = car.seg >= 0 ? W.net.arten[W.net.wege[W.seg.way[car.seg]][0]] : "service";
-    const vmax = LANGSAM.has(art) || car.park ? VMAX_WEG : VMAX;
+    const vmax = LANGSAM.has(art) || car.park || car.off ? VMAX_WEG : VMAX;
     let a = 0;
     const gas = input.up, brake = input.down;
     if (gas && car.v >= -0.5) a += 4.6 * (1 - Math.sign(car.v) * (car.v / vmax) ** 2);
     else if (gas) a += 9;
     if (brake && car.v > 0.5) a -= 9;
     else if (brake && car.v > -VMAX_RUECK) a -= 3.2;
-    if (Math.abs(car.v) > 0.02) a -= Math.sign(car.v) * (0.35 + 0.0011 * car.v * car.v + (input.hand ? 6 : 0));
+    if (Math.abs(car.v) > 0.02) a -= Math.sign(car.v) * (0.35 + 0.0011 * car.v * car.v + (input.hand ? 6 : 0) + (car.off ? 0.6 : 0));
     a -= 9.81 * car.slope * 0.7;
     car.v += a * h;
     if (!gas && !brake && Math.abs(car.v) < 0.3) car.v = 0;   // steht das Auto, hält es (auch am Hang)
@@ -492,22 +518,31 @@ export async function createDrive(ctx) {
     car.yaw += yawRate * h;
     car.x += Math.sin(car.yaw) * car.v * h;
     car.z += -Math.cos(car.yaw) * car.v * h;
-    // 1. auf der befahrbaren Fläche bleiben
+    // 1. Nur Straßen: auf der befahrbaren Fläche bleiben. Freie Fahrt: nur am Rand des Modells halten.
     roadField(car.x, car.z, field);
-    if (field.d === Infinity) { resetToRoad(false); return; }
-    if (field.d > 0) {
-      car.x -= field.nx * field.d; car.z -= field.nz * field.d;
-      slide(-field.nx, -field.nz);
-      if (!hintedEdge && Math.abs(car.v) > 1) { hintedEdge = true; say("Nur öffentliche Straßen und Wege laut OpenStreetMap sind befahrbar."); }
+    if (onlyRoads) {
+      if (field.d === Infinity) { resetToRoad(false); return; }
+      if (field.d > 0) {
+        car.x -= field.nx * field.d; car.z -= field.nz * field.d;
+        slide(-field.nx, -field.nz);
+        if (!hintedEdge && Math.abs(car.v) > 1) { hintedEdge = true; say("Nur Straßen: öffentliche Straßen und Wege laut OpenStreetMap. Taste F für freie Fahrt."); }
+      }
+    } else if (ctx.terrainSurfaceAt(car.x, car.z) == null) {
+      car.x = ox; car.z = oz; car.v *= 0.3;
+      if (!hintedEdge) { hintedEdge = true; say("Hier endet das Modell."); }
     }
     car.seg = field.seg; car.park = field.park;
+    car.off = !onlyRoads && field.d > 0.5; car.offDist = field.d;
+    if (car.off && !hintedOff && Math.abs(car.v) > 1) { hintedOff = true; say("Abseits der Straße: Gebäude, große Bäume und Betriebsgelände bleiben Hindernisse."); }
     // 2. Hauswände und parkende Autos haben Vorrang
     bodyPush(car.x, car.z, car.yaw, push);
     if (push.x || push.z) {
       car.x += push.x; car.z += push.z;
       const L = Math.hypot(push.x, push.z);
+      car.lastHit = push.kind;
       const v0 = Math.abs(car.v), cos = slide(push.x / L, push.z / L);
-      if (cos > 0.8 && v0 > 4 && performance.now() - lastBump > 600) { lastBump = performance.now(); say("Rums. Wand oder parkendes Auto.", 1400); }
+      if (push.kind === "sperr" && performance.now() - lastBump > 1500) { lastBump = performance.now(); say("Betriebsgelände: nicht befahrbar.", 1600); }
+      else if (cos > 0.8 && v0 > 4 && performance.now() - lastBump > 600) { lastBump = performance.now(); say({ wand: "Rums. Hauswand.", auto: "Rums. Parkendes Auto.", baum: "Rums. Baum." }[push.kind] || "Rums.", 1400); }
     }
     // Sicherung: rutscht ein Kreismittelpunkt doch in einen Grundriss, gilt der Schritt nicht
     if (anyInBuilding(car.x, car.z, car.yaw) && !anyInBuilding(ox, oz, oyaw)) { car.x = ox; car.z = oz; car.yaw = oyaw; car.v *= 0.3; }
@@ -693,6 +728,7 @@ export async function createDrive(ctx) {
         shadow: { r: sh.camera.right, bias: sh.bias, normalBias: sh.normalBias }, terrainCast: ctx.terrainGroup.children[0]?.castShadow ?? true };
       ctx.takeCamera(owner);
       if (fine) { fine.resetGroups(); fine.attach(ctx.carsLayer?.meshes); fine.attach([ctx.getTreeMesh?.()]); }
+      buildTrees();
       // Auf dem Handy das Bedienfeld einklappen, beim Aussteigen wieder öffnen
       const panel = $("sunpanel");
       saved.foldedPanel = innerWidth < 900 && panel && !panel.classList.contains("collapsed");
@@ -751,6 +787,24 @@ export async function createDrive(ctx) {
     if (v === "chase") { chaseTarget(0, want, wantLook); cam.pos.copy(want); }
   }
 
+  // Bäume als Hindernisse: nur abseits der Straßen (über Straßen hängende Kronen sollen nichts blockieren), ab 6 m Höhe,
+  // Stammradius aus der dargestellten Baumform. Gebaut aus der gerade sichtbaren Baumebene (grob zeigt jeden dritten Baum).
+  function buildTrees() {
+    const m = ctx.getTreeMesh?.();
+    if (!m) { trees = null; return; }
+    if (trees && trees.mesh === m) return;
+    const a = m.instanceMatrix.array, xs = [], zs = [], rs = [], grid = new Grid();
+    for (let i = 0; i < m.count; i++) {
+      const o = i * 16, h = Math.hypot(a[o + 4], a[o + 5], a[o + 6]);
+      if (h < BAUM_MIN_H) continue;
+      const x = a[o + 12], z = a[o + 14];
+      if (roadField(x, z, field).d < 1) continue;
+      const id = xs.length; xs.push(x); zs.push(z); rs.push(Math.max(0.3, 0.022 * h));
+      grid.add(x - 3, z - 3, x + 3, z + 3, id);
+    }
+    trees = { mesh: m, x: Float32Array.from(xs), z: Float32Array.from(zs), r: Float32Array.from(rs), grid };
+  }
+
   // ---------- Eingaben ----------
   const KEYMAP = { w: "up", arrowup: "up", s: "down", arrowdown: "down", a: "left", arrowleft: "left", d: "right", arrowright: "right", " ": "hand" };
   const typing = (el) => el && (el.tagName === "TEXTAREA" || el.tagName === "SELECT" || (el.tagName === "INPUT" && !["range", "checkbox", "button", "radio"].includes(el.type)));
@@ -761,6 +815,7 @@ export async function createDrive(ctx) {
     else if (k === "c" && !e.repeat) setView(view === "chase" ? "driver" : "chase");
     else if (k === "r" && !e.repeat && state === "drive") resetToRoad();
     else if (k === "l" && !e.repeat) setAssist(!assist);
+    else if (k === "f" && !e.repeat) setOnlyRoads(!onlyRoads);
     else if (KEYMAP[k]) input[KEYMAP[k]] = 1;
     else return;
     e.preventDefault(); e.stopPropagation();
@@ -782,6 +837,13 @@ export async function createDrive(ctx) {
     $("dhAssist").classList.toggle("off", !on);
   }
   $("dhAssist").addEventListener("click", () => setAssist(!assist));
+  function setOnlyRoads(on) {
+    onlyRoads = on; hintedEdge = false;
+    $("dhRoads").innerHTML = `Nur Straßen: ${on ? "an" : "aus"}<span class="long"> (F)</span>`;
+    $("dhRoads").classList.toggle("off", !on);
+    if (on && state === "drive" && roadField(car.x, car.z, field).d > 0) resetToRoad();
+  }
+  $("dhRoads").addEventListener("click", () => setOnlyRoads(!onlyRoads));
   // Joystick (Handy): waagerecht ziehen lenkt stufenlos
   const joy = $("dJoy"), knob = joy.querySelector(".knob");
   let joyId = null, joyX = 0;
@@ -892,7 +954,7 @@ export async function createDrive(ctx) {
     return trace;
   }
   const setQuality = (q) => { quality = q; if (state !== "off") applyQuality(); };
-  const api = { debugCam: (p, l) => { debugCam = p ? { p: new THREE.Vector3(...p), l: new THREE.Vector3(...l) } : null; }, fine: () => fine, setQuality, quality: () => quality, assistSteer, setAssist, inBuilding, anyInBuilding, sim, startDrag, placeNear, exit, enter, nearestRoad, roadField, bodyPush, state: () => state, car, input, setView, world: W, saved: () => saved };
+  const api = { setOnlyRoads, onlyRoads: () => onlyRoads, buildTrees, trees: () => trees, debugCam: (p, l) => { debugCam = p ? { p: new THREE.Vector3(...p), l: new THREE.Vector3(...l) } : null; }, fine: () => fine, setQuality, quality: () => quality, assistSteer, setAssist, inBuilding, anyInBuilding, sim, startDrag, placeNear, exit, enter, nearestRoad, roadField, bodyPush, state: () => state, car, input, setView, world: W, saved: () => saved };
   window.__drive = api;
   return api;
 }

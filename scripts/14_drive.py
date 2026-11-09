@@ -14,6 +14,9 @@ Der Fahrmodus lädt diese Dateien erst, wenn jemand ein Auto absetzt. Die normal
      - Durchfahrten durch Gebäude (tunnel = building_passage)
    Parkplätze (amenity = parking als Fläche) sind befahrbar, außer privat oder auf Gewerbe- und Industrieflächen.
    Breite aus dem OSM-Tag width, sonst ein Standardwert je Straßenart (Annahme, siehe BREITE).
+   Sperrflächen für die freie Fahrt: Gewerbe- und Industrieflächen laut OSM abzüglich der befahrbaren Straßen
+   (halbe Breite plus 1,5 m), damit öffentliche Straßen durch diese Flächen frei bleiben. Betriebsgelände sind auch
+   abseits der Straßen nicht befahrbar, darunter der Hekatron-Standort.
    Ausgabe: web/data/fahrnetz.json (ODbL, © OpenStreetMap-Mitwirkende)
 
 2. Gebäudegrundrisse für die Kollision aus den Bodenflächen (GroundSurface) des LoD2-Modells, je Gebäude vereinigt
@@ -160,7 +163,18 @@ def build_network(tr, extent, e0, n0):
         laenge[hw] += L
     stand = d.get("osm3s", {}).get("timestamp_osm_base")
     stand_gew = g.get("osm3s", {}).get("timestamp_osm_base")
-    return wege, flaechen, names, laenge, ausgeschlossen, breite_aus_osm, stand, stand_gew
+    # Sperrflächen: Gewerbe- und Industrieflächen minus Straßenkorridor
+    korridor = []
+    for w in wege:
+        pts = [(w[k] + e0, n0 - w[k + 1]) for k in range(4, len(w), 2)]
+        korridor.append(LineString(pts).buffer(w[2] / 20 + 1.5))
+    sperr = gew.difference(unary_union(korridor)).simplify(0.5, preserve_topology=True) if not gew.is_empty else Polygon()
+    sperrflaechen = []
+    for poly in (list(sperr.geoms) if sperr.geom_type == "MultiPolygon" else [sperr] if not sperr.is_empty else []):
+        if poly.area < 20:
+            continue
+        sperrflaechen.append([[round(c, RUND) for e, n in list(r.coords)[:-1] for c in (e - e0, -(n - n0))] for r in [poly.exterior, *poly.interiors]])
+    return wege, flaechen, names, laenge, ausgeschlossen, breite_aus_osm, stand, stand_gew, sperrflaechen
 
 
 def build_footprints(e0, n0):
@@ -212,11 +226,12 @@ def main() -> int:
     extent = unary_union(tiles).buffer(-20)
     tr = Transformer.from_crs("EPSG:4326", f"EPSG:{common.EPSG}", always_xy=True)
 
-    wege, flaechen, names, laenge, ausgeschlossen, breite_osm, stand, stand_gew = build_network(tr, extent, e0, n0)
+    wege, flaechen, names, laenge, ausgeschlossen, breite_osm, stand, stand_gew, sperrflaechen = build_network(tr, extent, e0, n0)
     fahrnetz = {
         "ebene": "Fahrnetz für den Spielmodus „Fahren“",
         "spalten_wege": ["art", "name", "breite_dm", "tempo_kmh_osm", "x0", "z0", "x1", "z1", "…"],
         "arten": FAHRBAR, "namen": names, "wege": wege, "parkplaetze": flaechen,
+        "sperrflaechen": sperrflaechen, "sperrflaechen_format": "je Fläche eine Liste von Ringen [x0, z0, x1, z1, …], erster Ring außen, weitere Ringe Löcher",
         "regeln": {
             "befahrbar": FAHRBAR,
             "ausgeschlossen": ["access, vehicle oder motor_vehicle = private oder no",

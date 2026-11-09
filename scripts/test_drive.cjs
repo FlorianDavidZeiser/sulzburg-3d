@@ -74,6 +74,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
       return m; };
     d.placeNear(40, 60);
     d.setAssist(false);   // Autopilot lenkt selbst; die Spurhilfe wird unten getrennt geprüft
+    d.setOnlyRoads(true); // Autopilot prüft die Straßenbindung (Modus „Nur Straßen“)
     res.beschleunigung_kmh_je_s = d.sim(4, { up: 1 }, 1).map((p) => +(p[2] * 3.6).toFixed(1));
     res.bremsen_kmh_je_s = d.sim(2, { down: 1 }, 1).map((p) => +(p[2] * 3.6).toFixed(1));
     const t0 = performance.now(); d.sim(10, { up: 1, left: 1 }); res.rechenzeit_ms_je_fahrsekunde = +((performance.now() - t0) / 10).toFixed(2);
@@ -112,6 +113,26 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
       }
     }
     d.setAssist(true);
+    d.setOnlyRoads(false);
+    // Freie Fahrt: quer über die Mittelinsel des Kreisverkehrs (Mitte -422/-446) und gegen die Sperrfläche am Hekatron-Standort
+    const kx = -422, kz = -446; let best = 99;
+    for (let k = 0; k < 8; k++) {
+      const ang = k * Math.PI / 4, sx = kx + Math.cos(ang) * 14, sz = kz + Math.sin(ang) * 14, f = { d: 0 };
+      if (d.roadField(sx, sz, f).d > 0) continue;
+      c.x = sx; c.z = sz; c.yaw = Math.atan2(kx - sx, -(kz - sz)); c.v = 0;
+      for (const [x, z] of d.sim(4, { up: 1 }, 0.1)) best = Math.min(best, Math.hypot(x - kx, z - kz));
+    }
+    const net2 = d.world.net;
+    const sp = net2.sperrflaechen.map((p, k) => { const xs = p[0].filter((_, i) => i % 2 === 0), zs = p[0].filter((_, i) => i % 2 === 1); return { k, xs, zs, mx: xs.reduce((a, b) => a + b) / xs.length, mz: zs.reduce((a, b) => a + b) / zs.length }; })
+      .sort((a, b) => Math.hypot(a.mx + 620, a.mz + 595) - Math.hypot(b.mx + 620, b.mz + 595))[0];
+    const pip = (x, z) => { let ins = false; for (let i = 0, j = sp.xs.length - 1; i < sp.xs.length; j = i++) if ((sp.zs[i] > z) !== (sp.zs[j] > z) && x < ((sp.xs[j] - sp.xs[i]) * (z - sp.zs[i])) / (sp.zs[j] - sp.zs[i]) + sp.xs[i]) ins = !ins; return ins; };
+    let drin = 0, versuche = 0;
+    for (let k = 0; k < 6; k++) {
+      const rd = d.nearestRoad(sp.mx + Math.cos(k) * 40, sp.mz + Math.sin(k) * 40); if (!rd) continue;
+      c.x = rd.x; c.z = rd.z; c.yaw = Math.atan2(sp.mx - c.x, -(sp.mz - c.z)); c.v = 0; versuche++;
+      for (const [x, z] of d.sim(8, { up: 1, right: k % 2 ? 0.2 : 0 }, 0.1)) if (pip(x, z)) drin++;
+    }
+    res.freie_fahrt = { kreisverkehr_naechster_abstand_zur_mitte_m: +best.toFixed(2), sperrflaeche_versuche: versuche, sperrflaeche_punkte_innen: drin, baeume_als_hindernis: d.trees() ? d.trees().x.length : 0 };
     d.exit();
     res.autopilot = { wege: pick.length, meter: Math.round(meter), ohne_haengen: pick.length - probleme.length, probleme, max_abstandsfeld_spur_m: +maxRoad.toFixed(3), min_kreisabstand_wand_m: +minW.toFixed(3) };
     return res;
