@@ -1,9 +1,9 @@
 {
- "erzeugt": "2026-11-09T10:44:04.827Z",
+ "erzeugt": "2026-11-09T11:36:15.033Z",
  "kreisradius_m": 0.97,
  "start": {
-  "dateien": 180,
-  "bytes": 21098486,
+  "dateien": 181,
+  "bytes": 21115689,
   "fahrmodus_dateien_beim_start": []
  },
  "ziehen": {
@@ -38,7 +38,7 @@
    17.2,
    -4.6
   ],
-  "rechenzeit_ms_je_fahrsekunde": 1.26,
+  "rechenzeit_ms_je_fahrsekunde": 1.67,
   "freie_fahrt": {
    "kreisverkehr_naechster_abstand_zur_mitte_m": 0.39,
    "abseits_hoechsttempo_kmh": 40,
@@ -74,7 +74,7 @@
  },
  "stufe2": {
   "kacheln_geladen": 22,
-  "kb": 1854,
+  "kb": 1889,
   "naht_m": 0.0003,
   "rand_m": 0,
   "auto_auf_feiner_flaeche_m": 0.003,
