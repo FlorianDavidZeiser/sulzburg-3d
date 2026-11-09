@@ -48,6 +48,8 @@ Live: https://floriandavidzeiser.github.io/sulzburg-3d/
 - Eigenes Modul (`web/drive.js`), das erst beim ersten Absetzen lädt (rund 160 KB). Ohne Fahren bleibt die Anwendung wie vorher; `?drive=0` blendet den Modus ganz aus
 - Stufe 2 (offen): Luftbild in 20 cm entlang der Straße, feineres Gelände und schärfere Schatten am Auto, Spurhilfe, besseres Automodell, Handysteuerung mit Joystick, Scheinwerfer
 
+![Fahrmodus, Verfolgersicht in der Hauptstraße](docs/screenshot-fahren.jpg)
+
 **Feinschliff (Phase 4)**
 - Seite „Datenquellen und Grenzen“ (`web/quellen.html`), erzeugt aus den Metadaten der Pipeline
 - Impressum und Datenschutz als Vorlage (`web/impressum.html`), **Platzhalter vor öffentlicher Verbreitung ausfüllen**
@@ -180,6 +182,7 @@ Der Fahrplan läuft im Modell nur bis zum Ende des exportierten Zeitraums (sechs
 - **Klima.** Heiße Tage am Marktplatz 7 → 14 (DWD-Raster), Landesmittel 4,7 → 10,5. Sulzburg liegt am Oberrhein erwartungsgemäß darüber.
 - **Betriebe.** 20 von 29 Betrieben über die Adresse einem LoD2-Gebäude zugeordnet, die übrigen am OSM-Punkt. Im Marktstammdatenregister stehen zwei weitere Firmen ohne Lage (Plasticant Mobilo, Krone GmbH); sie fehlen in der Karte, bis Lage und Branche belegt sind.
 - **Parkende Autos.** 308 erkannt; in einer Sichtprüfung von 48 zufälligen Treffern lagen etwa 8 von 10 auf einem Auto. Am Marktplatz wurden rund 18 von gut 40 sichtbaren Autos gefunden. Fehltreffer sind vor allem Gartenobjekte und Paletten, Lücken entstehen unter Bäumen, an Gebäuden und in engen Reihen.
+- **Fahrmodus.** Browsertest `scripts/test_drive.cjs`, Protokoll `docs/fahrmodus_test.json`: Beim Start wird keine Datei des Fahrmodus geladen. Nach dem Aussteigen stehen Kamera und Blickpunkt exakt wie vorher, das Bild ist pixelgleich. Ein einfacher Autopilot fährt 80 Straßen und Wege ab (19 km): 77 ohne Hängenbleiben, nie außerhalb der Spur, nie in einer Wand. Die drei Hänger sind Datenkonflikte (erkanntes Auto mitten auf der Fahrbahn, OSM-Weg führt in oder dicht an ein Gebäude). Die Fahrphysik braucht rund 1 ms je gefahrener Sekunde.
 - **Busse.** Alle 154 Fahrten im Umgriff einem Linienverlauf zugeordnet. Ein Abgleich mit der Fahrplanauskunft des Verbunds steht aus.
 - **Ladevolumen.** Rund 25 MB auf der Platte, rund 16 MB übertragen (gzip). Bei 20 Mbit/s etwa 6 bis 7 Sekunden bis alles geladen ist, bedienbar früher.
 

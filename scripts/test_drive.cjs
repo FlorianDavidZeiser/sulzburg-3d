@@ -38,12 +38,12 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
   for (let i = 1; i <= 10; i++) { await page.mouse.move(chip.x + 20 + (tgt.x - chip.x - 20) * i / 10, chip.y + 10 + (tgt.y - chip.y - 10) * i / 10); await page.waitForTimeout(40); }
   out.ziehen = { beschriftung: await page.evaluate(() => document.getElementById('driveDrag').textContent) };
   await page.mouse.up();
-  await page.waitForTimeout(2200);
+  await page.waitForFunction(() => window.__drive.state() === 'drive', null, { timeout: 120000 });   // Anflug abwarten (Software-Rendering ist langsam)
   out.ziehen.zustand = await page.evaluate(() => window.__drive.state());
   await page.keyboard.down('w'); await page.waitForTimeout(1500); await page.keyboard.up('w');
   await page.keyboard.press('c'); await page.waitForTimeout(400); await page.keyboard.press('c');
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(2400);
+  await page.waitForFunction(() => window.__drive.state() === 'off', null, { timeout: 120000 });   // Rückflug abwarten
   const camAfter = await page.evaluate(() => { const c = window.__ctx; return { p: c.camera.position.toArray(), t: c.controls.target.toArray(), fov: c.camera.fov, near: c.camera.near, far: c.camera.far, enabled: c.controls.enabled, state: window.__drive.state() }; });
   await page.waitForTimeout(1500);
   const imgAfter = await shot();
@@ -53,7 +53,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
 
   // Suche oder Sprungknopf während der Fahrt: Fahrmodus wird verlassen, Steuerung ist wieder da
   await page.evaluate(() => window.__drive.placeNear(0, 0));
-  await page.waitForTimeout(1800);
+  await page.waitForFunction(() => window.__drive.state() === 'drive', null, { timeout: 120000 });
   out.flug_waehrend_fahrt = await page.evaluate(async () => { const c = window.__ctx; c.flyTo(new c.THREE.Vector3(0, c.centerY, 0), 450); await new Promise((r) => setTimeout(r, 2000));
     return { zustand: window.__drive.state(), steuerung_aktiv: c.controls.enabled, near: c.camera.near, kamera_frei: !c.cameraOwner() }; });
 
