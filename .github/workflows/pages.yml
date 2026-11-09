@@ -1,4 +1,7 @@
-# Veröffentlicht den Ordner web/ auf GitHub Pages, sobald Pages in den Repo-Einstellungen auf "GitHub Actions" steht.
+# Veröffentlicht das Repository auf GitHub Pages im selben Aufbau wie die Auslieferung aus dem Branch:
+# Startseite index.html leitet nach web/ weiter, die Anwendung liegt unter web/. So gelten dieselben Adressen,
+# egal ob Pages auf "GitHub Actions" oder "Deploy from a branch" steht (früher lud dieser Workflow nur web/ hoch;
+# liefen beide Wege gleichzeitig, fehlte je nach Reihenfolge /web/ und die Seite zeigte 404).
 name: Pages
 on:
   push:
@@ -22,6 +25,6 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: .
       - id: deployment
         uses: actions/deploy-pages@v4
