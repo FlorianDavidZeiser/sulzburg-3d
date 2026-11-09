@@ -36,6 +36,10 @@ Live: https://floriandavidzeiser.github.io/sulzburg-3d/
 - Hekatron nur mit Firmensitz, Branche, Adresse und Website. Keine Kennzahlen, keine Angaben zu Anlagen, Zugängen oder Barrierefreiheit am Standort. Regeln in `data/betriebe_kuratiert.json`
 - Suche findet auch Betriebe; die Gebäude-Info nennt die Betriebe im Gebäude
 
+**Parkende Autos und Bodenrichtwerte**
+- 308 parkende Autos als 3D-Modelle, an den Stellen, an denen sie beim Bildflug am 25.08.2025 standen. Erkannt aus dem Oberflächenmodell nDOM1 und dem Luftbild, nur an Straßen und Parkplätzen aus OpenStreetMap; Farbe aus dem Luftbild, Höhe aus dem nDOM. Sichtprüfung von 48 Treffern: etwa 8 von 10 sind Autos; am Marktplatz rund 18 von gut 40 gefunden. Stichprobe in `docs/autos_stichprobe.jpg`
+- Bodenrichtwerte: keine Ebene. Die Werte in BORIS-BW sind laut Nutzungsbedingungen urheberrechtlich geschützt, ihre Veröffentlichung ist untersagt. Die Gebäude-Info verweist stattdessen auf das amtliche Portal
+
 **Feinschliff (Phase 4)**
 - Seite „Datenquellen und Grenzen“ (`web/quellen.html`), erzeugt aus den Metadaten der Pipeline
 - Impressum und Datenschutz als Vorlage (`web/impressum.html`), **Platzhalter vor öffentlicher Verbreitung ausfüllen**
@@ -77,6 +81,7 @@ scripts/   Datenpipeline (Python), Reihenfolge siehe unten
   10_solar.py        PV-Szenario (PVGIS-Wetterjahr, Geländehorizont), Bestand aus dem MaStR
   11_climate.py      DWD-Klimaraster, Gebietsmittel BW, Fortschreibung 2040
   12_business.py     Betriebe aus OSM, Ergänzungen, Solar laut MaStR (Variante A)
+  13_cars.py         Parkende Autos aus nDOM1 und DOP20 (Momentaufnahme Bildflug)
 data/
   sources.json       Protokoll aller Downloads und Ebenen (URL, SHA-256, Stand, Kennzahlen, Validierung)
   orte.json          kuratierte Orte mit Fakten und Quellen (hier ergänzen oder kürzen)
@@ -84,7 +89,7 @@ data/
   gemeinde.geojson, kacheln.json, codelisten/
   raw/, processed/   Rohdaten und Zwischenstände (nicht im Git, rund 5 GB, per Skript neu ladbar)
 web/
-  index.html, app.js, places.js, scenario.js, extras.js, business.js, sun.js, style.css
+  index.html, app.js, places.js, scenario.js, extras.js, business.js, cars.js, sun.js, style.css
   quellen.html, quellen.js, impressum.html
   data/              aufbereitete Daten (22 MB, übertragen dank gzip rund 16 MB)
   vendor/three/      three.js 0.187.0 (MIT)
@@ -114,6 +119,8 @@ docs/                Screenshots, Validierungsbericht
 | Marktplatz-Koordinate, Adress-Stichprobe | OpenStreetMap über Nominatim | ODbL | 08.11.2026 |
 | Betriebe | OpenStreetMap über Overpass | ODbL | 09.11.2026 |
 | Solaranlagen von Betrieben | Marktstammdatenregister, Bundesnetzagentur | dl-de/by-2-0 | abgerufen 09.11.2026 |
+| Parkende Autos | abgeleitet aus LGL nDOM1 und DOP20, Straßen aus OpenStreetMap | dl-de/by-2-0, ODbL | Bildflug 25.08.2025 |
+| Bodenrichtwerte | nur Verweis auf BORIS-BW, keine Übernahme | Veröffentlichung laut Nutzungsbedingungen untersagt | |
 | 3D-Darstellung | three.js 0.187.0 | MIT | |
 
 Namensnennung LGL: **„Datenquelle: LGL, www.lgl-bw.de, dl-de/by-2-0“**. Namensnennung MaStR: „Marktstammdatenregister – © Bundesnetzagentur | dl-de/by-2-0“. Weil `web/data/transit.json` Linienverläufe und `web/data/business.json` Betriebe aus ODbL-Datensätzen enthalten, stehen diese Dateien unter ODbL.
@@ -139,6 +146,8 @@ python3 -I scripts/10_solar.py                       # ruft PVGIS und das MaStR 
 # DWD-Dateien siehe Kopf von scripts/11_climate.py, Ablage in data/raw/dwd/
 python3 -I scripts/11_climate.py
 python3 -I scripts/12_business.py --neu-laden          # ruft Overpass und das MaStR ab
+# Straßen und Parkplätze aus OSM nach data/raw/osm/strassen_overpass.json (Abfrage im Kopf von scripts/13_cars.py)
+python3 -I scripts/13_cars.py
 python3 -I scripts/05_validate.py
 ```
 
@@ -153,6 +162,7 @@ Der Fahrplan läuft im Modell nur bis zum Ende des exportierten Zeitraums (sechs
 - **PV-Modell.** Kalibriert auf PVGIS für 35° Süd; 15° Süd liegt 3,6 % darüber, Ost und West 5 bis 6 %. Das Szenario ist eher eine obere Grenze.
 - **Klima.** Heiße Tage am Marktplatz 7 → 14 (DWD-Raster), Landesmittel 4,7 → 10,5. Sulzburg liegt am Oberrhein erwartungsgemäß darüber.
 - **Betriebe.** 20 von 29 Betrieben über die Adresse einem LoD2-Gebäude zugeordnet, die übrigen am OSM-Punkt. Im Marktstammdatenregister stehen zwei weitere Firmen ohne Lage (Plasticant Mobilo, Krone GmbH); sie fehlen in der Karte, bis Lage und Branche belegt sind.
+- **Parkende Autos.** 308 erkannt; in einer Sichtprüfung von 48 zufälligen Treffern lagen etwa 8 von 10 auf einem Auto. Am Marktplatz wurden rund 18 von gut 40 sichtbaren Autos gefunden. Fehltreffer sind vor allem Gartenobjekte und Paletten, Lücken entstehen unter Bäumen, an Gebäuden und in engen Reihen.
 - **Busse.** Alle 154 Fahrten im Umgriff einem Linienverlauf zugeordnet. Ein Abgleich mit der Fahrplanauskunft des Verbunds steht aus.
 - **Ladevolumen.** Rund 25 MB auf der Platte, rund 16 MB übertragen (gzip). Bei 20 Mbit/s etwa 6 bis 7 Sekunden bis alles geladen ist, bedienbar früher.
 

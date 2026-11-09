@@ -226,7 +226,7 @@ def check_size() -> tuple[list[str], dict]:
               "Luftbild (JPEG-Kacheln)": sorted((web / "data" / "terrain").glob("o_*.jpg")),
               "Gebäude (GLB + JSON + Dachtextur)": [web / "data" / "buildings.glb", web / "data" / "buildings.json"] + sorted((web / "data").glob("roofs_*.jpg")),
               "Bäume": [web / "data" / "trees.bin", web / "data" / "trees.json"],
-              "Sonne, Klima, PV, Orte, Fahrplan, Betriebe": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json", "business.json")],
+              "Sonne, Klima, PV, Orte, Fahrplan, Betriebe, Autos": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json", "business.json", "cars.json")],
               "Sonstige Daten": [web / "data" / "gemeinde.geojson", web / "data" / "sources.json"],
               "three.js + Anwendung": [p for p in web.rglob("*.js")] + [web / "index.html", web / "style.css"]}
     import gzip as _gz
@@ -275,6 +275,11 @@ def check_layers() -> tuple[list[str], dict]:
         md += [f"**Arbeiten und Wirtschaft.** {wi['betriebe']} Betriebe aus OpenStreetMap (Stand {wi['osm_stand']}), davon {wi['mit_lod2']} über die Adresse einem LoD2-Gebäude zugeordnet, "
                f"{wi['mit_solar']} mit Solaranlagen laut Marktstammdatenregister. Zuordnung je Betrieb:", ""] + [f"- {x}" for x in wi["pruefung"]] + [""]
         st["wirtschaft"] = {k: wi[k] for k in ("betriebe", "mit_lod2", "mit_solar")}
+    au = src["ebenen"].get("autos")
+    if au:
+        md += [f"**Parkende Autos.** {au['anzahl']} Autos aus {au['kandidaten_flecken']} Kandidatenflecken. Sichtprüfung von 48 zufälligen Treffern (`docs/autos_stichprobe.jpg`): etwa 8 von 10 liegen auf einem Auto. "
+               "Vollständigkeit am Marktplatz: rund 18 von gut 40 sichtbaren Autos. Momentaufnahme vom Bildflug 25.08.2025.", ""]
+        st["autos"] = {"anzahl": au["anzahl"], "trefferquote_stichprobe": "ca. 0,8", "vollstaendigkeit_marktplatz": "ca. 18 von 40"}
     if (W / "transit.json").exists():
         tr = json.loads((W / "transit.json").read_text(encoding="utf-8"))
         n_trips = len(tr.get("fahrten") or [])

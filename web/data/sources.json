@@ -968,9 +968,15 @@
         "Weingut Rainer Schlumberger: wein/Weingut, LoD2 Obere Holzgasse 4, Sulzburg (14 m), Solar 24.2 kW",
         "Winzergenossenschaft Laufen: wein/Winzergenossenschaft, LoD2 Weinstraße 48, Sulzburg (27 m)"
       ]
+    },
+    "autos": {
+      "ebene": "Parkende Autos (Momentaufnahme)",
+      "anzahl": 308,
+      "kandidaten_flecken": 1224,
+      "osm_strassen_stand": "2026-11-09T07:02:18Z"
     }
   },
-  "aktualisiert": "2026-11-09T05:22:32+00:00",
+  "aktualisiert": "2026-11-09T07:17:59+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
@@ -999,8 +1005,8 @@
       "max_zeitdifferenz_min": 0.7787698
     },
     "ladevolumen": {
-      "gesamt_mb": 24.702993,
-      "uebertragen_gzip_mb": 15.821466
+      "gesamt_mb": 24.722227,
+      "uebertragen_gzip_mb": 15.82952
     },
     "ebenen": {
       "orte": 6,
@@ -1021,6 +1027,11 @@
         "betriebe": 29,
         "mit_lod2": 20,
         "mit_solar": 3
+      },
+      "autos": {
+        "anzahl": 308,
+        "trefferquote_stichprobe": "ca. 0,8",
+        "vollstaendigkeit_marktplatz": "ca. 18 von 40"
       },
       "busse": {
         "fahrten": 154

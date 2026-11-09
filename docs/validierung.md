@@ -1,6 +1,6 @@
 # Validierung (automatisch erzeugt)
 
-Erzeugt am 2026-11-09T05:22:32+00:00 durch `scripts/05_validate.py`.
+Erzeugt am 2026-11-09T07:17:59+00:00 durch `scripts/05_validate.py`.
 
 ## 1. Gebäude gegen Gelände
 
@@ -79,9 +79,9 @@ GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 f�
 | Luftbild (JPEG-Kacheln) | 147 | 9.0 | 9.0 |
 | Gebäude (GLB + JSON + Dachtextur) | 3 | 10.6 | 5.0 |
 | Bäume | 2 | 0.8 | 0.5 |
-| Sonne, Klima, PV, Orte, Fahrplan, Betriebe | 6 | 0.5 | 0.1 |
+| Sonne, Klima, PV, Orte, Fahrplan, Betriebe, Autos | 7 | 0.5 | 0.1 |
 | Sonstige Daten | 2 | 0.1 | 0.0 |
-| three.js + Anwendung | 15 | 2.5 | 0.5 |
+| three.js + Anwendung | 16 | 2.5 | 0.5 |
 | **Gesamt** | | **24.7** | **15.8** |
 
 Übertragen bei 20 Mbit/s rund 6 s, bei 50 Mbit/s rund 3 s. Gelände und Gebäude kommen zuerst, die Luftbildkacheln laden danach (Siedlung zuerst); bedienbar ist die Ansicht vorher.
@@ -141,5 +141,7 @@ Ergebnis: 17,115 kWp, 17,189 MWh pro Jahr, spezifischer Ertrag Median 1033 kWh/k
 - Staudengärtnerei Gräfin von Zeppelin OHG: wein/Staudengärtnerei, LoD2 Weinstraße 2, Sulzburg (57 m)
 - Weingut Rainer Schlumberger: wein/Weingut, LoD2 Obere Holzgasse 4, Sulzburg (14 m), Solar 24.2 kW
 - Winzergenossenschaft Laufen: wein/Winzergenossenschaft, LoD2 Weinstraße 48, Sulzburg (27 m)
+
+**Parkende Autos.** 308 Autos aus 1224 Kandidatenflecken. Sichtprüfung von 48 zufälligen Treffern (`docs/autos_stichprobe.jpg`): etwa 8 von 10 liegen auf einem Auto. Vollständigkeit am Marktplatz: rund 18 von gut 40 sichtbaren Autos. Momentaufnahme vom Bildflug 25.08.2025.
 
 **Busse.** 11 Haltesteige, 154 Fahrten mit Linienverlauf zugeordnet (12 Verlaufsabschnitte). Die Zuordnung prüft Linie und Folge der Haltestellen; eine Prüfung gegen die Fahrplanauskunft des Verbunds steht aus.

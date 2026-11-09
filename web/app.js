@@ -9,6 +9,7 @@ import { setupPlaces } from "./places.js";
 import { setupScenario } from "./scenario.js";
 import { setupExtras } from "./extras.js";
 import { setupBusiness } from "./business.js";
+import { setupCars } from "./cars.js";
 
 const TZ = "Europe/Berlin";
 const params = new URLSearchParams(location.search);
@@ -444,7 +445,9 @@ function externalLinks(g) {
   const [lat, lon] = utmToLatLon(g.e, g.n);
   const sv = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat.toFixed(6)},${lon.toFixed(6)}`;
   const mp = `https://www.mapillary.com/app/?lat=${lat.toFixed(6)}&lng=${lon.toFixed(6)}&z=18`;
-  return `<div class="links small"><a href="${sv}" target="_blank" rel="noopener">In Google Street View ansehen</a> · <a href="${mp}" target="_blank" rel="noopener">Mapillary</a> <span class="muted">(externe Dienste, Verfügbarkeit vor Ort nicht garantiert)</span></div>`;
+  const brw = "https://www.gutachterausschuesse-bw.de/borisbw/?lang=de";
+  return `<div class="links small"><a href="${sv}" target="_blank" rel="noopener">In Google Street View ansehen</a> · <a href="${mp}" target="_blank" rel="noopener">Mapillary</a> <span class="muted">(externe Dienste, Verfügbarkeit vor Ort nicht garantiert)</span></div>` +
+    `<div class="links small"><a href="${brw}" target="_blank" rel="noopener">Bodenrichtwert im amtlichen Portal BORIS-BW nachschlagen</a> <span class="muted">(dort ${g.adresse ? "„" + g.adresse.split(",")[0] + ", Sulzburg“" : "die Adresse"} eingeben; die Werte dürfen laut Nutzungsbedingungen nicht übernommen werden)</span></div>`;
 }
 
 function setupSunlightLayer() {
@@ -709,6 +712,7 @@ async function main() {
   await setupPlaces(ctx);
   await setupScenario(ctx);
   await setupBusiness(ctx);
+  await setupCars(ctx);
   await setupExtras(ctx);
   showSources();
   loadAlerts();

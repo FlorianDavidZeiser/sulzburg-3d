@@ -145,6 +145,22 @@ function block(rows) {
     <li>Keine personenbezogenen Daten: Adressen stammen aus dem offenen LoD2-Datensatz, Eigentümer oder Bewohner sind nicht enthalten.</li>
     <li>Kein offizielles Angebot der Stadt Sulzburg oder eines Unternehmens; kein Wappen, kein Logo.</li>
   </ul>`);
+  try {
+    const ca = await j("data/cars.json");
+    out.push(`<h2>Parkende Autos</h2>` + block([
+      ["Herkunft", `${esc(ca.quelle.ndom)}; ${esc(ca.quelle.luftbild)}; Straßen und Parkplätze: ${esc(ca.quelle.strassen)}.`],
+      ["Methode", `${esc(ca.methode.beschreibung)} Höhe ${ca.methode.hoehe_m.join(" bis ")} m, freistehend, nicht im Grünen, nicht zu dunkel.`],
+      ["Güte", `${ca.anzahl} Autos erkannt. In einer Sichtprüfung von 48 zufälligen Treffern lagen etwa 8 von 10 auf einem Auto. Am Marktplatz wurden rund 18 von gut 40 sichtbaren Autos gefunden. Stichprobe: <code>docs/autos_stichprobe.jpg</code> im Repository.`],
+      ["Bekannte Lücken", esc(ca.methode.grenzen)],
+    ]));
+  } catch (e) { /* ohne cars.json keine Angabe */ }
+
+  out.push(`<h2>Bodenrichtwerte</h2>` + block([
+    ["Warum keine Ebene", "Die Bodenrichtwerte in Baden-Württemberg stellen die Gutachterausschüsse über das Portal BORIS-BW bereit. Laut dessen Nutzungsbedingungen sind die Werte urheberrechtlich geschützt und ihre Veröffentlichung untersagt; erlaubt sind Ansehen, Ausdrucken und das Einbinden des Kartenviewers für nicht-kommerzielle Zwecke. Der Viewer lässt sich technisch nicht in fremde Seiten einbetten."],
+    ["Was die Seite stattdessen tut", 'Die Gebäude-Info verweist auf das amtliche Portal. Dort lässt sich die Adresse eingeben. <a href="https://www.gutachterausschuesse-bw.de/borisbw/termsofuse_bw.html" target="_blank" rel="noopener">Nutzungsbedingungen BORIS-BW</a>'],
+    ["Offen", "BORIS-BW führt einen Bereich „Open Data“ je Gutachterausschuss. Ob der für Sulzburg zuständige Gemeinsame Gutachterausschuss in Müllheim seine Werte offen freigegeben hat, ist nicht geprüft. Falls ja, wäre eine Zonen-Ebene mit Lizenzangabe möglich."],
+  ]));
+
   out.push(`<h2>Weitere Bausteine</h2>` + block([
     ["Bäume", "Normalisiertes Oberflächenmodell nDOM1 des LGL (dl-de/by-2-0); Lage und Höhe echt, Form generisch."],
     ["Dächer aus Luftbild", "DOP20 des LGL senkrecht auf die LoD2-Dachflächen projiziert; im Luftbild eingebrannte Schatten bleiben sichtbar."],
