@@ -47,7 +47,7 @@ Live: https://floriandavidzeiser.github.io/sulzburg-3d/
 - Anzeige mit Tempo, Straßenname und Tempolimit laut OSM, Kennzeichnung „Spielmodus, kein echter Verkehr“
 - Stufe 2: Rund um das Auto Fahrkacheln mit Gelände im 1-m-Raster (DGM1) und Luftbild in Originalauflösung 0,2 m (DOP20), nur an Straßen und Parkplätzen. An Gewerbe- und Industrieflächen bleibt das normale Luftbild, auch am Hekatron-Standort. Bäume und parkende Autos stehen dort auf der feinen Höhe
 - Stufe 2: schärfere Schatten vor dem Auto, Spurhilfe (folgt der Straße rechts der Mitte, aus, sobald man selbst lenkt), Automodell aus dem Kenney Car Kit (CC0), Scheinwerfer bei Dunkelheit, Qualitätsstufe, die bei niedriger Bildrate selbst herunterschaltet (`?fq=0|1|2` setzt sie fest)
-- Eigene Module (`web/drive.js`, `web/drive_tiles.js`), die erst beim ersten Absetzen laden (rund 0,4 MB), die Fahrkacheln dann nur rund um das Auto (rund 1 MB für die Umgebung). Beim Aussteigen kommt alles zurück: Kamera, Schatten, Geländematerial, Bäume, parkende Autos. Ohne Fahren bleibt die Anwendung wie vorher; `?drive=0` blendet den Modus ganz aus
+- Eigene Module (`web/drive.js`, `web/drive_tiles.js`), die erst beim ersten Absetzen laden (rund 0,2 MB übertragen), die Fahrkacheln dann nur rund um das Auto (rund 1 MB für die Umgebung). Beim Aussteigen kommt alles zurück: Kamera, Schatten, Geländematerial, Bäume, parkende Autos. Ohne Fahren bleibt die Anwendung wie vorher; `?drive=0` blendet den Modus ganz aus
 
 ![Fahrmodus Stufe 1 und 2 im Vergleich, gleiche Stelle in der Hauptstraße](docs/fahren-stufe1-stufe2.jpg)
 

@@ -170,7 +170,7 @@ function block(rows) {
         "Am Rand der geladenen Fläche geht das feine Gelände weich in das gröbere über. Bäume und parkende Autos werden dort auf die feine Höhe gesetzt."],
       ["Automodell", 'Kenney Car Kit (hatchback-sports), <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>, von Kenney auf OpenGameArt veröffentlicht. Lizenztext in <code>vendor/kenney-car-kit/</code>.'],
       ["Licht", "Schatten im Fahrmodus schärfer und nur im Umkreis von rund 150 m vor dem Auto. Nachts Scheinwerfer als Darstellung."],
-      ["Laden", "Alles für den Fahrmodus wird erst beim ersten Absetzen geladen (rund 0,4 MB), die Fahrkacheln dann nur rund um das Auto (etwa 1 MB für die Umgebung, weitere beim Fahren). Ohne Fahren ändert sich an Ladezeit und Ansicht nichts. Sinkt die Bildrate, schaltet der Fahrmodus die Qualität selbst herunter."],
+      ["Laden", "Alles für den Fahrmodus wird erst beim ersten Absetzen geladen (rund 0,2 MB übertragen), die Fahrkacheln dann nur rund um das Auto (etwa 1 MB für die Umgebung, weitere beim Fahren). Ohne Fahren ändert sich an Ladezeit und Ansicht nichts. Sinkt die Bildrate, schaltet der Fahrmodus die Qualität selbst herunter."],
     ]));
   } catch (e) { /* ohne fahrnetz.json keine Angabe */ }
 

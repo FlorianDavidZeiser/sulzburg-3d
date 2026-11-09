@@ -1022,7 +1022,7 @@
       "auswahl": "Straßen ohne Feld- und Waldwege, Puffer halbe Fahrbahnbreite plus 15 m; Parkplätze plus 10 m; ohne Kacheln an Gewerbe- und Industrieflächen laut OSM (Puffer 5 m), dort bleibt das Luftbild der Karte"
     }
   },
-  "aktualisiert": "2026-11-09T09:49:10+00:00",
+  "aktualisiert": "2026-11-09T09:54:12+00:00",
   "validierung": {
     "gelaende_gebaeude": {
       "gebaeude": 2366,
@@ -1051,9 +1051,9 @@
       "max_zeitdifferenz_min": 0.7787698
     },
     "ladevolumen": {
-      "gesamt_mb": 24.709112,
-      "uebertragen_gzip_mb": 15.823904,
-      "fahrmodus_nachgeladen_gzip_mb": 0.16276
+      "gesamt_mb": 24.710007,
+      "uebertragen_gzip_mb": 15.824268,
+      "fahrmodus_nachgeladen_gzip_mb": 22.102704
     },
     "ebenen": {
       "orte": 6,
@@ -1083,9 +1083,32 @@
       "fahrmodus": {
         "wege": 1101,
         "namen": 155,
-        "autopilot_ok": 77,
+        "autopilot_ok": 76,
         "autopilot_wege": 80,
-        "rueckweg_bild_identisch": true
+        "rueckweg_bild_identisch": true,
+        "stufe2": {
+          "kacheln_geladen": 16,
+          "kb": 809,
+          "naht_m": 0.0003,
+          "rand_m": 0,
+          "auto_auf_feiner_flaeche_m": 0.003,
+          "spurhilfe": {
+            "wege": 15,
+            "wege_ok": 13,
+            "max_abstand_achse_m": 4.25
+          },
+          "waehrend": {
+            "kacheln": 16,
+            "maske_aktiv": true,
+            "baeume_angepasst": true
+          },
+          "zurueck": {
+            "objekte": true,
+            "schatten_material": true,
+            "kacheln_entfernt": true,
+            "lichter_entfernt": true
+          }
+        }
       },
       "busse": {
         "fahrten": 154
