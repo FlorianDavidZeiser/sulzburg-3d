@@ -163,7 +163,7 @@ function block(rows) {
         `${k.wege} Wegstücke, ${k.namen} Straßennamen, ${k.parkplaetze} Parkplätze.`],
       ["Befahrbar", `Straßen und Wege, die in OpenStreetMap für Autos offen sind oder keine Angabe haben. Ausgeschlossen: ${fn.regeln.ausgeschlossen.map(esc).join("; ")}. Damit sind Betriebsgelände nicht befahrbar.`],
       ["Breite", esc(fn.regeln.breite_hinweis)],
-      ["Hauswände", "Kollision mit den Grundrissen aus den Bodenflächen des LoD2-Modells (LGL, dl-de/by-2-0). Brücken aus dem LoD2-Modell sind Fahrbahn. Parkende Autos aus der Luftbild-Erkennung sind Hindernisse, solange die Ebene eingeschaltet ist."],
+      ["Hauswände", "Kollision mit den Grundrissen aus den Bodenflächen des LoD2-Modells (LGL, dl-de/by-2-0). Brücken aus dem LoD2-Modell sind Fahrbahn, wenn man auf ihrer Höhe ankommt; führt ein Weg darunter durch, fährt das Auto unten durch. Parkende Autos aus der Luftbild-Erkennung sind Hindernisse, solange die Ebene eingeschaltet ist."],
       ["Höhe", "Das Auto fährt auf der dargestellten Geländefläche (DGM1, im Ort 5 m Raster). Kleine Dellen an Bachquerungen und Kanten kommen daher."],
       ["Laden", "Die Daten des Fahrmodus werden erst beim ersten Absetzen geladen (rund 160 KB). Ohne Fahren ändert sich an Ladezeit und Ansicht nichts."],
     ]));

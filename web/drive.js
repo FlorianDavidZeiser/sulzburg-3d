@@ -211,10 +211,15 @@ export async function createDrive(ctx) {
   const [net, fp] = await Promise.all([fetchJson("data/fahrnetz.json"), fetchJson("data/grundrisse.json")]);
   const W = buildWorld(net, fp, ctx);
   const canvas = ctx.renderer.domElement;
-  // Fahrbahnhöhe: dargestellte Geländefläche, auf Brücken deren Oberkante (das DGM enthält keine Brücken)
-  const surface = (x, z) => {
-    let h = ctx.terrainSurfaceAt(x, z) ?? ctx.terrainHeightAt(x, z) ?? ctx.centerY;
-    for (const di of W.deckGrid.at(x, z)) { const D = W.decks[di]; if (D.top > h && pointInPoly(D.xs, D.zs, x, z)) h = D.top; }
+  // Fahrbahnhöhe: dargestellte Geländefläche, auf Brücken deren Oberkante (das DGM enthält keine Brücken).
+  // Auf die Brücke kommt das Auto nur, wenn es etwa auf ihrer Höhe ankommt (ref = bisherige Höhe); darunter fährt es durch.
+  const surface = (x, z, ref = null) => {
+    const g = ctx.terrainSurfaceAt(x, z) ?? ctx.terrainHeightAt(x, z) ?? ctx.centerY;
+    let h = g;
+    for (const di of W.deckGrid.at(x, z)) {
+      const D = W.decks[di];
+      if (D.top > h && D.top - (ref ?? g) < (ref == null ? 3 : 1.5) && pointInPoly(D.xs, D.zs, x, z)) h = D.top;
+    }
     return h;
   };
 
@@ -426,8 +431,9 @@ export async function createDrive(ctx) {
   function placeModel(dt) {
     const fx = Math.sin(car.yaw), fz = -Math.cos(car.yaw), rx = -fz, rz = fx;
     const L = RADSTAND / 2, S2 = SPUR / 2;
-    const hFL = surface(car.x + fx * L - rx * S2, car.z + fz * L - rz * S2), hFR = surface(car.x + fx * L + rx * S2, car.z + fz * L + rz * S2);
-    const hRL = surface(car.x - fx * L - rx * S2, car.z - fz * L - rz * S2), hRR = surface(car.x - fx * L + rx * S2, car.z - fz * L + rz * S2);
+    const ref = dt > 0 ? car.y : null;
+    const hFL = surface(car.x + fx * L - rx * S2, car.z + fz * L - rz * S2, ref), hFR = surface(car.x + fx * L + rx * S2, car.z + fz * L + rz * S2, ref);
+    const hRL = surface(car.x - fx * L - rx * S2, car.z - fz * L - rz * S2, ref), hRR = surface(car.x - fx * L + rx * S2, car.z - fz * L + rz * S2, ref);
     const y = (hFL + hFR + hRL + hRR) / 4;
     car.y = dt > 0 && Math.abs(y - car.y) < 3 ? car.y + (y - car.y) * Math.min(1, dt * 20) : y;
     car.slope = ((hFL + hFR) - (hRL + hRR)) / 2 / RADSTAND;
@@ -723,7 +729,7 @@ export async function createDrive(ctx) {
   function sim(sec, inp = {}, every = 0.25) {
     Object.assign(input, { up: 0, down: 0, left: 0, right: 0, hand: 0 }, inp);
     const trace = []; let t = 0, next = 0;
-    while (t < sec) { step(1 / 120); t += 1 / 120; if (t >= next) { placeModel(1 / 120); trace.push([car.x, car.z, car.v, car.y]); next += every; } }
+    while (t < sec) { step(1 / 120); placeModel(1 / 120); t += 1 / 120; if (t >= next) { trace.push([car.x, car.z, car.v, car.y]); next += every; } }
     for (const k in input) input[k] = 0;
     return trace;
   }
