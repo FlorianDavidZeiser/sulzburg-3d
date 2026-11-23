@@ -24,6 +24,7 @@ const OUT = process.env.OUT || path.join(__dirname, '..', 'docs', 'fahrmodus_tes
   page.on('response', async (r) => { try { loaded.push([r.url().replace(/^https?:\/\/[^/]+\//, ''), (await r.body()).length]); } catch (e) { /* abgebrochen */ } });
   await page.goto(`${BASE}?lod=1&t=2026-08-25T15:00&cam=-160,120,160&target=0,0&intro=0&fq=2${BASE.extra}`, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
+  await page.evaluate(() => { if (window.__ui2) window.__ui2.setTheme('fahren'); });   // neue Oberfläche: Fahren-Knöpfe stehen im Thema „Fahren“
   await page.waitForTimeout(5000);
   await page.evaluate(() => { const b = document.getElementById('buses'); if (b.checked) b.click(); });   // bewegte Busse aus, damit Bilder vergleichbar sind
   await page.waitForTimeout(500);
