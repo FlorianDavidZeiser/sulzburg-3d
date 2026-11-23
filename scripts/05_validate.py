@@ -228,7 +228,7 @@ def check_size() -> tuple[list[str], dict]:
               "Bäume": [web / "data" / "trees.bin", web / "data" / "trees.json"],
               "Sonne, Klima, PV, Orte, Fahrplan, Betriebe, Autos": [web / "data" / n for n in ("sunlight.json", "climate.json", "solar.json", "places.json", "transit.json", "business.json", "cars.json")],
               "Sonstige Daten": [web / "data" / "gemeinde.geojson", web / "data" / "sources.json"],
-              "three.js + Anwendung": [p for p in web.rglob("*.js") if p.name not in ("drive.js", "drive_tiles.js", "quellen.js")] + [web / "index.html", web / "style.css"]}
+              "three.js + Anwendung": [p for p in web.rglob("*.js") if p.name not in ("drive.js", "drive_tiles.js", "quellen.js")] + [web / "index.html", web / "style.css", web / "ui2.css"]}
     # Nur bei Nutzung geladen, zählt nicht zum Start
     lazy = {"Fahrmodus (erst beim ersten Absetzen)": [web / "drive.js", web / "drive_tiles.js", web / "data" / "fahrnetz.json", web / "data" / "grundrisse.json",
                                                    web / "data" / "fahrkacheln" / "index.json", web / "vendor" / "kenney-car-kit" / "hatchback-sports.glb",
@@ -303,9 +303,14 @@ def check_layers() -> tuple[list[str], dict]:
         if tf.exists():
             t = json.loads(tf.read_text(encoding="utf-8"))
             ap, rw = t["physik"]["autopilot"], t["rueckweg"]
+            def bild_text(r):
+                if r["bild_identisch"]:
+                    return "identisch"
+                a = r.get("bild_abweichung")
+                return f"bis auf {a['pixel']} Pixel gleich (Abweichung höchstens {a['max']} von 255)" if a else "verschieden"
             md += [f"Browsertest vom {t['erzeugt'][:10]} (`scripts/test_drive.cjs`, Ergebnis in `docs/fahrmodus_test.json`): "
                    f"beim Start {len(t['start']['fahrmodus_dateien_beim_start'])} Dateien des Fahrmodus geladen; Rückweg Kamera {rw['kamera_abweichung_m']:.3f} m, Blickpunkt {rw['blickpunkt_abweichung_m']:.3f} m, "
-                   f"Bild vorher und nachher {'identisch' if rw['bild_identisch'] else 'verschieden'}. Autopilot auf {ap['wege']} Straßen ({ap['meter']/1000:.1f} km): "
+                   f"Bild vorher und nachher {bild_text(rw)}. Autopilot auf {ap['wege']} Straßen ({ap['meter']/1000:.1f} km): "
                    f"{ap['ohne_haengen']} ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds {ap['max_abstandsfeld_spur_m']} m), "
                    f"kleinster Abstand eines Kollisionskreises zur Wand {ap['min_kreisabstand_wand_m']} m (Radius {t.get('kreisradius_m', 0.92)} m). Hänger: "
                    + ("; ".join(f"{x['weg']} ({x['hindernis']})" for x in ap["probleme"]) or "keine") + ".", ""]

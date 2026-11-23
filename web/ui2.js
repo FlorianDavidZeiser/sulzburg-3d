@@ -1,4 +1,4 @@
-// Neue Oberfläche (Probe-Version neu.html): Themen, kleine Fenster, Chips für Wetter und Warnung, Startkarte, freiwillige Tour.
+// Oberfläche (index.html): Themen, kleine Fenster, Chips für Wetter und Warnung, Startkarte, freiwillige Tour.
 // Nutzt nur die bestehenden Bedienelemente; app.js und die Module bleiben unverändert zuständig.
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -153,7 +153,8 @@ setTheme(THEMES[params.get("thema")] ? params.get("thema") : "umsehen", { expand
 const waitReady = setInterval(() => {
   if (!window.__ready || !ctx()) return;
   clearInterval(waitReady);
-  setTheme(theme, { expand: innerWidth >= 900 && !$("sunpanel").classList.contains("collapsed") });
+  // Wer per Link in ein Thema springt (?thema=…), sieht die Themenkarte offen, auch am Handy
+  setTheme(theme, { expand: (innerWidth >= 900 && !$("sunpanel").classList.contains("collapsed")) || !!THEMES[params.get("thema")] });
   updateChips();
   const skip = params.get("intro") === "0" || params.get("start") === "0" || params.has("thema") || store.get("sz3d_start");
   if (!skip) openStart();

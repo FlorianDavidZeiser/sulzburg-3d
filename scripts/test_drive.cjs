@@ -36,6 +36,15 @@ const OUT = process.env.OUT || path.join(__dirname, '..', 'docs', 'fahrmodus_tes
   const objBefore = await objState();
   out.start = { dateien: loaded.length, bytes: loaded.reduce((a, x) => a + x[1], 0), fahrmodus_dateien_beim_start: loaded.filter((x) => /drive\.js|fahrnetz|grundrisse/.test(x[0])).map((x) => x[0]) };
   const shot = () => page.screenshot({ timeout: 180000 });
+  // Pixelvergleich im Browser: wie viele Pixel weichen ab und um wie viel höchstens (0 bis 255)
+  const pixelDiff = async ([a, b]) => {
+    const load = (d) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = 'data:image/png;base64,' + d; });
+    const [ia, ib] = await Promise.all([load(a), load(b)]);
+    const px = (i) => { const cv = document.createElement('canvas'); cv.width = i.width; cv.height = i.height; const g = cv.getContext('2d'); g.drawImage(i, 0, 0); return g.getImageData(0, 0, i.width, i.height).data; };
+    const da = px(ia), db = px(ib); let n = 0, max = 0;
+    for (let k = 0; k < da.length; k += 4) { const m = Math.max(Math.abs(da[k] - db[k]), Math.abs(da[k + 1] - db[k + 1]), Math.abs(da[k + 2] - db[k + 2])); if (m) { n++; if (m > max) max = m; } }
+    return { pixel: n, max };
+  };
   const imgBefore = await shot();
   const camBefore = await page.evaluate(() => { const c = window.__ctx; return { p: c.camera.position.toArray(), t: c.controls.target.toArray(), fov: c.camera.fov, near: c.camera.near, far: c.camera.far }; });
 
@@ -59,7 +68,8 @@ const OUT = process.env.OUT || path.join(__dirname, '..', 'docs', 'fahrmodus_tes
   const imgAfter = await shot();
   const dist = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
   out.rueckweg = { kamera_abweichung_m: dist(camAfter.p, camBefore.p), blickpunkt_abweichung_m: dist(camAfter.t, camBefore.t), fov_gleich: camAfter.fov === camBefore.fov,
-    near_far_gleich: camAfter.near === camBefore.near && camAfter.far === camBefore.far, steuerung_aktiv: camAfter.enabled, zustand: camAfter.state, bild_identisch: imgBefore.equals(imgAfter) };
+    near_far_gleich: camAfter.near === camBefore.near && camAfter.far === camBefore.far, steuerung_aktiv: camAfter.enabled, zustand: camAfter.state, bild_identisch: imgBefore.equals(imgAfter),
+    bild_abweichung: await page.evaluate(pixelDiff, [imgBefore.toString('base64'), imgAfter.toString('base64')]) };
 
   // Suche oder Sprungknopf während der Fahrt: Fahrmodus wird verlassen, Steuerung ist wieder da
   await page.evaluate(() => window.__drive.placeNear(0, 0));

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sulzburg 3D (bisherige Ansicht)</title>
+<meta name="description" content="Privater Prototyp: die Gemeinde Sulzburg als 3D-Modell aus offenen Geodaten des LGL Baden-Württemberg und Wetterdaten des DWD. Kein offizielles Angebot.">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div id="scenarioBanner" hidden>SZENARIO · <span id="scenarioBannerText"></span> · keine Beobachtung</div>
+  <section class="panel" id="sunpanel">
+    <h1>Sulzburg 3D <button id="menuToggle" class="menu-toggle" aria-expanded="true">Menü ▴</button><span>Phase 3 · privates Projekt aus offenen Daten, keine offizielle Seite</span></h1>
+    <div id="panelBody">
+    <label for="date">Datum <span class="seasons"><button data-d="03-20">Frühling</button><button data-d="06-21">Sommer</button><button data-d="09-22">Herbst</button><button data-d="12-21">Winter</button></span></label>
+    <input type="date" id="date">
+    <label for="time">Uhrzeit (Europe/Berlin): <b id="timeLabel">–</b> <span class="seasons"><button id="play" title="Tagesablauf abspielen">▶ Tag</button><button id="now">Jetzt</button></span></label>
+    <input type="range" id="time" min="0" max="1439" step="5" value="720">
+    <div id="startHint" class="warn small" hidden>Draußen ist es dunkel. Die Ansicht startet mittags, „Jetzt“ zeigt die echte Uhrzeit.</div>
+    <div id="suninfo">–</div>
+    <div class="search"><input type="search" id="search" placeholder="Adresse oder Betrieb suchen, z. B. Hauptstraße 60" autocomplete="off" list="searchList"><datalist id="searchList"></datalist></div>
+
+    <details class="sec" open><summary>Ansicht</summary>
+      <div class="toggles">
+        <label class="inline"><input type="checkbox" id="shadows" checked> Schatten</label>
+        <label class="inline"><input type="checkbox" id="ortho" checked> Luftbild</label>
+        <label class="inline"><input type="checkbox" id="rooftex" checked> Dächer aus Luftbild</label>
+        <label class="inline"><input type="checkbox" id="grenze" checked> Gemeindegrenze</label>
+        <label class="inline">Gelände <select id="lod"><option value="1">fein</option><option value="2">grob</option></select></label>
+        <label class="inline"><input type="checkbox" id="autorotate"> Drehen</label>
+      </div>
+      <div class="jumps" id="jumps"><span>Springe zu:</span></div>
+    </details>
+
+    <details class="sec" id="driveSec" open hidden><summary>Fahren <span class="badge">Spielmodus</span></summary>
+      <div class="drive-entry">
+        <button id="driveCar" class="drive-car" title="Auf eine Straße in der Karte ziehen"><svg viewBox="0 0 32 16" width="30" height="15" aria-hidden="true"><path d="M3 11V8.5L6 7l3.5-4h9L23 7l5 1.2V11z" fill="#e3b53c"/><path d="M10.4 4.2h3.8V7H7.8zM15.5 4.2h2.6L21 7h-5.5z" fill="#1d2633"/><circle cx="9" cy="11.5" r="2.3" fill="#111"/><circle cx="23" cy="11.5" r="2.3" fill="#111"/></svg> Auto auf eine Straße ziehen</button>
+        <button id="driveCenter" class="drive-btn">An der Bildmitte absetzen</button>
+      </div>
+      <div id="driveInfo" class="small muted">Frei fahren, auch abseits der Straße; Gebäude, große Bäume und parkende Autos bleiben Hindernisse. Taste F: nur Straßen. Kein echter Verkehr. Lädt erst beim Fahren: rund 0,2 MB zum Start, dann schärferes Luftbild rund um das Auto.</div>
+    </details>
+
+    <details class="sec" open><summary>Ebenen</summary>
+      <div id="treesWrap"><label class="inline"><input type="checkbox" id="trees" checked> Bäume</label>
+        <div id="treesInfo" class="small muted"></div></div>
+      <div id="transitWrap"><label class="inline"><input type="checkbox" id="transit" checked> Haltestellen (Klick: Abfahrten)</label>
+        <label class="inline"><input type="checkbox" id="buses" checked> Busse nach Fahrplan</label>
+        <div id="transitInfo" class="small muted"></div></div>
+      <div id="carsWrap"><label class="inline"><input type="checkbox" id="cars" checked> Parkende Autos (Luftbild 25.08.2025)</label>
+        <div id="carsInfo" class="small muted"></div></div>
+      <div id="sunlayerWrap"><label class="inline"><input type="checkbox" id="sunlayer"> Sonne auf den Dächern einfärben</label>
+        <div id="sunlegend" class="small muted" hidden></div></div>
+    </details>
+
+    <details class="sec" open><summary>Orte mit Geschichte</summary>
+      <div id="placesWrap"><label class="inline"><input type="checkbox" id="places" checked> Marker zeigen</label>
+        <div class="jumps" id="placesList"></div></div>
+    </details>
+
+    <details class="sec" id="businessSec"><summary>Arbeiten und Wirtschaft</summary>
+      <label class="inline"><input type="checkbox" id="business"> Betriebe zeigen</label>
+      <div id="businessFilter" class="chips"></div>
+      <div id="businessCount" class="small muted"></div>
+      <div class="small muted">Alle Betriebe gleich behandelt: Name, Branche, Adresse, Öffnungszeiten, Website. Keine Umsätze, keine Eigentümer.</div>
+      <details class="small"><summary>Alle Betriebe als Liste</summary><div id="businessList"></div></details>
+    </details>
+
+    <details class="sec" id="scenarioSec"><summary>Klima und Szenario 2040</summary>
+      <div id="scenario">lädt …</div>
+    </details>
+
+    <details class="help"><summary>Bedienung</summary>
+      Ziehen dreht, rechte Maustaste oder zwei Finger verschieben, Rad zoomt zur Mausposition.
+      Doppelklick setzt den Blickpunkt. Pfeiltasten oder W A S D fahren, Q und E senken und heben. Klick auf ein Gebäude, eine Haltestelle oder einen Ort zeigt die Daten.
+      Fahrmodus: W A S D oder Pfeiltasten, Leertaste Handbremse, C wechselt die Sicht, L Spurhilfe an oder aus, F nur Straßen an oder aus, R setzt auf die Straße zurück, Esc zurück zur Karte. Auf dem Handy links lenken, rechts Gas und Bremse.
+    </details>
+    <div id="fps">–</div>
+    <div class="small muted footlinks"><a href="quellen.html">Datenquellen und Grenzen</a> · <a href="impressum.html">Impressum und Datenschutz</a></div>
+    </div>
+  </section>
+  <section class="panel" id="alerts" hidden></section>
+  <section class="panel" id="weather">
+    <h2>Wetter</h2>
+    <div id="weatherbody">lädt …</div>
+    <label class="inline small"><input type="checkbox" id="clouds" checked> Live-Wetter in der Ansicht (Licht, Nebel, Regen, Schnee)</label>
+    <div id="wxLive" class="small"></div>
+    <label class="inline small"><input type="checkbox" id="radar"> Regenradar über dem Gelände</label>
+    <div id="radarBox" class="small" hidden>
+      <div class="radar-row"><button id="radarPlay" title="Abspielen">▶</button><input type="range" id="radarTime" min="0" max="0" value="0"><button id="radarNow">jetzt</button></div>
+      <div id="radarLabel" class="muted">–</div>
+      <div class="legend-row">mm/h <span class="swatch" style="background:#9ecae1"></span>0,1 <span class="swatch" style="background:#6baed6"></span>0,5 <span class="swatch" style="background:#3182bd"></span>2 <span class="swatch" style="background:#08519c"></span>5 <span class="swatch" style="background:#54278f"></span>15</div>
+      <div class="muted">DWD-Regenradar (RADOLAN RV, 1 km, alle 5 min) über Bright Sky; letzte Stunde gemessen, danach Vorhersage bis 2 h.</div>
+    </div>
+  </section>
+  <section class="panel" id="info" hidden></section>
+  <div id="loading" class="panel">Lade Gelände, Luftbild und Gebäude …<div id="progress"></div></div>
+  <section class="panel" id="sources">–</section>
+  <div id="attrib">Daten: LGL BW (dl-de/by-2-0), DWD, NVBW/MobiData BW, BNetzA · <a href="quellen.html">Quellen</a> · <a href="impressum.html">Impressum</a> · privates Projekt</div>
+  <div id="tooltip" hidden></div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
