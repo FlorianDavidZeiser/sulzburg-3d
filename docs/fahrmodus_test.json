@@ -1,9 +1,9 @@
 {
- "erzeugt": "2026-11-09T11:36:15.033Z",
+ "erzeugt": "2026-11-23T21:03:08.786Z",
  "kreisradius_m": 0.97,
  "start": {
-  "dateien": 181,
-  "bytes": 21115689,
+  "dateien": 183,
+  "bytes": 21145748,
   "fahrmodus_dateien_beim_start": []
  },
  "ziehen": {
@@ -17,7 +17,11 @@
   "near_far_gleich": true,
   "steuerung_aktiv": true,
   "zustand": "off",
-  "bild_identisch": true
+  "bild_identisch": false,
+  "bild_abweichung": {
+   "pixel": 10,
+   "max": 2
+  }
  },
  "flug_waehrend_fahrt": {
   "zustand": "off",
@@ -38,7 +42,7 @@
    17.2,
    -4.6
   ],
-  "rechenzeit_ms_je_fahrsekunde": 1.67,
+  "rechenzeit_ms_je_fahrsekunde": 0.98,
   "freie_fahrt": {
    "kreisverkehr_naechster_abstand_zur_mitte_m": 0.39,
    "abseits_hoechsttempo_kmh": 40,
@@ -74,7 +78,7 @@
  },
  "stufe2": {
   "kacheln_geladen": 22,
-  "kb": 1889,
+  "kb": 1589,
   "naht_m": 0.0003,
   "rand_m": 0,
   "auto_auf_feiner_flaeche_m": 0.003,

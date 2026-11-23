@@ -1,6 +1,6 @@
 # Validierung (automatisch erzeugt)
 
-Erzeugt am 2026-11-09T11:38:19+00:00 durch `scripts/05_validate.py`.
+Erzeugt am 2026-11-23T21:05:52+00:00 durch `scripts/05_validate.py`.
 
 ## 1. Gebäude gegen Gelände
 
@@ -65,7 +65,7 @@ Einordnung: In OSM ist die Adresse oft am Gebäudeumriss oder als Punkt erfasst;
 | 2026-06-21 | 03:30:21 | 03:30:36 | -0.3 min | 19:31:37 | 19:31:21 | +0.3 min |
 | 2026-09-22 | 05:16:02 | 05:15:56 | +0.1 min | 17:27:47 | 17:27:00 | +0.8 min |
 | 2026-12-21 | 07:15:32 | 07:15:45 | -0.2 min | 15:38:55 | 15:38:41 | +0.2 min |
-| 2026-11-09 | 06:26:02 | 06:26:00 | +0.0 min | 15:59:49 | 15:59:17 | +0.5 min |
+| 2026-11-23 | 06:46:44 | 06:46:46 | -0.0 min | 15:44:20 | 15:43:53 | +0.5 min |
 
 Größte Abweichung: **0.8 min**.
 
@@ -81,8 +81,8 @@ GitHub Pages liefert die Dateien gzip-komprimiert aus (geprüft am 08.11.2026 f�
 | Bäume | 2 | 0.8 | 0.5 |
 | Sonne, Klima, PV, Orte, Fahrplan, Betriebe, Autos | 7 | 0.5 | 0.1 |
 | Sonstige Daten | 2 | 0.1 | 0.0 |
-| three.js + Anwendung | 16 | 2.5 | 0.5 |
-| **Gesamt beim Start** | | **24.7** | **15.8** |
+| three.js + Anwendung | 18 | 2.5 | 0.5 |
+| **Gesamt beim Start** | | **24.8** | **15.8** |
 | Fahrmodus (erst beim ersten Absetzen) | 7 | 0.73 | 0.23 |
 | Fahrkacheln (nur rund um das Auto) | 1655 | 27.08 | 21.88 |
 
@@ -148,8 +148,8 @@ Ergebnis: 17,115 kWp, 17,189 MWh pro Jahr, spezifischer Ertrag Median 1033 kWh/k
 
 **Fahrmodus (Spielmodus).** Fahrnetz aus OpenStreetMap (Stand 2026-11-09T07:02:18Z): 1101 Wegstücke, 155 Straßennamen, 13 Parkplätze. Länge in km: secondary 9.3, residential 17.0, tertiary 3.7, unclassified 13.1, track 281.3, service 9.1, tertiary_link 0.0, living_street 0.2. Ausgeschlossen in km: nur_land_und_forstwirtschaft 24.1, privat_oder_gesperrt 7.24, gewerbe_oder_industrieflaeche 1.01, grundstueckszufahrt 2.33, durchfahrt_durch_gebaeude 0.01. Kollision mit 2366 LoD2-Grundrissen (2386 Ringe); Brücken (LoD2-Funktion 53001_1800) sind Fahrbahn, keine Wand.
 
-Browsertest vom 2026-11-09 (`scripts/test_drive.cjs`, Ergebnis in `docs/fahrmodus_test.json`): beim Start 0 Dateien des Fahrmodus geladen; Rückweg Kamera 0.000 m, Blickpunkt 0.000 m, Bild vorher und nachher identisch. Autopilot auf 80 Straßen (19.0 km): 77 ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds -0.651 m), kleinster Abstand eines Kollisionskreises zur Wand 0.97 m (Radius 0.97 m). Hänger: track (Gebäude); Salzmatten (unklar); residential (unklar).
+Browsertest vom 2026-11-23 (`scripts/test_drive.cjs`, Ergebnis in `docs/fahrmodus_test.json`): beim Start 0 Dateien des Fahrmodus geladen; Rückweg Kamera 0.000 m, Blickpunkt 0.000 m, Bild vorher und nachher bis auf 10 Pixel gleich (Abweichung höchstens 2 von 255). Autopilot auf 80 Straßen (19.0 km): 77 ohne Hängenbleiben, nie außerhalb der Spur (größter Wert des Abstandsfelds -0.651 m), kleinster Abstand eines Kollisionskreises zur Wand 0.97 m (Radius 0.97 m). Hänger: track (Gebäude); Salzmatten (unklar); residential (unklar).
 
-Stufe 2: 22 Fahrkacheln am Auto geladen (1889 KB). Größter Höhensprung an einer Kachelgrenze 0.03 cm, am Rand zum groben Gelände 0.00 cm. Spurhilfe nur mit Gas: 13 von 15 Straßen bis zum Ende, größter Abstand zur Achse 19.76 m. Nach dem Aussteigen: Bäume und parkende Autos auf alter Höhe (ja), Schatten und Geländematerial wie vorher (ja).
+Stufe 2: 22 Fahrkacheln am Auto geladen (1589 KB). Größter Höhensprung an einer Kachelgrenze 0.03 cm, am Rand zum groben Gelände 0.00 cm. Spurhilfe nur mit Gas: 13 von 15 Straßen bis zum Ende, größter Abstand zur Achse 19.76 m. Nach dem Aussteigen: Bäume und parkende Autos auf alter Höhe (ja), Schatten und Geländematerial wie vorher (ja).
 
 **Busse.** 11 Haltesteige, 154 Fahrten mit Linienverlauf zugeordnet (12 Verlaufsabschnitte). Die Zuordnung prüft Linie und Folge der Haltestellen; eine Prüfung gegen die Fahrplanauskunft des Verbunds steht aus.
