@@ -616,7 +616,7 @@ export async function createDrive(ctx) {
 
   // ---------- Bildschleife (von app.js aufgerufen, solange der Fahrmodus die Kamera hat) ----------
   const ease = (f) => (f < 0.5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2);
-  let hudT = 0, lightT = 0, debugCam = null;
+  let hudT = 0, lightT = 0, debugCam = null, freshTimer = 0;
 
   // Qualität: Fahrkacheln und Schatten je Stufe; sinkt die Bildrate länger unter 28 Bilder/s, eine Stufe tiefer
   const sh = ctx.sun.shadow;
@@ -740,6 +740,7 @@ export async function createDrive(ctx) {
     controls.target.copy(saved.target);
     if (saved.autoRotate) { controls.autoRotate = true; const ar = $("autorotate"); if (ar) ar.checked = true; }
     if (saved.foldedPanel && $("sunpanel").classList.contains("collapsed")) $("menuToggle").click();
+    document.body.classList.remove("driving"); hud.classList.remove("fresh");
     ctx.driveClock = null; ctx.groundAt = null;
     if ($("time").value !== saved.time) { $("time").value = saved.time; ctx.setSun(); }
     window.__driveState = "off";
@@ -757,10 +758,12 @@ export async function createDrive(ctx) {
       ctx.groundAt = (x, z) => (fine ? fine.heightAt(x, z) : null);
       if (fine) attachObjects();
       buildTrees();
-      // Auf dem Handy das Bedienfeld einklappen, beim Aussteigen wieder öffnen
-      const panel = $("sunpanel");
-      saved.foldedPanel = innerWidth < 900 && panel && !panel.classList.contains("collapsed");
+      // Neue Oberfläche: alles andere ausblenden. Alte Oberfläche: auf dem Handy das Bedienfeld einklappen.
+      const ui2 = document.body.classList.contains("ui2"), panel = $("sunpanel");
+      if (ui2) document.body.classList.add("driving");
+      saved.foldedPanel = !ui2 && innerWidth < 900 && panel && !panel.classList.contains("collapsed");
       if (saved.foldedPanel) $("menuToggle").click();
+      hud.classList.add("fresh"); clearTimeout(freshTimer); freshTimer = setTimeout(() => hud.classList.remove("fresh"), 7000);
     }
     // Fahrtrichtung entlang der Straße, möglichst vom Betrachter weg
     camera.getWorldDirection(v3);

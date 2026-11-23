@@ -9,8 +9,10 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
-const BASE = process.env.BASE || 'http://127.0.0.1:8124/index.html';
-const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
+const BASE0 = process.env.BASE || 'http://127.0.0.1:8124/index.html';
+// BASE darf schon Parameter enthalten (z. B. neu.html?thema=fahren); weitere werden mit & angehängt
+const BASE = { toString: () => BASE0.split('?')[0], extra: BASE0.includes('?') ? '&' + BASE0.split('?')[1] : '' };
+const OUT = process.env.OUT || path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
 
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -20,7 +22,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
   page.on('console', (m) => { if (m.type() === 'error') logs.push('console: ' + m.text()); });
   const loaded = [];
   page.on('response', async (r) => { try { loaded.push([r.url().replace(/^https?:\/\/[^/]+\//, ''), (await r.body()).length]); } catch (e) { /* abgebrochen */ } });
-  await page.goto(`${BASE}?lod=1&t=2026-08-25T15:00&cam=-160,120,160&target=0,0&intro=0&fq=2`, { waitUntil: 'load', timeout: 180000 });
+  await page.goto(`${BASE}?lod=1&t=2026-08-25T15:00&cam=-160,120,160&target=0,0&intro=0&fq=2${BASE.extra}`, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
   await page.waitForTimeout(5000);
   await page.evaluate(() => { const b = document.getElementById('buses'); if (b.checked) b.click(); });   // bewegte Busse aus, damit Bilder vergleichbar sind
@@ -186,7 +188,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'fahrmodus_test.json');
   // Notschalter, auf einer eigenen Seite
   await page.close();
   const p2 = await browser.newPage({ viewport: { width: 1000, height: 700 } });
-  await p2.goto(`${BASE}?lod=2&intro=0&drive=0`, { waitUntil: 'load', timeout: 180000 });
+  await p2.goto(`${BASE}?lod=2&intro=0&drive=0${BASE.extra}`, { waitUntil: 'load', timeout: 180000 });
   await p2.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
   out.notschalter = { abschnitt_vorhanden: await p2.evaluate(() => !!document.getElementById('driveSec')) };
   out.fehler_konsole = logs;

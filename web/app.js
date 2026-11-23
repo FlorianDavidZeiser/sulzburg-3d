@@ -398,6 +398,20 @@ function showBuilding(idx) {
   const dgm = terrainHeightAt(g.e - meta.buildings.e0, -(g.n - meta.buildings.n0));
   const fmt = (v, d = 1) => (v == null ? "–" : Number(v).toFixed(d).replace(".", ","));
   info.hidden = false;
+  if (document.body.classList.contains("ui2")) {
+    // Neue Oberfläche: das Wichtigste oben, der Rest hinter „Mehr zum Gebäude“
+    info.innerHTML = `<h2>${g.adresse || "Gebäude ohne Adresse"}</h2><dl>` +
+      `<dt>Nutzung</dt><dd>${g.funktion_name || "–"}</dd><dt>Dach</dt><dd>${g.dachform_name || "–"}</dd><dt>Höhe</dt><dd>${fmt(g.hoehe_m)} m</dd>` +
+      (g.in_gemeinde ? "" : `<dt>Gemeinde</dt><dd>${g.gemeinde || "–"} (Randbereich)</dd>`) + `</dl>` +
+      infoHooks.map((h) => h(idx, g) || "").join("") +
+      `<details class="more"><summary>Mehr zum Gebäude</summary><dl>` +
+      `<dt>Funktion</dt><dd>${g.funktion || "–"}</dd><dt>Dachform</dt><dd>${g.dachform || "–"}${g.dachformen_teile ? ", Teile: " + g.dachformen_teile.join("/") : ""}</dd>` +
+      `<dt>First</dt><dd>${fmt(g.z_first)} m NHN</dd><dt>Boden</dt><dd>${fmt(g.z_boden_min)}${g.z_boden_max !== g.z_boden_min ? " bis " + fmt(g.z_boden_max) : ""} m NHN</dd>` +
+      `<dt>Gelände</dt><dd>${dgm == null ? "–" : fmt(dgm) + " m NHN"}</dd><dt>Grundriss</dt><dd>Stand ${g.grundriss_aktualitaet || "–"}, Modell ${g.erstellt || "–"}</dd>` +
+      `<dt>ID</dt><dd class="mono">${g.id}</dd></dl>` + sunlightInfo(idx) + externalLinks(g) + `</details>` +
+      `<div class="hint">LGL LoD2, dl-de/by-2-0</div>`;
+    return;
+  }
   info.innerHTML = `<h2>${g.adresse || "Gebäude ohne Adresse"}</h2><dl>` +
     `<dt>Gemeinde</dt><dd>${g.gemeinde || "–"}${g.in_gemeinde ? "" : " (Nachbargemeinde im Randbereich)"}</dd>` +
     `<dt>Funktion</dt><dd>${g.funktion_name || "–"} <span style="color:var(--muted)">(${g.funktion || "–"})</span></dd>` +
@@ -711,7 +725,7 @@ function setupInfoClose() {
 
 function setupMenu() {
   const panel = $("sunpanel"), btn = $("menuToggle");
-  const set = (collapsed) => { panel.classList.toggle("collapsed", collapsed); btn.textContent = collapsed ? "Menü ▾" : "Menü ▴"; btn.setAttribute("aria-expanded", String(!collapsed)); };
+  const set = (collapsed) => { panel.classList.toggle("collapsed", collapsed); btn.textContent = collapsed ? (btn.dataset.zu || "Menü ▾") : (btn.dataset.auf || "Menü ▴"); btn.setAttribute("aria-expanded", String(!collapsed)); };
   btn.addEventListener("click", () => set(!panel.classList.contains("collapsed")));
   if (innerWidth < 900) set(true);   // auf dem Handy startet das Menü eingeklappt
 }
